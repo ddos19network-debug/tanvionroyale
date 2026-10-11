@@ -195,7 +195,6 @@ describe('Royale Ace — REAL_MONEY fail-closed gate matrix', () => {
     const db = createInMemoryDb();
     const { ace } = makeAce(db, realRoyale(), aceConfig()); // BD allows BDT only
     fundReal(db, 'USD');
-    seedUser(db, USER.id, 'CUSTOMER', { country: 'BD' });
     const err = await ace
       .spin(USER, { stake: STAKE, currency: 'USD', clientRequestId: 'gm-4' } as any)
       .catch((e) => e);
