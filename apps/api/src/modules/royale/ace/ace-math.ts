@@ -517,30 +517,6 @@ export function stripStats(reel: number, strip: readonly AceStripEntry[]): AceSt
 }
 
 /**
- * Scale every paytable entry by `factor` (used by the tuning helper to move the
- * achieved RTP toward the target). Returns a NEW paytable; entries always stay
- * positive integers and never decrease along a run.
- */
-export function scalePaytable(config: AceGameConfig, factor: number): Record<AcePaySymbol, number[]> {
-  const scaled = {} as Record<AcePaySymbol, number[]>;
-  for (const symbol of ACE_PAY_SYMBOLS) {
-    const row = config.paytableBp[symbol];
-    const next = row.map((value, index) => {
-      // Index 0/1 can never pay and the trailing slot is reserved: both stay 0.
-      const payable = index >= 3 && index < ACE_REELS;
-      if (!payable || value <= 0) return 0;
-      return Math.max(1, Math.round(value * factor));
-    });
-    // Keep the table monotonic in run length after scaling.
-    for (let n = 4; n < ACE_REELS; n += 1) {
-      if (next[n] < next[n - 1]) next[n] = next[n - 1];
-    }
-    scaled[symbol] = next;
-  }
-  return scaled;
-}
-
-/**
  * Scale every non-scatter, non-wild entry of a reel strip by `factor` (min 1)
  * so the tuning helper can retune base-game hit frequency without touching
  * WILD / SCATTER / GOLDEN weights.
@@ -554,4 +530,5 @@ export function scaleStrip(
     return { ...entry, weight: Math.max(1, Math.round(entry.weight * factor)) };
   });
 }
+
 

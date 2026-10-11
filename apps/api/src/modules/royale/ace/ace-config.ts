@@ -692,3 +692,34 @@ export function validateAceStake(config: AceGameConfig, currency: string, stake:
   return stake;
 }
 
+
+
+/**
+ * Scale every paytable entry by `factor` (used by the tuning helper to move the
+ * achieved RTP toward the target). Returns a NEW paytable; entries always stay
+ * positive integers, never decrease along a run, and the reserved index always
+ * stays 0 so the result still passes `validateAceConfig`.
+ */
+export function scalePaytable(
+  config: AceGameConfig,
+  factor: number,
+): Record<AcePaySymbol, number[]> {
+  if (!Number.isFinite(factor) || factor <= 0) {
+    throw new Error('paytable scale factor must be a positive number');
+  }
+  const scaled: Record<AcePaySymbol, number[]> = {} as Record<AcePaySymbol, number[]>;
+  for (const symbol of ACE_PAY_SYMBOLS) {
+    const row = config.paytableBp[symbol];
+    const next = row.map((value, index) => {
+      // Index 0/1 never pay and index ACE_REELS is reserved for a future reel.
+      if (index < 2 || index >= ACE_REELS || value <= 0) return 0;
+      return Math.max(1, Math.round(value * factor));
+    });
+    // Keep the table monotonic in run length after scaling.
+    for (let n = 3; n < ACE_REELS; n += 1) {
+      if (next[n] < next[n - 1]) next[n] = next[n - 1];
+    }
+    scaled[symbol] = next;
+  }
+  return scaled;
+}
