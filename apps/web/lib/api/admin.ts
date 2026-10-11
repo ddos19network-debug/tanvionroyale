@@ -1692,4 +1692,176 @@ export async function completeAdminManualWithdrawal(
     `/admin/manual-withdrawals/${encodeURIComponent(id)}/complete`,
     { method: 'POST', body: JSON.stringify({ providerReference: providerReference?.trim() || undefined }) },
   );
+
+// ---------------------------------------------------------------------------
+// Royale Ace (admin) — RoyaleAceAdminController (admin/royale-ace)
+// ---------------------------------------------------------------------------
+
+/** A Royale Ace config version as returned by the admin API. */
+export interface AdminAceConfigVersion {
+  id: string;
+  version: number;
+  status: 'DRAFT' | 'ACTIVE' | 'RETIRED';
+  name: string;
+  configName: string;
+  targetRtpBp: number;
+  changeReason: string;
+  createdById: string;
+  activatedById: string | null;
+  createdAt: string;
+  activatedAt: string | null;
+  validationErrors: Array<{ path: string; message: string }>;
+  simulationPassed: boolean | null;
+  config: Record<string, unknown>;
+}
+
+/** A stored simulation report for a Royale Ace config version. */
+export interface AdminAceSimulationReport {
+  id: string;
+  configVersion: number;
+  spins: number;
+  rtpBp: number;
+  rtpCiLowBp: number;
+  rtpCiHighBp: number;
+  targetRtpBp: number;
+  toleranceBp: number;
+  hitFrequencyBp: number;
+  triggerRateBp: number;
+  retriggerRateBp: number;
+  baseGameRtpBp: number;
+  cascadeRtpBp: number;
+  freeSpinRtpBp: number;
+  volatilityBp: number;
+  maxWinObservedBp: number;
+  maxWinCapBp: number;
+  passed: boolean;
+  notes: string | null;
+  createdById: string;
+  createdAt: string;
+}
+
+/** A Royale Ace round row for the admin viewer (never includes a seed). */
+export interface AdminAceRound {
+  id: string;
+  userId: string;
+  mode: string;
+  status: string;
+  stake: number;
+  currency: string;
+  payout: number | null;
+  maxMultiplierBp: number;
+  capped: boolean;
+  configVersion: number;
+  serverSeedHash: string;
+  clientSeed: string;
+  nonce: number;
+  transactionId: string | null;
+  createdAt: string;
+  settledAt: string | null;
+}
+
+/** GET /admin/royale-ace/config/versions — every config version, newest first. */
+export function listAceConfigVersions(): Promise<{ versions: AdminAceConfigVersion[] }> {
+  return authFetch<{ versions: AdminAceConfigVersion[] }>('/admin/royale-ace/config/versions');
+}
+
+/** GET /admin/royale-ace/config/versions/:version — one version by number. */
+export function getAceConfigVersion(version: number): Promise<AdminAceConfigVersion> {
+  return authFetch<AdminAceConfigVersion>(`/admin/royale-ace/config/versions/${version}`);
+}
+
+/** GET /admin/royale-ace/config/default — the built-in launch configuration. */
+export function getAceDefaultConfig(): Promise<{ config: Record<string, unknown> }> {
+  return authFetch<{ config: Record<string, unknown> }>('/admin/royale-ace/config/default');
+}
+
+/** POST /admin/royale-ace/config/versions — create a new DRAFT version. */
+export function createAceConfigVersion(
+  config: Record<string, unknown>,
+  reason: string,
+): Promise<AdminAceConfigVersion> {
+  return authFetch<AdminAceConfigVersion>('/admin/royale-ace/config/versions', {
+    method: 'POST',
+    body: JSON.stringify({ config, reason }),
+  });
+}
+
+/** GET /admin/royale-ace/config/versions/:version/reports — sim reports. */
+export function listAceSimulationReports(
+  version: number,
+): Promise<{ reports: AdminAceSimulationReport[] }> {
+  return authFetch<{ reports: AdminAceSimulationReport[] }>(
+    `/admin/royale-ace/config/versions/${version}/reports`,
+  );
+}
+
+/** POST /admin/royale-ace/config/versions/:version/simulate — run a sim report. */
+export function runAceSimulation(
+  version: number,
+  options: { spins?: number; seed?: string } = {},
+): Promise<AdminAceSimulationReport> {
+  return authFetch<AdminAceSimulationReport>(
+    `/admin/royale-ace/config/versions/${version}/simulate`,
+    { method: 'POST', body: JSON.stringify(options) },
+  );
+}
+
+/** POST /admin/royale-ace/config/versions/:version/activate — activate. */
+export function activateAceConfigVersion(
+  version: number,
+  reason: string,
+): Promise<AdminAceConfigVersion> {
+  return authFetch<AdminAceConfigVersion>(
+    `/admin/royale-ace/config/versions/${version}/activate`,
+    { method: 'POST', body: JSON.stringify({ reason }) },
+  );
+}
+
+/** POST /admin/royale-ace/config/enabled — game on/off switch. */
+export function setAceEnabled(
+  enabled: boolean,
+  reason: string,
+): Promise<AdminAceConfigVersion> {
+  return authFetch<AdminAceConfigVersion>('/admin/royale-ace/config/enabled', {
+    method: 'POST',
+    body: JSON.stringify({ enabled, reason }),
+  });
+}
+
+/** GET /admin/royale-ace/rounds — recent rounds (operational viewer). */
+export function listAceRounds(
+  filters: { userId?: string; status?: string; limit?: number } = {},
+): Promise<AdminAceRound[]> {
+  const search = new URLSearchParams();
+  if (filters.userId) search.set('userId', filters.userId);
+  if (filters.status) search.set('status', filters.status);
+  if (filters.limit) search.set('limit', String(filters.limit));
+  const qs = search.toString();
+  return authFetch<AdminAceRound[]>(`/admin/royale-ace/rounds${qs ? `?${qs}` : ''}`).then(
+    (rows) => rows ?? [],
+  );
+}
+
+/** GET /admin/royale-ace/rounds/:roundId — one round with its full outcome. */
+export function getAceRoundForReplay(roundId: string): Promise<Record<string, unknown>> {
+  return authFetch<Record<string, unknown>>(
+    `/admin/royale-ace/rounds/${encodeURIComponent(roundId)}`,
+  );
+}
+
+/** POST /admin/royale-ace/rounds/:roundId/void — void an unpaid round. */
+export function voidAceRound(roundId: string, reason: string): Promise<{ voided: boolean }> {
+  return authFetch<{ voided: boolean }>(
+    `/admin/royale-ace/rounds/${encodeURIComponent(roundId)}/void`,
+    { method: 'POST', body: JSON.stringify({ reason }) },
+  );
+}
+
+/** POST /admin/royale-ace/reconcile — trigger the stuck-round reconciler. */
+export function reconcileAceRounds(): Promise<{ completed: number; voided: number }> {
+  return authFetch<{ completed: number; voided: number }>('/admin/royale-ace/reconcile', {
+    method: 'POST',
+  });
+}
+
 }

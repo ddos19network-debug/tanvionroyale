@@ -108,6 +108,7 @@ export const games: Game[] = [
   // --- TANVION ROYALE — Royale Play (server-authoritative, wallet-backed) ---
   makeGame(34, 'Plinko Royale', 'TANVIONROYALE', 'Mini Games', 155, 'NEW', undefined, 'freeplay', 'royale-plinko'),
   makeGame(35, 'Mines Royale', 'TANVIONROYALE', 'Mini Games', 195, 'NEW', undefined, 'freeplay', 'royale-mines'),
+  makeGame(36, 'Royale Ace', 'TANVIONROYALE', 'Slots', 220, 'NEW', undefined, 'freeplay', 'royale-ace'),
 ];
 
 export function gamesByCategory(category: string): Game[] {

@@ -305,6 +305,17 @@ export class RoyaleAceService {
           },
         });
 
+        // FREE_PLAY: debit the stake from the ONE points ledger (keyed,
+        // exactly-once, throws on overdraw) — mirrors the REAL_MONEY reservation
+        // above so the stake always leaves the bankroll before the win is paid.
+        if (!isReal) {
+          await this.freeWallet.getOrCreateWalletInTx(db, user.id);
+          await this.freeWallet.debitInTx(db, user.id, dto.stake, aceStakeKey(idempotencyKey), {
+            type: 'ROYALE_ACE',
+            id: round.id,
+          });
+        }
+
         if (isReal) {
           await this.wallet.captureStakeInTx(db, user.id, aceStakeKey(idempotencyKey));
           if (payout > 0) {

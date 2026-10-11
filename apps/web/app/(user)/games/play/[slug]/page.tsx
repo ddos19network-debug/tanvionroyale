@@ -7,6 +7,7 @@ import { SkyRocketGame } from '@/components/games/crash-game';
 import { LightningDiceGame } from '@/components/games/dice-game';
 import { PlinkoGame } from '@/components/games/plinko-game';
 import { MinesGame } from '@/components/games/mines-game';
+import { AceSlotGame } from '@/components/games/ace-slot-game';
 import { ActionGame, getActionGameConfig } from '@/components/games/action-game';
 import { getFreePlayGame } from '@/lib/data/games';
 
@@ -52,6 +53,14 @@ export default function FreePlayGamePage() {
     );
   }
 
+  if (game.slug === 'royale-ace') {
+    return (
+      <main className="min-h-[100dvh] w-full bg-[#070d1f] pb-[env(safe-area-inset-bottom)]">
+        <AceSlotGame />
+      </main>
+    );
+  }
+
   return (
     <>
       <main className="mx-auto max-w-4xl px-4 py-8 pb-24 sm:pb-10">
@@ -78,6 +87,7 @@ export default function FreePlayGamePage() {
           game.slug !== 'lightning-dice' &&
           game.slug !== 'royale-plinko' &&
           game.slug !== 'royale-mines' &&
+          game.slug !== 'royale-ace' &&
           !getActionGameConfig(game.slug ?? '') ? (
             <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
               This free-play game is registered in the catalog but has no playable engine yet.

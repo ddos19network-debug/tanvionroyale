@@ -140,6 +140,41 @@ const DEFS: Record<string, TableDef> = {
     uniques: [['id']],
     defaults: () => ({ id: randomUUID(), accountType: 'CUSTOMER' }),
   },
+  // Royale Ace (royale-ace): one row per settled round, keyed by idempotency so
+  // a retried spin is exactly-once.
+  royaleAceRound: {
+    uniques: [['id'], ['userId', 'idempotencyKey']],
+    defaults: () => ({
+      id: randomUUID(),
+      mode: 'FREE_PLAY',
+      status: 'SETTLED',
+      payout: null,
+      maxMultiplierBp: 10_000,
+      capped: false,
+      serverSeed: null,
+      transactionId: null,
+      settledAt: now(),
+      createdAt: now(),
+    }),
+  },
+  // Versioned game config (immutable; one ACTIVE at a time).
+  royaleAceConfigVersion: {
+    uniques: [['id'], ['version']],
+    defaults: () => ({
+      id: 1,
+      status: 'DRAFT',
+      name: '',
+      validationErrors: null,
+      activatedAt: null,
+      activatedById: null,
+      createdAt: now(),
+    }),
+  },
+  // Stored math provenance for a config version.
+  royaleAceSimulationReport: {
+    uniques: [['id']],
+    defaults: () => ({ id: randomUUID(), passed: false, notes: null, createdAt: now() }),
+  },
 };
 
 function scalarEqual(a: unknown, b: unknown): boolean {

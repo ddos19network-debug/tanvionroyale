@@ -3,6 +3,8 @@ import {
   IsBoolean,
   IsIn,
   IsInt,
+  IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -84,5 +86,76 @@ export class AceHistoryQueryDto {
   @IsInt()
   @Min(1)
   @Max(100)
+  limit?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Admin DTOs — config versioning, simulation, and round operations.
+// Every mutating admin action carries a MANDATORY reason (governance / audit).
+// The complex `config` object is NOT deep-validated by class-validator; the
+// admin SERVICE re-validates the whole thing with `validateAceConfig` and only
+// ever persists a fully valid clone, so the class-validator layer stays thin.
+// ---------------------------------------------------------------------------
+
+export class CreateAceConfigDto {
+  /** The full candidate config. Structurally re-validated server-side. */
+  @IsObject()
+  @IsNotEmpty()
+  config!: Record<string, unknown>;
+
+  @IsString()
+  @MaxLength(500)
+  reason!: string;
+}
+
+export class ActivateAceConfigDto {
+  @IsString()
+  @MaxLength(500)
+  reason!: string;
+}
+
+export class SetAceEnabledDto {
+  @IsBoolean()
+  enabled!: boolean;
+
+  @IsString()
+  @MaxLength(500)
+  reason!: string;
+}
+
+export class RunAceSimulationDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1_000)
+  @Max(2_000_000)
+  spins?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  seed?: string;
+}
+
+export class VoidAceRoundDto {
+  @IsString()
+  @MaxLength(500)
+  reason!: string;
+}
+
+export class AceRoundsQueryDto {
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @IsOptional()
+  @IsIn(['ACTIVE', 'SETTLED', 'VOIDED'])
+  status?: 'ACTIVE' | 'SETTLED' | 'VOIDED';
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(200)
   limit?: number;
 }
