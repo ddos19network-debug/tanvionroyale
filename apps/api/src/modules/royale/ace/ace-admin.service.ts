@@ -522,10 +522,12 @@ export class RoyaleAceAdminService {
       await this.prisma.auditLog.create({
         data: {
           actorId,
+          actorType: 'ADMIN',
           action,
-          entity: 'RoyaleAce',
+          entityType: 'RoyaleAce',
           entityId,
-          value: value as unknown as Prisma.InputJsonValue,
+          oldValue: Prisma.JsonNull,
+          newValue: value as Prisma.InputJsonValue,
         },
       });
     } catch (error) {
