@@ -47,9 +47,13 @@ services:
         value: 20.18.1
       - key: NODE_ENV
         value: production
-      # Public production frontend origin (safe to commit — not a secret).
+      # Public production frontend origin(s) (safe to commit — not a secret).
+      # Comma-separated allow-list. The canonical custom domain is listed first;
+      # the previous Vercel origin is kept during the migration so existing
+      # sessions and the OAuth post-login redirect keep working until the owner
+      # confirms login on royale.tanvion.com and removes it.
       - key: CORS_ORIGIN
-        value: https://tanvionroyale.vercel.app
+        value: https://royale.tanvion.com,https://tanvionroyale.vercel.app
       # --- TANVION ROYALE — Plinko + Mines safe defaults (audit H2/H3) ---
       # Non-secret configuration (committed as literal safe values, NOT sync:false).
       # Real money is FAIL-CLOSED: ROYALE_MODE must stay FREE_PLAY and
@@ -177,12 +181,15 @@ services:
         value: https://tanvionroyale.onrender.com/api/v1/auth/google/callback
       # Frontend origins allowed to receive the one-time OAuth exchange
       # redirect (first entry is the default). Only used for the frontend
-      # redirect destination — never as a Google redirect URI.
+      # redirect destination — never as a Google redirect URI. The canonical
+      # custom domain is the default; the previous Vercel origin is kept during
+      # the migration so a redirect that still lands there keeps working.
       - key: OAUTH_ALLOWED_REDIRECTS
-        value: https://tanvionroyale.vercel.app
+        value: https://royale.tanvion.com,https://tanvionroyale.vercel.app
       # Public frontend URL used for emailed verification/reset links.
+      # Canonical custom domain.
       - key: APP_URL
-        value: https://tanvionroyale.vercel.app
+        value: https://royale.tanvion.com
       # GOOGLE_CLIENT_ID is a public identifier but app-specific; set it in the
       # Render dashboard together with GOOGLE_CLIENT_SECRET. Never expose the
       # secret to the web app or via NEXT_PUBLIC_* variables.

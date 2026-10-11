@@ -2,6 +2,7 @@
 import { resolveCorsOrigins, DEFAULT_PRODUCTION_CORS_ORIGINS } from '../src/config/cors';
 
 const PROD_ORIGIN = 'https://tanvionroyale.vercel.app';
+const CANONICAL_ORIGIN = 'https://royale.tanvion.com';
 
 function envWith(overrides: Record<string, string | undefined>): NodeJS.ProcessEnv {
   return { NODE_ENV: 'production', ...overrides } as unknown as NodeJS.ProcessEnv;
@@ -23,19 +24,21 @@ describe('CORS origin resolution (production safety)', () => {
   it('falls back to the built-in production origin when CORS_ORIGIN is missing', () => {
     const origin = resolveCorsOrigins(envWith({ CORS_ORIGIN: undefined }));
     expect(origin).toEqual([...DEFAULT_PRODUCTION_CORS_ORIGINS]);
+    expect(origin).toContain(CANONICAL_ORIGIN);
     expect(origin).toContain(PROD_ORIGIN);
   });
 
   it('falls back safely when CORS_ORIGIN is blank', () => {
     const origin = resolveCorsOrigins(envWith({ CORS_ORIGIN: '   ' }));
-    expect(origin).toEqual([PROD_ORIGIN]);
+    expect(origin).toEqual([...DEFAULT_PRODUCTION_CORS_ORIGINS]);
+    expect(origin).toContain(CANONICAL_ORIGIN);
   });
 
   it('NEVER honours a wildcard origin together with credentials', () => {
     const origin = resolveCorsOrigins(envWith({ CORS_ORIGIN: '*' }));
     expect(origin).not.toBe('*');
     expect(origin).not.toContain('*');
-    expect(origin).toEqual([PROD_ORIGIN]);
+    expect(origin).toEqual([...DEFAULT_PRODUCTION_CORS_ORIGINS]);
   });
 
   it('keeps reflecting any origin in development when CORS_ORIGIN is unset (local dev)', () => {

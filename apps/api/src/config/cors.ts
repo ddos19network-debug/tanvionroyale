@@ -14,8 +14,18 @@
  *   behaviour (reflect any origin) so `pnpm dev` keeps working unchanged.
  */
 
-/** Built-in production origin allow-list (public values, not secrets). */
+/**
+ * Built-in production origin allow-list (public values, not secrets).
+ *
+ * The canonical production origin is https://royale.tanvion.com. The previous
+ * Vercel origin is kept in the list during the migration so existing sessions,
+ * bookmarks and the OAuth post-login redirect keep working until the owner
+ * confirms every login path succeeds on the custom domain and removes it.
+ * These are only the FAIL-SAFE defaults used when CORS_ORIGIN is unset; the
+ * deployment sets CORS_ORIGIN explicitly (see render.yaml).
+ */
 export const DEFAULT_PRODUCTION_CORS_ORIGINS: readonly string[] = [
+  'https://royale.tanvion.com',
   'https://tanvionroyale.vercel.app',
 ];
 

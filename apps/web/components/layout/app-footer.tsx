@@ -34,6 +34,7 @@ const FOOTER_SECTIONS = [
     links: [
       { href: '/privacy', label: 'Privacy Policy' },
       { href: '/terms', label: 'Terms of Service' },
+      { href: '/account-deletion', label: 'Account Deletion' },
     ],
   },
 ];

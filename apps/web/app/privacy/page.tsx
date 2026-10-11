@@ -224,7 +224,9 @@ export default function PrivacyPolicyPage() {
         <p>
           To exercise your rights, ask a question or close your account, contact us through the{' '}
           <LegalLink href="/support">Support</LegalLink> page. We may need to verify your identity before
-          acting on a request.
+          acting on a request. The steps for requesting deletion of your account and personal data — and the
+          records we must retain — are set out on the{' '}
+          <LegalLink href="/account-deletion">Account Deletion</LegalLink> page.
         </p>
       </LegalSection>
 

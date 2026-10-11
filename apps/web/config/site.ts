@@ -6,12 +6,14 @@
  * NEXT_PUBLIC_SITE_URL (optional, NEXT_PUBLIC_* — safe to expose to the
  * browser, never a secret):
  *   Public base URL of the deployed web app, no trailing slash.
- *   Production default: https://tanvionroyale.vercel.app
- *   When a custom production domain is configured later, set the variable in
- *   the Vercel dashboard (or .env.local) and every canonical/OG/sitemap URL
+ *   Canonical production default: https://royale.tanvion.com
+ *   During the migration the previous Vercel origin
+ *   (https://tanvionroyale.vercel.app) is still served and still allowed by
+ *   the API CORS/OAuth allow-lists; set NEXT_PUBLIC_SITE_URL explicitly in the
+ *   Vercel dashboard (or .env.local) and every canonical/OG/sitemap URL
  *   updates — no host is hardcoded in any component.
  */
-const DEFAULT_SITE_URL = 'https://tanvionroyale.vercel.app';
+const DEFAULT_SITE_URL = 'https://royale.tanvion.com';
 
 function normalizeBaseUrl(raw: string | undefined, fallback: string): string {
   const value = raw?.trim();

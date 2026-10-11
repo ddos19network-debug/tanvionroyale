@@ -161,9 +161,10 @@ export default function TermsOfServicePage() {
           reasonably believe it is necessary to comply with the law or a regulator instruction, to
           prevent fraud, abuse or security risks, to enforce these Terms, or to respond to a verified
           account compromise. You may stop using the platform and request account closure at any time
-          through the <LegalLink href="/support">Support</LegalLink> page. Where funds remain in an
-          enabled wallet, they are handled in line with the applicable verification, compliance and
-          legal requirements.
+          through the <LegalLink href="/support">Support</LegalLink> page — see the{' '}
+          <LegalLink href="/account-deletion">Account Deletion</LegalLink> page for the exact steps. Where
+          funds remain in an enabled wallet, they are handled in line with the applicable verification,
+          compliance and legal requirements.
         </p>
       </LegalSection>
 

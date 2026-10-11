@@ -71,6 +71,10 @@ export default function SupportPage() {
               review the account guidance in our{' '}
               <LegalLink href="/terms">Terms of Service</LegalLink>.
             </>,
+            <>
+              To close and delete your account and personal data, follow the steps on the{' '}
+              <LegalLink href="/account-deletion">Account Deletion</LegalLink> page.
+            </>,
           ]}
         />
       </LegalSection>
