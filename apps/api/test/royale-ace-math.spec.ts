@@ -7,6 +7,7 @@
  * logic that the verifier must be able to re-derive exactly.
  */
 import {
+  ACE_PAY_SYMBOLS,
   DEFAULT_ACE_CONFIG,
   effectiveMaxWinBp,
   isAceConfigValid,
@@ -111,7 +112,8 @@ describe('Royale Ace — 1024-ways evaluator', () => {
     expect(countScatters(g)).toBe(1);
     // WILD + SCATTER on reel 0 does not make a SCATTER "run".
     const wins = evaluateWays(g, cfg);
-    expect(wins.some((w) => w.symbol === 'SCATTER')).toBe(false);
+    expect(wins.every((w) => ACE_PAY_SYMBOLS.includes(w.symbol))).toBe(true);
+    expect(winningCells(wins).some((c) => c.reel === 0 && c.row === 0)).toBe(false);
   });
 });
 
@@ -130,7 +132,7 @@ describe('Royale Ace — golden → wild', () => {
     const wins = evaluateWays(g, cfg);
     const golden = goldenWinningCells(g, wins, cfg);
     expect(golden).toEqual([{ reel: 0, row: 0 }]);
-    const winners = winningCells(g, wins);
+    const winners = winningCells(wins);
     expect(winners).toContainEqual({ reel: 0, row: 0 });
     expect(winners).toContainEqual({ reel: 1, row: 0 });
     expect(winners).toContainEqual({ reel: 2, row: 0 });
@@ -158,7 +160,7 @@ describe('Royale Ace — golden → wild', () => {
       [cell('A'), cell('K'), cell('Q'), cell('J')],
     ]);
     const wins = evaluateWays(g, cfg);
-    const removed = winningCells(g, wins);
+    const removed = winningCells(wins);
     const golden = goldenWinningCells(g, wins, cfg);
     const rng = new HmacRandomStream('a'.repeat(64), 'golden', 1, 'base');
     const next = applyCascade(rng, g, removed, golden, cfg);
@@ -204,6 +206,7 @@ describe('Royale Ace — scatter and free spins', () => {
     expect(a.freeSpinsPlayed).toBe(b.freeSpinsPlayed);
     expect(a.totalPayBp).toBe(b.totalPayBp);
   });
+});
 
 describe('Royale Ace — provably-fair determinism and verifier', () => {
   it('generates an identical round for identical seeds (determinism)', () => {
@@ -297,4 +300,3 @@ describe('Royale Ace — RTP simulation gate', () => {
   });
 });
 
-});

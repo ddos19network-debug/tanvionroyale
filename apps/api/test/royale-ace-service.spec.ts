@@ -146,6 +146,7 @@ describe('Royale Ace — idempotency (double-click never double-spends)', () => 
     await ace.spin(USER, { stake: STAKE, clientRequestId: 'k-2' } as any);
     expect(aceRounds(db)).toHaveLength(2);
   });
+});
 
 describe('Royale Ace — REAL_MONEY fail-closed gate matrix', () => {
   it('rejects when the MASTER switch is off and creates nothing', async () => {
@@ -253,4 +254,3 @@ describe('Royale Ace — reconciler completes a stuck ACTIVE round', () => {
   });
 });
 
-});

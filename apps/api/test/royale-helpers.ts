@@ -301,6 +301,29 @@ export class InMemoryDb {
         rowsArr[idx] = candidate;
         return { ...candidate };
       },
+      upsert: async (args: {
+        where: Record<string, unknown>;
+        create: Record<string, unknown>;
+        update: Record<string, unknown>;
+      }) => {
+        const rowsArr = table();
+        const idx = rowsArr.findIndex((r) => matches(r, args.where));
+        if (idx !== -1) {
+          const candidate: Row = { ...rowsArr[idx], ...structuredClone(args.update) };
+          for (const cols of def.uniques) {
+            const clash = rowsArr.find(
+              (r, i) => i !== idx && cols.every((c) => scalarEqual(r[c], candidate[c])),
+            );
+            if (clash) p2002();
+          }
+          rowsArr[idx] = candidate;
+          return { ...candidate };
+        }
+        const row: Row = { ...def.defaults(), ...structuredClone(args.create) };
+        assertUniques(row);
+        table().push(row);
+        return { ...row };
+      },
       updateMany: async (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => {
         const rowsArr = table();
         let count = 0;
