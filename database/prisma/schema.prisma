@@ -157,6 +157,11 @@ model User {
   royalePlinkoRounds     RoyalePlinkoRound[]
   royaleMinesRounds      RoyaleMinesRound[]
   royaleSettlements      RoyaleSettlement[]
+  // Responsible gambling (Task 2 / audit F3): self-exclusions and play limits.
+  // These are PROTECTION records — they never hold money, only constraints that
+  // the Royale REAL_MONEY eligibility gate enforces before any stake.
+  selfExclusions         SelfExclusion[]
+  playLimits             PlayLimit[]
   manualDepositRequests  ManualDepositRequest[]
   withdrawalRequests     WithdrawalRequest[]
   supportTickets         SupportTicket[]        @relation("SupportTicketUser")
@@ -3064,3 +3069,82 @@ model RoyaleSettlement {
   @@index([roundId])
 }
 
+
+
+// ---------------------------------------------------------------------------
+// Responsible gambling (Task 2 / audit F3).
+//
+// PROTECTION records only — they never hold money. They constrain REAL_MONEY
+// play: the Royale eligibility gate calls ResponsibleGamblingService before any
+// wallet reservation, and every change is written to the AuditLog.
+//
+// Rules enforced by ResponsibleGamblingService (see responsible-gambling.service.ts):
+//   * lowering a limit OR self-excluding  -> takes effect IMMEDIATELY;
+//   * RAISING a limit OR ending an exclusion -> only after a cooling-off delay
+//     (ROYALE_RG_COOLING_OFF_HOURS, default 24h), stored in PlayLimit.pending*
+//     (raise) or SelfExclusion.revokedAt (scheduled end, future timestamp);
+//   * PERMANENT exclusion -> endsAt is NULL and can NEVER be revoked by the
+//     user (admin override only).
+// ---------------------------------------------------------------------------
+
+enum SelfExclusionType {
+  COOLING_OFF
+  TEMPORARY
+  PERMANENT
+}
+
+enum PlayLimitKind {
+  DEPOSIT
+  LOSS
+  STAKE_PER_BET
+}
+
+enum PlayLimitPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+/// One self-exclusion / cooling-off window for a user. A row is ACTIVE while
+/// startsAt <= now AND (endsAt IS NULL OR endsAt > now) AND
+/// (revokedAt IS NULL OR revokedAt > now) — a FUTURE revokedAt means the user
+/// ASKED to end it but the cooling-off delay has not elapsed yet.
+model SelfExclusion {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      SelfExclusionType
+  startsAt  DateTime          @default(now())
+  /// NULL for PERMANENT (and for open-ended cooling-off) — never expires on its own.
+  endsAt    DateTime?
+  reason    String?
+  /// Requested end time. A FUTURE value honours the cooling-off delay; admin
+  /// override sets it to now() so the exclusion lifts immediately.
+  revokedAt DateTime?
+  createdAt DateTime          @default(now())
+
+  @@index([userId])
+  @@index([userId, revokedAt])
+}
+
+/// One limit line per (user, kind, period). `amount` is the CURRENT effective
+/// cap in minor units. A RAISE is parked in pendingAmount/pendingEffectiveAt and
+/// only becomes effective once now >= pendingEffectiveAt (cooling-off honoured
+/// at read time). A LOWER clears the pending fields and applies immediately.
+model PlayLimit {
+  id                 String           @id @default(uuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind               PlayLimitKind
+  period             PlayLimitPeriod
+  amount             Int
+  currency           String
+  effectiveFrom      DateTime         @default(now())
+  pendingAmount      Int?
+  pendingEffectiveAt DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@unique([userId, kind, period])
+  @@index([userId])
+}

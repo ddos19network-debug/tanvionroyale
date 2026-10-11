@@ -19,7 +19,14 @@ export type RoyaleErrorCode =
   | 'DUPLICATE_REQUEST'
   | 'NOT_FOUND'
   | 'FORBIDDEN'
-  | 'INTERNAL';
+  | 'INTERNAL'
+  // REAL_MONEY eligibility gate (Task 1 / audit F1, F2, F4). Every one of these
+  // is thrown BEFORE any wallet reservation and always with HTTP 403.
+  | 'ROYALE_ACCOUNT_NOT_ACTIVE'
+  | 'ROYALE_KYC_REQUIRED'
+  | 'ROYALE_AGE_RESTRICTED'
+  | 'ROYALE_SELF_EXCLUDED'
+  | 'ROYALE_LIMIT_EXCEEDED';
 
 export interface RoyaleErrorBody {
   statusCode: number;

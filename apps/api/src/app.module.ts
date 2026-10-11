@@ -30,6 +30,7 @@ import { CasinoModule } from "./modules/casino/casino.module";
 import { WinHouseModule } from "./modules/winhouse/winhouse.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { ReferralModule } from "./modules/referral/referral.module";
+import { ResponsibleGamblingModule } from "./modules/responsible-gambling/responsible-gambling.module";
 import { isProduction } from "@tanvion-royale/config";
 
 /**
@@ -97,6 +98,10 @@ function resolveJwtSecret(): string {
     // User referral program. Exported so the auth flow can attribute a new
     // registration to the code that was submitted with it.
     ReferralModule,
+    // Responsible gambling (self-exclusion + play limits). Imported here so the
+    // player/admin RG routes are registered, and by RoyaleModule so the
+    // REAL_MONEY eligibility gate can assert every stake against it.
+    ResponsibleGamblingModule,
     SupportModule,
   ],
   controllers: [AppController],

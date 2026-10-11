@@ -58,6 +58,8 @@ export interface RoyaleConfig {
   algorithmVersion: string;
   realMoneyAvailable: boolean;
   realMoneyReason: string;
+  /** Minimum age for REAL_MONEY play. NEVER below 18, even if env asks for less. */
+  minAge: number;
 }
 
 function parseIntEnv(key: string, fallback: number, env: NodeJS.ProcessEnv): number {
@@ -164,5 +166,9 @@ export function loadRoyaleConfig(env: NodeJS.ProcessEnv = process.env): RoyaleCo
     algorithmVersion: env.ROYALE_ALGORITHM_VERSION ?? 'v1',
     realMoneyAvailable: realMoney.available,
     realMoneyReason,
+    // Minimum age for REAL_MONEY play (audit F4). Configurable but NEVER below
+    // 18: a request for 0 / negative / sub-adult values falls back to 18 (and a
+    // non-numeric value never lowers it either — parseIntEnv falls back to 18).
+    minAge: Math.max(18, parseIntEnv('ROYALE_MIN_AGE', 18, env)),
   };
 }

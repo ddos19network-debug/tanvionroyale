@@ -109,6 +109,31 @@ const DEFS: Record<string, TableDef> = {
       createdAt: now(),
     }),
   },
+  // Responsible gambling (Task 2 / audit F3). The Royale REAL_MONEY eligibility
+  // gate reads these; the double must model them so exclusion/limit checks run
+  // against real rows instead of being skipped.
+  selfExclusion: {
+    uniques: [['id']],
+    defaults: () => ({
+      id: randomUUID(),
+      startsAt: now(),
+      endsAt: null,
+      reason: null,
+      revokedAt: null,
+      createdAt: now(),
+    }),
+  },
+  playLimit: {
+    uniques: [['id'], ['userId', 'kind', 'period']],
+    defaults: () => ({
+      id: randomUUID(),
+      pendingAmount: null,
+      pendingEffectiveAt: null,
+      effectiveFrom: now(),
+      createdAt: now(),
+      updatedAt: now(),
+    }),
+  },
   // WalletService.assertCustomerWalletAccount reads accountType to refuse new
   // customer wallets for STAFF accounts — the double must model it.
   user: {
@@ -318,11 +343,24 @@ export function createInMemoryDb(): InMemoryDb {
  * Seed a customer user row so WalletService.assertCustomerWalletAccount passes
  * (it reads user.accountType before creating a wallet). STAFF rows can be
  * seeded here too to prove the guard refuses new staff wallets.
+ *
+ * The seeded user is FULLY REAL_MONEY-eligible by default (ACTIVE status,
+ * VERIFIED KYC, an adult date of birth, no exclusion, no limits) so existing
+ * settlement/ledger tests keep exercising money behaviour. Tests that target a
+ * specific eligibility rejection pass `overrides` to make the user ineligible.
  */
 export function seedUser(
   db: InMemoryDb,
   id: string,
   accountType: 'CUSTOMER' | 'STAFF' = 'CUSTOMER',
+  overrides: Record<string, unknown> = {},
 ): void {
-  db.rows('user').push({ id, accountType });
+  db.rows('user').push({
+    id,
+    accountType,
+    status: 'ACTIVE',
+    kycStatus: 'VERIFIED',
+    dateOfBirth: new Date('1990-01-01T00:00:00.000Z'),
+    ...overrides,
+  });
 }

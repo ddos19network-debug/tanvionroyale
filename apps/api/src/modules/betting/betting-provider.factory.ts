@@ -38,6 +38,16 @@ type OperatorAdapterFactory = () => OperatorProviderInterface;
  * configured name fails safe — real money can never be enabled by an env var
  * alone. A future adapter (e.g. `operator-http`) plugs in exactly here, behind
  * the same OperatorProviderInterface.
+ *
+ * TODO(E1): this map is intentionally EMPTY and must stay empty until a REAL,
+ * licensed operator adapter class is supplied together with its official API
+ * documentation and sandbox/production credentials. Do NOT register a stub,
+ * mock or placeholder "operator" here — doing so would satisfy the fail-closed
+ * gate (resolveRoyaleRealMoney) with a fake adapter and could enable REAL_MONEY
+ * without a genuine licensed operator behind it. The gate is designed so that
+ * no env var alone can turn real money on; only a reviewed, implemented adapter
+ * registered here can. See docs/operator-adapter-requirements.md for the
+ * contract (auth/getEvents/placeBet/settle) and the inputs required to build one.
  */
 const IMPLEMENTED_REAL_OPERATOR_ADAPTERS: ReadonlyMap<string, OperatorAdapterFactory> = new Map<
   string,

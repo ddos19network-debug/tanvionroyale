@@ -50,6 +50,33 @@ services:
       # Public production frontend origin (safe to commit — not a secret).
       - key: CORS_ORIGIN
         value: https://tanvionroyale.vercel.app
+      # --- TANVION ROYALE — Plinko + Mines safe defaults (audit H2/H3) ---
+      # Non-secret configuration (committed as literal safe values, NOT sync:false).
+      # Real money is FAIL-CLOSED: ROYALE_MODE must stay FREE_PLAY and
+      # ROYALE_REAL_MONEY_ALLOWED must stay false until a genuine, licensed
+      # operator adapter exists (IMPLEMENTED_REAL_OPERATOR_ADAPTERS is empty by
+      # design) AND payment credentials are configured AND legal signs off. No
+      # value here enables REAL_MONEY, and no secret is stored in source control.
+      - key: ROYALE_MODE
+        value: FREE_PLAY
+      - key: ROYALE_REAL_MONEY_ALLOWED
+        value: "false"
+      - key: ROYALE_CURRENCY
+        value: BDT
+      - key: ROYALE_MIN_STAKE
+        value: "100"
+      - key: ROYALE_MAX_STAKE
+        value: "100000"
+      - key: ROYALE_RTP_BP
+        value: "9900"
+      - key: ROYALE_GAME_ENABLED
+        value: "true"
+      - key: ROYALE_MINES_MAX_MINES
+        value: "10"
+      - key: ROYALE_ALGORITHM_VERSION
+        value: v1
+      - key: ROYALE_MIN_AGE
+        value: "18"
       # PORT is supplied dynamically by Render — do not set it here.
       # Secrets are set in the Render dashboard, never in source control.
       - key: DATABASE_URL

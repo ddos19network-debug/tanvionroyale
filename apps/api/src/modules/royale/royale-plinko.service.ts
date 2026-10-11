@@ -13,6 +13,7 @@ import {
   type RoyaleConfig,
 } from './royale.config';
 import { royaleError } from './royale.errors';
+import { RoyaleEligibilityService } from './royale-eligibility.service';
 import {
   computeSeedHash,
   derivePlinkoPath,
@@ -97,12 +98,20 @@ function isUniqueViolation(error: unknown): boolean {
 export class RoyalePlinkoService {
   private readonly logger = new Logger(RoyalePlinkoService.name);
   private readonly config: RoyaleConfig = loadRoyaleConfig();
+  /** REAL_MONEY eligibility gate — always defined (DI-injected or defaulted). */
+  private readonly eligibilityService: RoyaleEligibilityService;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly wallet: WalletService,
     private readonly freeWallet: CrashFreePlayWalletService,
-  ) {}
+    eligibility?: RoyaleEligibilityService,
+  ) {
+    // Nest injects the shared gate in production. When a unit test constructs
+    // this service directly it builds a real (not stubbed) gate from the same
+    // prisma client, so the checks are never silently skipped.
+    this.eligibilityService = eligibility ?? new RoyaleEligibilityService(prisma);
+  }
 
   getConfigView(): Record<string, unknown> {
     const cfg = this.config;
@@ -213,6 +222,14 @@ export class RoyalePlinkoService {
     const payout = payoutFor(dto.stake, multiplierBp);
     const isReal = cfg.mode === 'REAL_MONEY';
     const currency = isReal ? cfg.currency : FREEPLAY_CURRENCY;
+
+    // REAL_MONEY eligibility gate (Task 1 / audit F1,F2,F4): status, KYC, age,
+    // self-exclusion and play limits MUST pass BEFORE the reservation
+    // transaction opens. A rejection therefore creates NO round, NO ledger row
+    // and NO wallet reservation. FREE_PLAY never runs this gate.
+    if (isReal) {
+      await this.eligibilityService.assertEligibleForRealMoney(user.id, dto.stake, currency);
+    }
 
     try {
       await this.prisma.$transaction(async (db) => this.settleInTx(db, {

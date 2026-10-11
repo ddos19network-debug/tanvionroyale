@@ -8,6 +8,7 @@ import { WalletService } from '../wallet/wallet.service';
 import { CrashFreePlayWalletService } from '../crash/crash-freeplay-wallet.service';
 import { loadRoyaleConfig, type RoyaleConfig } from './royale.config';
 import { royaleError } from './royale.errors';
+import { RoyaleEligibilityService } from './royale-eligibility.service';
 import {
   computeSeedHash,
   decryptRoundSeed,
@@ -94,12 +95,19 @@ function isUniqueViolation(error: unknown): boolean {
 export class RoyaleMinesService {
   private readonly logger = new Logger(RoyaleMinesService.name);
   private readonly config: RoyaleConfig = loadRoyaleConfig();
+  /** REAL_MONEY eligibility gate — always defined (DI-injected or defaulted). */
+  private readonly eligibilityService: RoyaleEligibilityService;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly wallet: WalletService,
     private readonly freeWallet: CrashFreePlayWalletService,
-  ) {}
+    eligibility?: RoyaleEligibilityService,
+  ) {
+    // Nest injects the shared gate in production. A directly-constructed
+    // (unit-test) service builds a real gate so checks are never skipped.
+    this.eligibilityService = eligibility ?? new RoyaleEligibilityService(prisma);
+  }
 
   toView(row: RoyaleMinesRound): RoyaleMinesRoundView {
     const settled = row.status !== 'ACTIVE';
@@ -155,6 +163,19 @@ export class RoyaleMinesService {
 
     const isReal = cfg.mode === 'REAL_MONEY';
     const currency = isReal ? cfg.currency : FREEPLAY_CURRENCY;
+
+    // REAL_MONEY eligibility gate (Task 1 / audit F1,F2,F4): status, KYC, age,
+    // self-exclusion and play limits MUST pass BEFORE the reservation
+    // transaction opens — a rejection creates NO round, NO ledger row and NO
+    // wallet reservation. FREE_PLAY never runs this gate.
+    // NOTE: only NEW stakes are gated. An already-reserved ACTIVE round is
+    // deliberately NOT re-checked in reveal/cashout/forfeit, so a player who
+    // becomes self-excluded mid-round can still finish and cash out — we never
+    // trap money that is already in play.
+    if (isReal) {
+      await this.eligibilityService.assertEligibleForRealMoney(user.id, dto.stake, currency);
+    }
+
     let conflict: RoyaleMinesRound | null = null;
 
     try {
