@@ -13,8 +13,14 @@
 
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 
-import type { AceRandomSource } from './ace-math';
-import type { AceStripEntry } from './ace-config';
+import { effectiveMaxWinBp, type AceGameConfig, type AceStripEntry } from './ace-config';
+import {
+  playSpin,
+  payoutForBp,
+  type AceRandomSource,
+  type AceRoundResult,
+  type AceSpinResult,
+} from './ace-math';
 
 // ---------------------------------------------------------------------------
 // HMAC-SHA256 uniform stream
@@ -126,15 +132,6 @@ export class HmacRandomStream implements AceRandomSource {
 // ---------------------------------------------------------------------------
 // Server-authoritative round generation + verification
 // ---------------------------------------------------------------------------
-
-import type { AceGameConfig } from './ace-config';
-import { effectiveMaxWinBp } from './ace-config';
-import {
-  playSpin,
-  payoutForBp,
-  type AceRoundResult,
-  type AceSpinResult,
-} from './ace-math';
 
 /** Seed material a round is generated from — and can be verified from. */
 export interface AceRoundSeeds {
