@@ -1692,6 +1692,7 @@ export async function completeAdminManualWithdrawal(
     `/admin/manual-withdrawals/${encodeURIComponent(id)}/complete`,
     { method: 'POST', body: JSON.stringify({ providerReference: providerReference?.trim() || undefined }) },
   );
+}
 
 // ---------------------------------------------------------------------------
 // Royale Ace (admin) — RoyaleAceAdminController (admin/royale-ace)
@@ -1862,6 +1863,4 @@ export function reconcileAceRounds(): Promise<{ completed: number; voided: numbe
   return authFetch<{ completed: number; voided: number }>('/admin/royale-ace/reconcile', {
     method: 'POST',
   });
-}
-
 }

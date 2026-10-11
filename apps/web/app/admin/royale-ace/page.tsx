@@ -164,6 +164,7 @@ export default function AdminRoyaleAcePage() {
     } finally {
       setBusy(null);
     }
+  }
 
   async function doReplay(roundId: string): Promise<void> {
     setBusy(`replay-${roundId}`);
@@ -230,7 +231,11 @@ export default function AdminRoyaleAcePage() {
   if (loading) {
     return (
       <div>
-        <AdminPageHeader title="Royale Ace" description="5×4 / 1024-ways cascading card slot (royale-ace)." />
+        <AdminPageHeader
+          title="Royale Ace"
+          description="5×4 / 1024-ways cascading card slot (royale-ace)."
+          crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Royale Ace' }]}
+        />
         <p className="mt-4 text-sm text-slate-500">Loading…</p>
       </div>
     );
@@ -286,7 +291,7 @@ export default function AdminRoyaleAcePage() {
                             {v.simulationPassed ? 'sim ok' : 'sim fail'}
                           </span>
                         )}
-                        <AdminStatusBadge status={v.status} />
+                        <AdminStatusBadge value={v.status} />
                       </span>
                     </button>
                   </li>
@@ -305,6 +310,20 @@ export default function AdminRoyaleAcePage() {
               <p className="text-sm text-slate-500">Select a version.</p>
             ) : (
               <SelectedVersionPanel
+                selected={selected}
+                reason={reason}
+                setReason={setReason}
+                busy={busy}
+                canManage={canManage}
+                onSimulate={() => void doSimulate()}
+                onActivate={() => void doActivate()}
+                onToggle={() => void doToggle(!(active?.config as Record<string, unknown> | undefined)?.enabled)}
+                onCreateDraft={() => void doCreateDraft()}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Card>
@@ -351,6 +370,23 @@ export default function AdminRoyaleAcePage() {
                             onClick={() => void doVoid(r.id)}
                             disabled={!canManage || busy !== null}
                             className="rounded border border-white/10 px-2 py-0.5 hover:bg-white/10 disabled:opacity-50"
+                          >
+                            Void
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {replay && (
+              <pre className="mt-3 max-h-64 overflow-auto rounded-md bg-black/40 p-2 text-[10px] text-emerald-200">
+                {JSON.stringify(replay, null, 2)}
+              </pre>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -475,40 +511,3 @@ function SelectedVersionPanel(props: {
     </div>
   );
 }
-
-                          >
-                            Void
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {replay && (
-              <pre className="mt-3 max-h-64 overflow-auto rounded-md bg-black/40 p-2 text-[10px] text-emerald-200">
-                {JSON.stringify(replay, null, 2)}
-              </pre>
-            )}
-          </CardContent>
-        </Card>
-
-                selected={selected}
-                reason={reason}
-                setReason={setReason}
-                busy={busy}
-                canManage={canManage}
-                onSimulate={() => void doSimulate()}
-                onActivate={() => void doActivate()}
-                onToggle={() => void doToggle(!(active?.config as Record<string, unknown> | undefined)?.enabled)}
-                onCreateDraft={() => void doCreateDraft()}
-              />
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-
-  }
-
