@@ -316,15 +316,6 @@ export function drawGrid(random: AceRandomSource, config: AceGameConfig): AceGri
 }
 
 /**
- * Apply one cascade: remove `removed` cells, drop survivors down, refill from
- * the top and turn every `goldenRefill` position into a WILD.
- *
- * Refill order is deterministic and documented (it is what the verifier
- * re-derives): per reel, survivors are packed to the BOTTOM in their previous
- * top-to-bottom order, and new cells fill the freed rows from the TOP down.
- */
-
-/**
  * Play ONE complete spin (base game or a free spin) and return every cascade
  * step. The result is a pure function of (random, config, ladder) â€” calling it
  * twice with the same stream produces byte-identical output, which is exactly
@@ -445,6 +436,14 @@ export function playRound(
   };
 }
 
+/**
+ * Apply one cascade: remove `removed` cells, drop survivors down, refill from
+ * the top and turn every `goldenRefill` position into a WILD.
+ *
+ * Refill order is deterministic and documented (it is what the verifier
+ * re-derives): per reel, survivors are packed to the BOTTOM in their previous
+ * top-to-bottom order, and new cells fill the freed rows from the TOP down.
+ */
 export function applyCascade(
   random: AceRandomSource,
   grid: AceGrid,

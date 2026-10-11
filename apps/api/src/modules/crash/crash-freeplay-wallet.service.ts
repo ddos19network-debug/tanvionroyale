@@ -29,9 +29,9 @@ export interface FreePlayTxRow {
 }
 
 export interface FreePlayReference {
-  // ROYALE_PLINKO / ROYALE_MINES: the Royale Play games reuse this SAME
-  // free-play points ledger (no second points wallet is ever created).
-  type: 'CRASH_BET' | 'CRASH_SETTLEMENT' | 'ROYALE_PLINKO' | 'ROYALE_MINES' | 'SYSTEM';
+  // ROYALE_PLINKO / ROYALE_MINES / ROYALE_ACE: the Royale Play games reuse this
+  // SAME free-play points ledger (no second points wallet is ever created).
+  type: 'CRASH_BET' | 'CRASH_SETTLEMENT' | 'ROYALE_PLINKO' | 'ROYALE_MINES' | 'ROYALE_ACE' | 'SYSTEM';
   id?: string | null;
 }
 

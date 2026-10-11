@@ -371,24 +371,29 @@ export function formatAceReport(report: AceSimReport): string {
   ].join(' ');
 }
 
-/** Exported for tests and for the symbol-probability section of the docs. */
+/**
+ * Per-symbol probability of each reel (used by the docs and the admin config
+ * preview). Each visible cell draws independently from its reel's strip, so the
+ * probability is simply the entry's share of that strip's total weight.
+ */
 export function aceSymbolProbabilities(config: AceGameConfig): Array<{
   reel: number;
   symbol: string;
+  golden: boolean;
   probability: number;
 }> {
-  const rows: Array<{ reel: number; symbol: string; probability: number }> = [];
+  const rows: Array<{ reel: number; symbol: string; golden: boolean; probability: number }> = [];
   for (let reel = 0; reel < ACE_REELS; reel += 1) {
     const strip = config.strips[reel];
     const total = strip.reduce((sum, entry) => sum + entry.weight, 0);
-    for (let row = 0; row < ACE_ROWS; row += 1) {
-      for (const entry of strip) {
-        rows.push({
-          reel,
-          symbol: `${entry.symbol}${entry.golden ? ' (golden)' : ''}`,
-          probability: entry.weight / total,
-        });
-      }
+    if (total <= 0) continue;
+    for (const entry of strip) {
+      rows.push({
+        reel,
+        symbol: entry.symbol,
+        golden: entry.golden,
+        probability: entry.weight / total,
+      });
     }
   }
   return rows;

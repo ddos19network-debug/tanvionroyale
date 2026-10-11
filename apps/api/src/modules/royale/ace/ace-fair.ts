@@ -11,7 +11,10 @@
  * HMAC provable fairness alone for slots) â€” see docs/games/royale-ace.md.
  */
 
-import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
+import { randomBytes } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
+
+import { decryptSecret, encryptSecret } from '../../../common/utils/encryption';
 
 import { effectiveMaxWinBp, type AceGameConfig, type AceStripEntry } from './ace-config';
 import {
@@ -54,14 +57,34 @@ export function aceSecretsMatch(a: string, b: string): boolean {
   return timingSafeEqual(bufferA, bufferB);
 }
 
-/** HMAC commitment hash of a server seed (hex), shown to the player up front. */
+/** SHA-256 commitment of a server seed (hex), shown to the player up front. */
 export function aceCommitment(serverSeed: string): string {
-  return createHmac('sha256', 'tanvion-royale-ace:v1').update(serverSeed).digest('hex');
+  return createHash('sha256').update(serverSeed, 'utf8').digest('hex');
 }
 
 /** Cryptographically strong 32-byte server seed (hex). */
 export function generateAceServerSeed(): string {
   return randomBytes(32).toString('hex');
+}
+
+/** Cryptographically strong 16-byte client seed (hex). */
+export function generateAceClientSeed(): string {
+  return randomBytes(16).toString('hex');
+}
+
+/** Encrypt the plaintext server seed for at-rest storage. */
+export function encryptAceSeed(serverSeed: string): string {
+  return encryptSecret(serverSeed);
+}
+
+/** Decrypt a stored server seed; null when it cannot be recovered. */
+export function decryptAceSeed(stored: string | null | undefined): string | null {
+  if (!stored) return null;
+  try {
+    return decryptSecret(stored);
+  } catch {
+    return null;
+  }
 }
 
 /**

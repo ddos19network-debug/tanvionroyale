@@ -2953,6 +2953,8 @@ enum RoyaleSettlementResult {
   MINES_CASHOUT
   MINES_BUST
   VOIDED
+  /// Royale Ace: one settled spin (base game + any free spins as ONE round).
+  ACE_SPIN
 }
 
 /// One Plinko drop. Rounds settle INSTANTLY at creation: the path is derived
@@ -3246,6 +3248,12 @@ model RoyaleAceSimulationReport {
   @@index([configVersion, createdAt])
 }
 
+// ---------------------------------------------------------------------------
+// Responsible gambling (self-exclusion + play limits)
+// ---------------------------------------------------------------------------
+// These protection records are asserted by the Royale REAL_MONEY eligibility
+// gate on every stake:
+//   * COOLING_OFF / TEMPORARY exclusion -> endsAt is set and can be extended
 //     (raise) or SelfExclusion.revokedAt (scheduled end, future timestamp);
 //   * PERMANENT exclusion -> endsAt is NULL and can NEVER be revoked by the
 //     user (admin override only).

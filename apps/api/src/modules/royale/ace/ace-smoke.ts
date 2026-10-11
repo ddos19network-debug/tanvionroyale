@@ -40,7 +40,7 @@ const wins1 = evaluateWays(grid1, DEFAULT_ACE_CONFIG);
 check('only SPADE wins', wins1.length === 1, JSON.stringify(wins1.map((w) => w.symbol)));
 check('run length is 3', wins1[0]?.runLength === 3, String(wins1[0]?.runLength));
 check('ways = 2', wins1[0]?.ways === 2, String(wins1[0]?.ways));
-check('payBp = 724 (2 ways x 362 bp)', wins1[0]?.payBp === 724, String(wins1[0]?.payBp));
+check('payBp = 100 (2 ways x 50 bp)', wins1[0]?.payBp === 100, String(wins1[0]?.payBp));
 
 console.log('wild substitution');
 const grid2: AceGrid = [

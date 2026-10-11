@@ -120,3 +120,7 @@ ALTER TABLE "RoyaleAceSimulationReport" ADD CONSTRAINT "RoyaleAceSimulationRepor
 
 -- AddForeignKey
 ALTER TABLE "RoyaleAceSimulationReport" ADD CONSTRAINT "RoyaleAceSimulationReport_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- Royale Ace settles through the shared RoyaleSettlement record with its own
+-- result value. Adding an enum value to an existing type is additive and safe.
+ALTER TYPE "RoyaleSettlementResult" ADD VALUE IF NOT EXISTS 'ACE_SPIN';
