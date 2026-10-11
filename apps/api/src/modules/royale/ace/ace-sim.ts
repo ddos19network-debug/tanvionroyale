@@ -17,11 +17,12 @@ import {
   ACE_PAY_SYMBOLS,
   ACE_REELS,
   ACE_ROWS,
+  scalePaytable,
   type AceGameConfig,
   type AcePaySymbol,
   type AceStripEntry,
 } from './ace-config';
-import { BASIS_POINTS, playSpin, scalePaytable, type AceRandomSource } from './ace-math';
+import { BASIS_POINTS, playSpin, type AceRandomSource } from './ace-math';
 
 // ---------------------------------------------------------------------------
 // Fast deterministic PRNG (splitmix64) — simulation only, never for real money

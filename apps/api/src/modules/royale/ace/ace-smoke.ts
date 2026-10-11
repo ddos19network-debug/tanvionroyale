@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Ad-hoc smoke check for the Royale Ace engine (not part of the Jest suite).
  * Run with: pnpm --filter api exec ts-node -r tsconfig-paths/register
  *   src/modules/royale/ace/ace-smoke.ts
@@ -14,7 +14,7 @@ function check(name: string, condition: boolean, detail?: string): void {
     console.log(`  ok   ${name}`);
   } else {
     failures += 1;
-    console.log(`  FAIL ${name}${detail ? ` — ${detail}` : ''}`);
+    console.log(`  FAIL ${name}${detail ? ` â€” ${detail}` : ''}`);
   }
 }
 
@@ -65,8 +65,11 @@ const grid3: AceGrid = [
   col(['A', 'A', 'A', 'Q']),
 ];
 const wins3 = evaluateWays(grid3, DEFAULT_ACE_CONFIG);
-check('A wins all 5 reels', wins3.some((w) => w.symbol === 'A' && w.runLength === 5));
-check('ways = 27', wins3[0]?.ways === 27, String(wins3[0]?.ways));
+// A fills rows 1..3 of reels 0,2,3,4 plus reel1's WILD => ways 1*1*3*3*3 = 27.
+const aceWin = wins3.find((w) => w.symbol === 'A');
+check('A wins 5 reels with wild help', aceWin?.runLength === 5, String(aceWin?.runLength));
+check('ways = 27', aceWin?.ways === 27, String(aceWin?.ways));
+
 check('scatter count is 1', countScatters(grid3) === 1);
 
 console.log('ladder');
@@ -160,4 +163,5 @@ check('a golden winner returns as a WILD in the same cell', sawWild);
 
 console.log(failures === 0 ? '\nALL SMOKE CHECKS PASSED' : `\n${failures} SMOKE CHECK(S) FAILED`);
 process.exit(failures === 0 ? 0 : 1);
+
 

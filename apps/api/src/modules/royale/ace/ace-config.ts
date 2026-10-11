@@ -108,7 +108,9 @@ export interface AceGameConfig {
   volatilityLabel: string;
   /**
    * Payout in BASIS POINTS OF STAKE PER WAY for N-of-a-kind starting at reel 0.
-   * paytableBp[sym][n] is the pay for n-of-a-kind (n in 3..5).
+   * paytableBp[sym][n] is the pay for n-of-a-kind (n in 3..5). The array has
+   * ACE_REELS + 1 slots; index 0/1 are unused (0) and the last slot is
+   * reserved for a future 6th reel (0 today).
    */
   paytableBp: Record<AcePaySymbol, number[]>;
   /**
