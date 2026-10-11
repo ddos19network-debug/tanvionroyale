@@ -1,0 +1,251 @@
+    description: 'NBA, EuroLeague and international basketball.',
+    icon: 'basketball.svg',
+    status: 'INACTIVE',
+    sortOrder: 4,
+    games: [
+      {
+        name: 'NBA Match Winner',
+        slug: 'basketball-nba-winner',
+        description: 'Inactive sport — hidden from public APIs.',
+        status: 'ACTIVE',
+        sortOrder: 1,
+        gamblingEnabled: false,
+      },
+    ],
+  },
+];
+
+/**
+ * Seeds competitions (IPL, BPL, PSL, Premier League, Champions League, ...)
+ * under their parent sports. Development fixtures only — never hard-coded in
+ * the UI; the backend catalog is the source of truth.
+ */
+async function seedCompetitions(prisma: PrismaClient): Promise<void> {
+  const competitions = [
+    { sportSlug: 'football', name: 'Premier League', slug: 'premier-league', country: 'England', sortOrder: 1 },
+    { sportSlug: 'football', name: 'Champions League', slug: 'champions-league', country: 'Europe', sortOrder: 2 },
+    { sportSlug: 'cricket', name: 'IPL', slug: 'ipl', country: 'India', sortOrder: 1 },
+    { sportSlug: 'cricket', name: 'BPL', slug: 'bpl', country: 'Bangladesh', sortOrder: 2 },
+    { sportSlug: 'cricket', name: 'PSL', slug: 'psl', country: 'Pakistan', sortOrder: 3 },
+    { sportSlug: 'basketball', name: 'NBA', slug: 'nba', country: 'USA', sortOrder: 1 },
+    { sportSlug: 'tennis', name: 'ATP Tour', slug: 'atp-tour', country: 'International', sortOrder: 1 },
+  ] as const;
+
+  for (const comp of competitions) {
+    const sport = await prisma.sport.findUnique({ where: { slug: comp.sportSlug } });
+    if (!sport) continue;
+    await prisma.competition.upsert({
+      where: { sportId_slug: { sportId: sport.id, slug: comp.slug } },
+      update: { name: comp.name, country: comp.country, sortOrder: comp.sortOrder, status: 'ACTIVE' },
+      create: {
+        sportId: sport.id,
+        name: comp.name,
+        slug: comp.slug,
+        country: comp.country,
+        sortOrder: comp.sortOrder,
+        status: 'ACTIVE',
+      },
+    });
+  }
+
+  console.log('Seed complete: competitions provisioned (mock data only).');
+}
+
+/**
+ * Seeds the allowlisted partner provider configuration. The base URL is the
+ * ONLY destination the backend may redirect users to for partner events.
+ * Development fixture only — never a real gambling provider.
+ */
+async function seedPartnerProviders(prisma: PrismaClient): Promise<void> {
+  await prisma.partnerProvider.upsert({
+    where: { name: 'mock-partner' },
+    update: {
+      baseUrl: 'https://partner.example.com',
+      deepLinkTemplate: '/sport/{sportSlug}/competition/{competitionSlug}/event/{externalEventId}',
+      status: 'ACTIVE',
+    },
+    create: {
+      name: 'mock-partner',
+      baseUrl: 'https://partner.example.com',
+      deepLinkTemplate: '/sport/{sportSlug}/competition/{competitionSlug}/event/{externalEventId}',
+      status: 'ACTIVE',
+    },
+  });
+
+  console.log('Seed complete: partner providers provisioned (mock data only).');
+}
+
+async function seedSportsCatalog(prisma: PrismaClient): Promise<void> {
+  for (const sportSeed of SPORTS_CATALOG) {
+    const sport = await prisma.sport.upsert({
+      where: { slug: sportSeed.slug },
+      update: {
+        name: sportSeed.name,
+        description: sportSeed.description,
+        icon: sportSeed.icon,
+        status: sportSeed.status,
+        sortOrder: sportSeed.sortOrder,
+      },
+      create: {
+        name: sportSeed.name,
+        slug: sportSeed.slug,
+        description: sportSeed.description,
+        icon: sportSeed.icon,
+        status: sportSeed.status,
+        sortOrder: sportSeed.sortOrder,
+      },
+    });
+
+    for (const gameSeed of sportSeed.games) {
+      const game = await prisma.game.upsert({
+        where: { slug: gameSeed.slug },
+        update: {
+          sportId: sport.id,
+          name: gameSeed.name,
+          description: gameSeed.description,
+          status: gameSeed.status,
+          sortOrder: gameSeed.sortOrder,
+        },
+        create: {
+          sportId: sport.id,
+          name: gameSeed.name,
+          slug: gameSeed.slug,
+          description: gameSeed.description,
+          status: gameSeed.status,
+          sortOrder: gameSeed.sortOrder,
+        },
+      });
+
+      await prisma.gameAvailability.upsert({
+        where: { gameId: game.id },
+        update: { gamblingEnabled: gameSeed.gamblingEnabled },
+        create: { gameId: game.id, gamblingEnabled: gameSeed.gamblingEnabled },
+      });
+
+      if (gameSeed.providerMapping) {
+        await prisma.providerMapping.upsert({
+          where: { gameId: game.id },
+          update: {
+            providerName: gameSeed.providerMapping.providerName,
+            externalGameId: gameSeed.providerMapping.externalGameId,
+            status: gameSeed.providerMapping.status,
+          },
+          create: {
+            gameId: game.id,
+            providerName: gameSeed.providerMapping.providerName,
+            externalGameId: gameSeed.providerMapping.externalGameId,
+            status: gameSeed.providerMapping.status,
+          },
+        });
+      }
+    }
+  }
+
+  console.log('Seed complete: sports/games catalog provisioned (mock data only).');
+}
+// ---------------------------------------------------------------------------
+// Phase 5 — Betting domain seed (clearly fake, development-only data).
+//
+// Covers the coverage matrix required for betting tests:
+//   events:    SCHEDULED (evt-1001) | LIVE (evt-1002) | SUSPENDED (evt-sus-1)
+//              | FINISHED (evt-fin-1)
+//   markets:   OPEN (Match Winner) | SUSPENDED (Total Goals) | CLOSED
+//   selections: ACTIVE selections with odds | one INACTIVE selection (No Goal)
+//   games:     gambling-enabled (football-premier-league-winner) and a
+//              non-gambling game (see SPORTS_CATALOG above) which deliberately
+//              has no events so it can never be bet on.
+//
+// Provider references mirror the MockProvider catalog (packages/integrations)
+// so a dev bet on evt-1001 can actually be accepted by the mock operator.
+// ---------------------------------------------------------------------------
+
+interface SeedSelection {
+  name: string;
+  providerSelectionId: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  price?: string;
+}
+interface SeedMarket {
+  name: string;
+  status: 'OPEN' | 'SUSPENDED' | 'CLOSED';
+  selections: SeedSelection[];
+}
+interface SeedEvent {
+  providerEventId: string;
+  name: string;
+  startTime: string;
+  status: 'SCHEDULED' | 'LIVE' | 'SUSPENDED' | 'FINISHED' | 'CANCELLED';
+  /** Competition slug (sports-hub model) this event belongs to. */
+  competitionSlug?: string;
+  markets: SeedMarket[];
+}
+
+// providerEventId values align with the MockProvider fixture catalog.
+const BETTING_EVENTS: SeedEvent[] = [
+  {
+    providerEventId: 'evt-1001',
+    name: 'Alpha United v Beta City',
+    startTime: new Date(Date.now() + 86_400_000).toISOString(),
+    status: 'SCHEDULED',
+    competitionSlug: 'premier-league',
+    markets: [
+      {
+        name: 'Match Winner',
+        status: 'OPEN',
+        selections: [
+          { name: 'Home', providerSelectionId: 'evt-1001-sel-home', status: 'ACTIVE', price: '1.85' },
+          { name: 'Draw', providerSelectionId: 'evt-1001-sel-draw', status: 'ACTIVE', price: '3.40' },
+          { name: 'Away', providerSelectionId: 'evt-1001-sel-away', status: 'ACTIVE', price: '4.20' },
+        ],
+      },
+    ],
+  },
+  {
+    providerEventId: 'evt-1002',
+    name: 'Gamma Rovers v Delta FC',
+    startTime: new Date(Date.now() + 3_600_000).toISOString(),
+    status: 'LIVE',
+    competitionSlug: 'premier-league',
+    markets: [
+      {
+        name: 'Match Winner',
+        status: 'OPEN',
+        selections: [
+          { name: 'Home', providerSelectionId: 'evt-1002-sel-home', status: 'ACTIVE', price: '2.10' },
+          { name: 'Draw', providerSelectionId: 'evt-1002-sel-draw', status: 'ACTIVE', price: '3.20' },
+          { name: 'Away', providerSelectionId: 'evt-1002-sel-away', status: 'ACTIVE', price: '3.55' },
+        ],
+      },
+    ],
+  },
+  {
+    providerEventId: 'evt-sus-1',
+    name: 'Suspended Derby',
+    startTime: new Date(Date.now() + 48 * 3_600_000).toISOString(),
+    status: 'SUSPENDED',
+    competitionSlug: 'premier-league',
+    markets: [
+      {
+        name: 'Total Goals',
+        status: 'SUSPENDED',
+        selections: [
+          { name: 'Over 2.5', providerSelectionId: 'evt-sus-1-sel-over', status: 'ACTIVE', price: '1.95' },
+          { name: 'Under 2.5', providerSelectionId: 'evt-sus-1-sel-under', status: 'ACTIVE', price: '1.85' },
+          // Deliberately INACTIVE selection (never bettable).
+          { name: 'No Goal', providerSelectionId: 'evt-sus-1-sel-none', status: 'INACTIVE' },
+        ],
+      },
+    ],
+  },
+  {
+    providerEventId: 'evt-fin-1',
+    name: 'Finished Classic',
+    startTime: new Date(Date.now() - 24 * 3_600_000).toISOString(),
+    status: 'FINISHED',
+    competitionSlug: 'premier-league',
+    markets: [
+      {
+        name: 'Match Winner',
+        status: 'CLOSED',
+        selections: [
+          { name: 'Home', providerSelectionId: 'evt-fin-1-sel-home', status: 'ACTIVE', price: '1.50' },

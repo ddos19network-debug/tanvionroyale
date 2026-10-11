@@ -1,0 +1,1498 @@
+﻿diff --git a/apps/api/src/modules/users/users.service.ts b/apps/api/src/modules/users/users.service.ts
+index d5f58e3..73a83c5 100644
+--- a/apps/api/src/modules/users/users.service.ts
++++ b/apps/api/src/modules/users/users.service.ts
+@@ -1,4 +1,5 @@
+ import {
++  BadRequestException,
+   ConflictException,
+   ForbiddenException,
+   Injectable,
+@@ -9,6 +10,7 @@ import {
+ import { Prisma } from '../../generated/prisma';
+ import { PrismaService } from '../../database/prisma.service';
+ import { toPublicUser } from '../auth/auth.service';
++import { PHONE_REGEX } from '../auth/dto/phone.dto';
+ import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+ import type { PublicUser, SessionInfo } from '@tanvion-royale/types';
+ import type { UpdateProfileDto } from './dto/update-profile.dto';
+@@ -57,6 +59,33 @@ export class UsersService {
+       }
+     }
+ 
++    // Phone changes go through the SAME security rule as the Verification
++    // Center (master prompt Part 10): a changed number is NEVER still verified.
++    // Canonical E.164 normalization/validation (PHONE_REGEX ΓÇö no second format
++    // invented here), uniqueness enforced, verification flags reset so the new
++    // number must pass OTP before it can ever read VERIFIED again.
++    let phoneVerificationReset = false;
++    if (changes['phone'] !== undefined) {
++      const newPhone = String(changes['phone']).trim();
++      const currentPhone = (user.phone ?? '').trim();
++      if (newPhone === currentPhone) {
++        delete changes['phone']; // whitespace-only edit ΓÇö nothing to write
++      } else {
++        if (!PHONE_REGEX.test(newPhone)) {
++          throw new BadRequestException('phone must be a valid E.164 number, e.g. +447911123456');
++        }
++        const taken = await this.prisma.user.findUnique({ where: { phone: newPhone } });
++        if (taken && taken.id !== auth.id) {
++          throw new ConflictException('That phone number is already in use.');
++        }
++        changes['phone'] = newPhone;
++        changes['phoneVerified'] = false;
++        changes['phoneVerifiedAt'] = null;
++        changes['phoneVerifiedDuringSignupAt'] = null;
++        phoneVerificationReset = true;
++      }
++    }
++
+     // Username: validated by DTO (3-32, letters/numbers/underscores), uniqueness
+     // enforced here + by the DB unique constraint. Never trust client alone.
+     if (dto.username !== undefined && dto.username !== user.username) {
+@@ -81,6 +110,16 @@ export class UsersService {
+       data: changes,
+     });
+ 
++    // Keep the Verification Center row honest after a phone swap: back to
++    // NOT_STARTED until the new number completes the OTP flow.
++    if (phoneVerificationReset) {
++      await this.prisma.verification.upsert({
++        where: { userId_type: { userId: auth.id, type: 'PHONE' } },
++        update: { status: 'NOT_STARTED', verifiedAt: null },
++        create: { userId: auth.id, type: 'PHONE', status: 'NOT_STARTED' },
++      });
++    }
++
+     await this.audit(auth.id, 'USER_PROFILE_UPDATED', 'User', auth.id, oldValue, changes, ip, userAgent);
+     return toPublicUser(updated);
+   }
+diff --git a/apps/api/src/modules/verification/verification.controller.ts b/apps/api/src/modules/verification/verification.controller.ts
+index 60f81eb..62c2e04 100644
+--- a/apps/api/src/modules/verification/verification.controller.ts
++++ b/apps/api/src/modules/verification/verification.controller.ts
+@@ -1,17 +1,23 @@
+-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
++import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Post, Query, Req, UseGuards } from '@nestjs/common';
+ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+ import { Throttle } from '@nestjs/throttler';
++import type { Request } from 'express';
+ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+ import { Public } from '../../common/decorators/public.decorator';
+ import { CurrentUser } from '../../common/decorators/current-user.decorator';
+ import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+ import { VerificationService } from './verification.service';
++import { SetEmailDto, RemoveIdentifierDto } from './dto/verification-management.dto';
+ 
+ @ApiTags('verification')
+ @Controller('verification')
+ export class VerificationController {
+   constructor(private readonly verificationService: VerificationService) {}
+ 
++  private context(req: Request): { ip?: string; userAgent?: string } {
++    return { ip: req.ip, userAgent: req.headers['user-agent'] };
++  }
++
+   @Get('status')
+   @UseGuards(JwtAuthGuard)
+   @ApiBearerAuth()
+@@ -48,6 +54,56 @@ export class VerificationController {
+     return this.verificationService.verifyPhone(auth.id, code);
+   }
+ 
++  /**
++   * Settings ΓÇö add/change the account email (Parts 5/6). Stores the address
++   * UNVERIFIED; the existing emailed-link/OTP flows are the only way it ever
++   * becomes VERIFIED. Password-confirmed, throttled.
++   */
++  @Post('email/set')
++  @HttpCode(HttpStatus.OK)
++  @UseGuards(JwtAuthGuard)
++  @ApiBearerAuth()
++  @Throttle({ default: { limit: 3, ttl: 60_000 } })
++  @ApiOperation({ summary: 'Add or change the account email (never auto-verifies)' })
++  async setEmail(
++    @CurrentUser() auth: AuthenticatedUser,
++    @Body() dto: SetEmailDto,
++    @Req() req: Request,
++  ) {
++    const { ip, userAgent } = this.context(req);
++    return this.verificationService.setEmail(auth.id, dto.email, dto.currentPassword, ip, userAgent);
++  }
++
++  /** Settings ΓÇö remove the email (refused server-side when it is the last login/recovery path). */
++  @Delete('email')
++  @UseGuards(JwtAuthGuard)
++  @ApiBearerAuth()
++  @Throttle({ default: { limit: 5, ttl: 60_000 } })
++  @ApiOperation({ summary: 'Remove the account email (safety-checked, password-confirmed)' })
++  async removeEmail(
++    @CurrentUser() auth: AuthenticatedUser,
++    @Body() dto: RemoveIdentifierDto,
++    @Req() req: Request,
++  ) {
++    const { ip, userAgent } = this.context(req);
++    return this.verificationService.removeEmail(auth.id, dto.currentPassword, ip, userAgent);
++  }
++
++  /** Settings ΓÇö remove the phone (refused server-side when it is the last login/recovery path). */
++  @Delete('phone')
++  @UseGuards(JwtAuthGuard)
++  @ApiBearerAuth()
++  @Throttle({ default: { limit: 5, ttl: 60_000 } })
++  @ApiOperation({ summary: 'Remove the phone number (safety-checked, password-confirmed)' })
++  async removePhone(
++    @CurrentUser() auth: AuthenticatedUser,
++    @Body() dto: RemoveIdentifierDto,
++    @Req() req: Request,
++  ) {
++    const { ip, userAgent } = this.context(req);
++    return this.verificationService.removePhone(auth.id, dto.currentPassword, ip, userAgent);
++  }
++
+   @Post('email/send')
+   @HttpCode(HttpStatus.ACCEPTED)
+   @UseGuards(JwtAuthGuard)
+diff --git a/apps/api/src/modules/verification/verification.service.ts b/apps/api/src/modules/verification/verification.service.ts
+index 5e995c0..9066cb1 100644
+--- a/apps/api/src/modules/verification/verification.service.ts
++++ b/apps/api/src/modules/verification/verification.service.ts
+@@ -1,4 +1,6 @@
+-import { BadRequestException, ConflictException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
++import { BadRequestException, ConflictException, Injectable, Logger, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
++import * as argon2 from 'argon2';
++import { Prisma } from '../../generated/prisma';
+ import { PrismaService } from '../../database/prisma.service';
+ import { OtpService } from '../auth/otp.service';
+ import { PHONE_REGEX } from '../auth/dto/phone.dto';
+@@ -109,12 +111,22 @@ private getFaceProvider(): FaceVerificationProvider | null {
+ 
+   // ---------------- Phone verification ----------------
+ 
+-  /** Sends the verification OTP to the user's phone (or sets a new one). */
++  /**
++   * Sends the verification OTP to the user's phone (or sets a new one).
++   *
++   * CHANGE FLOW (master prompt Part 10): when a DIFFERENT number is supplied,
++   * the previous verification NEVER carries over. The new number is stored
++   * UNVERIFIED (flags + Verification row reset), every code bound to the
++   * previous number is burned, the change is audited, and only then is a fresh
++   * OTP issued to the new number ΓÇö so a phone becomes VERIFIED exclusively
++   * through successful OTP verification of that exact number.
++   */
+   async sendPhoneVerification(userId: string, phone?: string): Promise<{ message: string }> {
+     const user = await this.prisma.user.findUnique({ where: { id: userId } });
+     if (!user) throw new BadRequestException('User not found');
+ 
+     let target = user.phone;
++    let phoneChanged = false;
+     if (phone) {
+       const normalized = phone.trim();
+       if (!PHONE_REGEX.test(normalized)) {
+@@ -125,12 +137,40 @@ private getFaceProvider(): FaceVerificationProvider | null {
+         if (clash && clash.id !== userId) {
+           throw new ConflictException('Phone already registered');
+         }
+-        await this.prisma.user.update({ where: { id: userId }, data: { phone: normalized } });
++        await this.prisma.user.update({
++          where: { id: userId },
++          data: {
++            phone: normalized,
++            // A changed phone is NEVER still verified (Part 10) ΓÇö the OTP to
++            // the new number is the only path back to VERIFIED.
++            phoneVerified: false,
++            phoneVerifiedAt: null,
++            phoneVerifiedDuringSignupAt: null,
++          },
++        });
++        await this.prisma.verification.upsert({
++          where: { userId_type: { userId, type: 'PHONE' } },
++          update: { status: 'NOT_STARTED', verifiedAt: null },
++          create: { userId, type: 'PHONE', status: 'NOT_STARTED' },
++        });
++        // Burn every outstanding code bound to the previous number so a stale
++        // OTP can never be replayed against the account (they are keyed by
++        // identifier anyway, this keeps the stored state honest).
++        if (user.phone) {
++          await this.prisma.otpCode.updateMany({
++            where: { identifier: user.phone, consumedAt: null },
++            data: { consumedAt: new Date() },
++          });
++        }
++        await this.safeAudit(userId, 'USER_PHONE_CHANGED', { before: user.phone, after: normalized });
+         target = normalized;
++        phoneChanged = true;
+       }
+     }
+     if (!target) throw new BadRequestException('Add a phone number first');
+-    if (user.phoneVerified) throw new ConflictException('Phone already verified');
++    // Unchanged + already verified ΓåÆ nothing to send. (A changed phone is
++    // reset above, so it falls through and receives its first OTP.)
++    if (!phoneChanged && user.phoneVerified) throw new ConflictException('Phone already verified');
+ 
+     await this.otpService.issue(target, 'PHONE_VERIFY', 'sms');
+     return { message: 'If the phone number is valid, a verification code has been sent.' };
+@@ -151,6 +191,71 @@ private getFaceProvider(): FaceVerificationProvider | null {
+       update: { status: 'VERIFIED', verifiedAt: new Date() },
+       create: { userId, type: 'PHONE', status: 'VERIFIED', verifiedAt: new Date() },
+     });
++    await this.safeAudit(userId, 'USER_PHONE_VERIFIED', {});
++    return this.getStatus(userId);
++  }
++
++  // ---------------- Phone removal (Settings Account & Security) ----------------
++
++  /**
++   * Removes the phone number from the account ΓÇö ONLY when another viable
++   * sign-in/recovery path remains (master prompt Part 11): a stored email
++   * address (email+password login and the email forgot-password flow) or a
++   * linked Google/Facebook identity. An account can never end up with no way
++   * to sign in or recover.
++   *
++   * Password confirmation is mandatory (phone is a login credential): OAuth
++   * accounts without a password must set one first via the existing
++   * set-password flow, which the error message points to.
++   */
++  async removePhone(
++    userId: string,
++    currentPassword: string,
++    ip?: string,
++    userAgent?: string,
++  ): Promise<VerificationStatusResponse> {
++    const user = await this.prisma.user.findUnique({ where: { id: userId } });
++    if (!user) throw new BadRequestException('User not found');
++    if (!user.phone) throw new BadRequestException('No phone number to remove.');
++    await this.confirmPassword(user, currentPassword);
++
++    const identities = await this.prisma.authIdentity.findMany({
++      where: { userId },
++      select: { provider: true },
++    });
++    const hasOAuth =
++      identities.some((i) => i.provider === 'GOOGLE' || i.provider === 'FACEBOOK');
++    if (!user.email && !hasOAuth) {
++      throw new ConflictException(
++        'Removing your phone number would leave this account with no sign-in or recovery method. ' +
++          'Add an email address (or link Google/Facebook) first.',
++      );
++    }
++
++    const previousPhone = user.phone;
++    // Burn every outstanding code bound to the number being removed.
++    await this.prisma.otpCode.updateMany({
++      where: { identifier: previousPhone, consumedAt: null },
++      data: { consumedAt: new Date() },
++    });
++    // The PHONE login identity (phone-signup accounts) must not dangle.
++    await this.prisma.authIdentity.deleteMany({ where: { userId, provider: 'PHONE' } });
++
++    await this.prisma.user.update({
++      where: { id: userId },
++      data: {
++        phone: null,
++        phoneVerified: false,
++        phoneVerifiedAt: null,
++        phoneVerifiedDuringSignupAt: null,
++      },
++    });
++    await this.prisma.verification.upsert({
++      where: { userId_type: { userId, type: 'PHONE' } },
++      update: { status: 'NOT_STARTED', verifiedAt: null },
++      create: { userId, type: 'PHONE', status: 'NOT_STARTED' },
++    });
++    await this.safeAudit(userId, 'USER_PHONE_REMOVED', { before: previousPhone }, ip, userAgent);
+     return this.getStatus(userId);
+   }
+ 
+@@ -230,6 +335,7 @@ private getFaceProvider(): FaceVerificationProvider | null {
+       update: { status: 'VERIFIED', verifiedAt: new Date() },
+       create: { userId: record.userId, type: 'EMAIL', status: 'VERIFIED', verifiedAt: new Date() },
+     });
++    await this.safeAudit(record.userId, 'USER_EMAIL_VERIFIED', {});
+     return this.getStatus(record.userId);
+   }
+ 
+@@ -270,6 +376,118 @@ private getFaceProvider(): FaceVerificationProvider | null {
+       update: { status: 'VERIFIED', verifiedAt: new Date() },
+       create: { userId, type: 'EMAIL', status: 'VERIFIED', verifiedAt: new Date() },
+     });
++    await this.safeAudit(userId, 'USER_EMAIL_VERIFIED', {});
++    return this.getStatus(userId);
++  }
++
++  // ---------------- Email management (Settings Account & Security) ----------------
++
++  /**
++   * Adds the FIRST email address or CHANGES the existing one (master prompt
++   * Parts 5/6). The address is stored UNVERIFIED ΓÇö this endpoint never marks
++   * anything VERIFIED; only the existing emailed-link / OTP verification flows
++   * can do that. Normalization matches registration (trim + lower-case),
++   * uniqueness is enforced, and every credential outstanding for the OLD
++   * address is burned so a stale link can never verify the new one.
++   *
++   * Security-sensitive: requires the account password (Parts 6/11) so a stolen
++   * session alone can never swap the recovery address. Accounts without a
++   * password (OAuth-only) must set one first via the existing set-password flow.
++   */
++  async setEmail(
++    userId: string,
++    email: string,
++    currentPassword: string,
++    ip?: string,
++    userAgent?: string,
++  ): Promise<VerificationStatusResponse> {
++    const user = await this.prisma.user.findUnique({ where: { id: userId } });
++    if (!user) throw new BadRequestException('User not found');
++    await this.confirmPassword(user, currentPassword);
++
++    const normalized = (email ?? '').trim().toLowerCase();
++    // Mirrors the DTO's @IsEmail so direct service callers are validated too.
++    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) || normalized.length > 254) {
++      throw new BadRequestException('Enter a valid email address');
++    }
++    const isChange = user.email !== null;
++    const previousEmail = user.email;
++    if (normalized === user.email) {
++      throw new BadRequestException('This is already your email address.');
++    }
++    const clash = await this.prisma.user.findUnique({ where: { email: normalized } });
++    if (clash && clash.id !== userId) {
++      throw new ConflictException('An account with this email already exists.');
++    }
++
++    await this.prisma.user.update({
++      where: { id: userId },
++      data: { email: normalized, emailVerified: false, emailVerifiedAt: null },
++    });
++    // The Verification row must never keep a stale VERIFIED state for a
++    // different address (Part 6: changing email does not auto-verify).
++    await this.prisma.verification.upsert({
++      where: { userId_type: { userId, type: 'EMAIL' } },
++      update: { status: 'NOT_STARTED', verifiedAt: null },
++      create: { userId, type: 'EMAIL', status: 'NOT_STARTED' },
++    });
++    // Snapshot taken BEFORE the write: the OLD address's credentials die even
++    // if the underlying row has already moved on.
++    await this.burnEmailCredentials(userId, previousEmail);
++    await this.safeAudit(
++      userId,
++      isChange ? 'USER_EMAIL_CHANGED' : 'USER_EMAIL_ADDED',
++      { before: previousEmail, after: normalized },
++      ip,
++      userAgent,
++    );
++    return this.getStatus(userId);
++  }
++
++  /**
++   * Removes the email address ΓÇö ONLY when another viable sign-in/recovery path
++   * remains (master prompt Part 7): a stored phone number (phone+password login
++   * and phone-recovery OTP) or a linked Google/Facebook identity. If the email
++   * is the last way in, the removal is refused with a clear explanation and the
++   * Settings UI disables the action the same way (the server is the authority).
++   */
++  async removeEmail(
++    userId: string,
++    currentPassword: string,
++    ip?: string,
++    userAgent?: string,
++  ): Promise<VerificationStatusResponse> {
++    const user = await this.prisma.user.findUnique({ where: { id: userId } });
++    if (!user) throw new BadRequestException('User not found');
++    if (!user.email) throw new BadRequestException('No email address to remove.');
++    await this.confirmPassword(user, currentPassword);
++
++    const identities = await this.prisma.authIdentity.findMany({
++      where: { userId },
++      select: { provider: true },
++    });
++    const hasOAuth = identities.some(
++      (i) => i.provider === 'GOOGLE' || i.provider === 'FACEBOOK',
++    );
++    if (!user.phone && !hasOAuth) {
++      throw new ConflictException(
++        'Removing your email would leave this account with no sign-in or recovery method. ' +
++          'Add and verify a phone number (or link Google/Facebook) first.',
++      );
++    }
++
++    const previousEmail = user.email;
++    await this.burnEmailCredentials(userId, previousEmail);
++    await this.prisma.user.update({
++      where: { id: userId },
++      data: { email: null, emailVerified: false, emailVerifiedAt: null },
++    });
++    await this.prisma.verification.upsert({
++      where: { userId_type: { userId, type: 'EMAIL' } },
++      update: { status: 'NOT_STARTED', verifiedAt: null },
++      create: { userId, type: 'EMAIL', status: 'NOT_STARTED' },
++    });
++    await this.safeAudit(userId, 'USER_EMAIL_REMOVED', { before: previousEmail }, ip, userAgent);
+     return this.getStatus(userId);
+   }
+ 
+@@ -324,4 +542,85 @@ private getFaceProvider(): FaceVerificationProvider | null {
+     await this.prisma.authIdentity.deleteMany({ where: { userId, provider } });
+     return this.getLoginMethods(userId);
+   }
++
++  // ---------------- Shared security helpers ----------------
++
++  /**
++   * Password confirmation for security-sensitive identifier changes. Refuses
++   * accounts with no functioning password (OAuth-only) with guidance to the
++   * existing set-password flow ΓÇö never a passwordless bypass. The password
++   * itself is never logged or echoed anywhere.
++   */
++  private async confirmPassword(
++    user: { passwordHash: string; passwordSetAt: Date | null },
++    currentPassword: string,
++  ): Promise<void> {
++    if (!user.passwordSetAt) {
++      throw new BadRequestException(
++        'Set a password first (Profile -> Set password), then retry ΓÇö changing sign-in details always requires password confirmation.',
++      );
++    }
++    const valid = await argon2
++      .verify(user.passwordHash, currentPassword)
++      .catch(() => false);
++    if (!valid) throw new UnauthorizedException('Current password is incorrect');
++  }
++
++  /**
++   * Burns every outstanding credential bound to the CURRENT email address when
++   * that address is about to change or disappear: emailed verification links
++   * (AuthToken rows are keyed by user, not address, so a link sent to the OLD
++   * address must die), password-reset links sent to it, and email OTP codes.
++   * Best-effort: a failure here never blocks the identifier change itself ΓÇö
++   * every verification flow also re-checks against the CURRENT stored address.
++   */
++  private async burnEmailCredentials(
++    userId: string,
++    previousEmail: string | null,
++  ): Promise<void> {
++    try {
++      await this.prisma.authToken.updateMany({
++        where: { userId, usedAt: null },
++        data: { usedAt: new Date() },
++      });
++      if (previousEmail) {
++        await this.prisma.otpCode.updateMany({
++          where: { identifier: previousEmail, consumedAt: null },
++          data: { consumedAt: new Date() },
++        });
++      }
++    } catch (error) {
++      this.logger.warn(
++        `Failed to burn outstanding email credentials: ${error instanceof Error ? error.message : String(error)}`,
++      );
++    }
++  }
++
++  /** Best-effort audit write ΓÇö never breaks the operation itself. */
++  private async safeAudit(
++    actorId: string,
++    action: string,
++    metadata: Record<string, unknown>,
++    ip?: string,
++    userAgent?: string,
++  ): Promise<void> {
++    try {
++      await this.prisma.auditLog.create({
++        data: {
++          actorId,
++          actorType: 'USER',
++          action,
++          entityType: 'User',
++          entityId: actorId,
++          // Identifiers (email/phone) are the audited subject ΓÇö never
++          // passwords, never OTP codes, never tokens.
++          newValue: metadata as Prisma.InputJsonValue,
++          ip,
++          userAgent,
++        },
++      });
++    } catch {
++      // Best-effort audit ΓÇö never break the user-facing operation.
++    }
++  }
+ }
+diff --git a/apps/api/test/helpers-phase11.ts b/apps/api/test/helpers-phase11.ts
+index 8f70cdd..0578f19 100644
+--- a/apps/api/test/helpers-phase11.ts
++++ b/apps/api/test/helpers-phase11.ts
+@@ -19,6 +19,11 @@ export function makePrismaFake() {
+   const matches = (row: Record<string, any>, where: Record<string, any>): boolean =>
+     Object.entries(where).every(([k, v]): boolean => {
+       if (v && typeof v === 'object' && !(v instanceof Date) && !Array.isArray(v)) {
++        // Prisma scalar negation filter ({ not: value }) used by
++        // session.updateMany({ id: { not: currentId } }) and friends.
++        if (Object.prototype.hasOwnProperty.call(v, 'not')) {
++          return row?.[k] !== (v as { not: unknown }).not;
++        }
+         return matches(row?.[k] ?? {}, v);
+       }
+       return row?.[k] === v;
+@@ -143,6 +148,11 @@ export function makePrismaFake() {
+         if (t) Object.assign(t, data);
+         return t;
+       }),
++      updateMany: jest.fn(async ({ where, data }: any) => {
++        const matched = state.authTokens.filter((t) => matches(t, where));
++        matched.forEach((t) => Object.assign(t, data));
++        return { count: matched.length };
++      }),
+     },
+     auditLog: {
+       create: jest.fn(async ({ data }: any) => {
+diff --git a/apps/web/app/(user)/settings/page.tsx b/apps/web/app/(user)/settings/page.tsx
+index 59135e2..aa409c5 100644
+--- a/apps/web/app/(user)/settings/page.tsx
++++ b/apps/web/app/(user)/settings/page.tsx
+@@ -1,13 +1,107 @@
+-∩╗┐'use client';
++'use client';
+ 
++/**
++ * Settings ΓÇö Account & Security / Verification center (master prompt Parts 1ΓÇô25).
++ *
++ * Sections: Account information ┬╖ Email ┬╖ Phone ┬╖ Verification ┬╖ KYC ┬╖
++ * Password ┬╖ Active sessions. Every status shown here is the raw
++ * server-authoritative state from /verification/status and /users/me ΓÇö the
++ * client NEVER derives VERIFIED from the presence of a value, and KYC state is
++ * display-only (no customer write path exists or is faked).
++ *
++ * Pinned contracts (apps/web/scripts/test-form-flow.cjs): the handlers
++ * `onChangePassword` and `onRevoke` keep their exact names and success/error
++ * ordering. Every new handler follows the same mutation contract: busy guard ΓåÆ
++ * await API ΓåÆ success transition (close/clear + refresh + notice) ΓåÆ catch keeps
++ * the form open with the server error ΓåÆ finally restores the busy flag.
++ */
+ import { useEffect, useState, type FormEvent } from 'react';
+ import { useRouter } from 'next/navigation';
++import Link from 'next/link';
+ import { Card, CardContent, CardHeader, CardTitle, Button, Skeleton } from '@tanvion-royale/ui';
+-import { changePassword, listSessions, revokeSession } from '@/lib/api/users';
+-import { getVerificationStatus, type VerificationStatus } from '@/lib/api/verification';
++import { changePassword, listSessions, revokeSession, getMe } from '@/lib/api/users';
++import {
++  getVerificationStatus,
++  getLoginMethods,
++  sendPhoneVerification,
++  verifyPhone,
++  sendEmailVerificationOtp,
++  verifyEmailOtp,
++  setEmail,
++  removeEmail,
++  removePhone,
++  type VerificationStatus,
++  type LoginMethods,
++} from '@/lib/api/verification';
+ import { useAuth } from '@/src/lib/auth';
+ import { ApiClientError } from '@/lib/api/client';
+-import type { SessionInfo } from '@tanvion-royale/types';
++import type { PublicUser, SessionInfo } from '@tanvion-royale/types';
++
++/** Shared, consistent status pill (same visual language as /verification). */
++function StatusPill({
++  state,
++  label,
++}: {
++  state: 'verified' | 'pending' | 'rejected' | 'unverified';
++  label: string;
++}) {
++  const styles: Record<typeof state, string> = {
++    verified: 'bg-emerald-500/15 text-emerald-300',
++    pending: 'bg-amber-500/15 text-amber-300',
++    rejected: 'bg-red-500/15 text-red-300',
++    unverified: 'bg-ink-700 text-slate-300',
++  };
++  const icon =
++    state === 'verified' ? 'Γ£ô' : state === 'pending' ? 'ΓÇª' : state === 'rejected' ? 'Γ£ò' : 'ΓÇó';
++  return (
++    <span
++      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[state]}`}
++    >
++      <span aria-hidden="true">{icon}</span> {label}
++      <span className="sr-only">({state})</span>
++    </span>
++  );
++}
++
++/** Maps a backend verification/email/phone status onto the shared pill. */
++function statusPill(status: string): {
++  state: 'verified' | 'pending' | 'rejected' | 'unverified';
++  label: string;
++} {
++  switch (status) {
++    case 'VERIFIED':
++      return { state: 'verified', label: 'Verified' };
++    case 'PENDING':
++      return { state: 'pending', label: 'Pending' };
++    case 'UNAVAILABLE':
++      return { state: 'unverified', label: 'No email' };
++    default:
++      return { state: 'unverified', label: 'Not verified' };
++  }
++}
++
++/** Maps the backend KycStatus enum onto the shared pill (display only). */
++function kycPill(status: string): {
++  state: 'verified' | 'pending' | 'rejected' | 'unverified';
++  label: string;
++} {
++  switch (status) {
++    case 'VERIFIED':
++      return { state: 'verified', label: 'Verified' };
++    case 'PENDING':
++      return { state: 'pending', label: 'Pending' };
++    case 'MANUAL_REVIEW':
++      return { state: 'pending', label: 'Manual review' };
++    case 'REJECTED':
++      return { state: 'rejected', label: 'Rejected' };
++    case 'EXPIRED':
++      return { state: 'unverified', label: 'Expired' };
++    default:
++      return { state: 'unverified', label: 'Not started' };
++  }
++}
++
++const fieldClass = 'rounded-md border border-ink-600 px-3 py-2 text-sm';
+ 
+ /** Security settings */
+ export default function SettingsPage() {
+@@ -16,12 +110,62 @@ export default function SettingsPage() {
+   const [loading, setLoading] = useState(true);
+   const [sessions, setSessions] = useState<SessionInfo[]>([]);
+   const [verification, setVerification] = useState<VerificationStatus | null>(null);
++  const [methods, setMethods] = useState<LoginMethods | null>(null);
++  const [me, setMe] = useState<PublicUser | null>(null);
+   const [currentPassword, setCurrentPassword] = useState('');
+   const [newPassword, setNewPassword] = useState('');
+   const [changing, setChanging] = useState(false);
+   const [message, setMessage] = useState<string | null>(null);
+   const [error, setError] = useState<string | null>(null);
+ 
++  // ---- Email section state ----
++  const [emailEditMode, setEmailEditMode] = useState<'idle' | 'edit'>('idle');
++  const [emailValue, setEmailValue] = useState('');
++  const [emailPassword, setEmailPassword] = useState('');
++  const [emailBusy, setEmailBusy] = useState(false);
++  const [emailError, setEmailError] = useState<string | null>(null);
++  const [emailNotice, setEmailNotice] = useState<string | null>(null);
++  const [emailOtpStep, setEmailOtpStep] = useState<'idle' | 'sent'>('idle');
++  const [emailOtp, setEmailOtp] = useState('');
++  const [emailOtpBusy, setEmailOtpBusy] = useState(false);
++  const [emailOtpSending, setEmailOtpSending] = useState(false);
++  const [emailOtpError, setEmailOtpError] = useState<string | null>(null);
++  const [emailRemoveOpen, setEmailRemoveOpen] = useState(false);
++  const [emailRemovePassword, setEmailRemovePassword] = useState('');
++  const [emailRemoveBusy, setEmailRemoveBusy] = useState(false);
++  const [emailRemoveError, setEmailRemoveError] = useState<string | null>(null);
++
++  // ---- Phone section state ----
++  const [phoneEditMode, setPhoneEditMode] = useState<'idle' | 'edit'>('idle');
++  const [phoneValue, setPhoneValue] = useState('');
++  const [phoneBusy, setPhoneBusy] = useState(false);
++  const [phoneError, setPhoneError] = useState<string | null>(null);
++  const [phoneNotice, setPhoneNotice] = useState<string | null>(null);
++  const [phoneOtpStep, setPhoneOtpStep] = useState<'idle' | 'sent'>('idle');
++  const [phoneOtp, setPhoneOtp] = useState('');
++  const [phoneOtpBusy, setPhoneOtpBusy] = useState(false);
++  const [phoneOtpSending, setPhoneOtpSending] = useState(false);
++  const [phoneOtpError, setPhoneOtpError] = useState<string | null>(null);
++  const [phoneRemoveOpen, setPhoneRemoveOpen] = useState(false);
++  const [phoneRemovePassword, setPhoneRemovePassword] = useState('');
++  const [phoneRemoveBusy, setPhoneRemoveBusy] = useState(false);
++  const [phoneRemoveError, setPhoneRemoveError] = useState<string | null>(null);
++
++  // ---- KYC section state (display + honest availability notice) ----
++  const [kycInfo, setKycInfo] = useState<string | null>(null);
++
++  /** Re-reads every server-authoritative slice this page displays. */
++  async function refresh(): Promise<void> {
++    const [status, loginMethods, account] = await Promise.all([
++      getVerificationStatus(),
++      getLoginMethods(),
++      getMe(),
++    ]);
++    setVerification(status);
++    setMethods(loginMethods);
++    setMe(account);
++  }
++
+   useEffect(() => {
+     if (!ready) return;
+     if (!isAuthenticated) {
+@@ -43,9 +187,7 @@ export default function SettingsPage() {
+         setError('Could not load your sessions. The server may be starting up ΓÇö try again in a moment.');
+       })
+       .finally(() => { if (!cancelled) setLoading(false); });
+-    getVerificationStatus()
+-      .then((v) => { if (!cancelled) setVerification(v); })
+-      .catch(() => undefined);
++    refresh().catch(() => undefined);
+     return () => { cancelled = true; };
+   }, [router, ready, isAuthenticated]);
+ 
+@@ -81,28 +223,675 @@ export default function SettingsPage() {
+     }
+   }
+ 
++  /**
++   * KYC (Parts 13ΓÇô16): status is display-only, and no submission workflow /
++   * provider exists in the backend today ΓÇö so the Start action reports that
++   * honestly instead of faking a PENDING or VERIFIED state.
++   */
++  function onStartKyc() {
++    setKycInfo('KYC verification is currently unavailable.');
++  }
++
++  // ---- Email handlers ----
++
++  function openEmailEdit() {
++    setEmailError(null);
++    setEmailNotice(null);
++    setEmailValue(verification?.email.email ?? '');
++    setEmailPassword('');
++    setEmailRemoveOpen(false);
++    setEmailEditMode('edit');
++  }
++
++  function cancelEmailEdit() {
++    if (emailBusy) return;
++    setEmailEditMode('idle');
++    setEmailValue('');
++    setEmailPassword('');
++    setEmailError(null);
++  }
++
++  /** Add (no email yet) or change (email exists) ΓÇö never verifies by itself. */
++  async function onSubmitEmail(e: FormEvent) {
++    e.preventDefault();
++    if (emailBusy) return; // double-submit guard
++    setEmailError(null);
++    setEmailNotice(null);
++    setEmailBusy(true);
++    try {
++      const next = await setEmail(emailValue.trim(), emailPassword);
++      // SUCCESS: close the form, clear the sensitive field, refresh server
++      // state, and surface the pending-verification result.
++      setVerification(next);
++      setEmailEditMode('idle');
++      setEmailValue('');
++      setEmailPassword('');
++      const [loginMethods, account] = await Promise.all([getLoginMethods(), getMe()]);
++      setMethods(loginMethods);
++      setMe(account);
++      setEmailNotice(
++        'Email saved. Verification required ΓÇö send a code below to verify the new address.',
++      );
++      setEmailOtpStep('idle');
++    } catch (err) {
++      // FAILURE: form stays open with the entered values + server error.
++      setEmailError(err instanceof Error ? err.message : 'Failed to save the email address');
++    } finally {
++      setEmailBusy(false);
++    }
++  }
++
++  async function onSendEmailOtp() {
++    if (emailOtpSending) return;
++    setEmailOtpError(null);
++    setEmailNotice(null);
++    setEmailOtpSending(true);
++    try {
++      await sendEmailVerificationOtp();
++      setEmailOtpStep('sent');
++      setEmailNotice('If the email address is valid, a verification code has been sent.');
++    } catch (err) {
++      // Resend cooldown / provider errors surface exactly as the server
++      // reports them (60s cooldown enforced server-side).
++      setEmailOtpError(err instanceof Error ? err.message : 'Could not send the code');
++    } finally {
++      setEmailOtpSending(false);
++    }
++  }
++
++  async function onSubmitEmailOtp(e: FormEvent) {
++    e.preventDefault();
++    if (emailOtpBusy) return;
++    setEmailOtpError(null);
++    setEmailOtpBusy(true);
++    try {
++      const next = await verifyEmailOtp(emailOtp.trim());
++      setVerification(next);
++      setEmailOtp('');
++      setEmailOtpStep('idle');
++      setEmailNotice('Email verified.');
++      const account = await getMe();
++      setMe(account);
++    } catch (err) {
++      setEmailOtpError(err instanceof Error ? err.message : 'Invalid or expired code');
++    } finally {
++      setEmailOtpBusy(false);
++    }
++  }
++
++  async function onSubmitRemoveEmail(e: FormEvent) {
++    e.preventDefault();
++    if (emailRemoveBusy) return;
++    setEmailRemoveError(null);
++    setEmailRemoveBusy(true);
++    try {
++      const next = await removeEmail(emailRemovePassword);
++      setVerification(next);
++      setEmailRemoveOpen(false);
++      setEmailRemovePassword('');
++      setEmailOtpStep('idle');
++      setEmailNotice('Email removed from this account.');
++      const [loginMethods, account] = await Promise.all([getLoginMethods(), getMe()]);
++      setMethods(loginMethods);
++      setMe(account);
++    } catch (err) {
++      // The server safety rule (last login/recovery path) is surfaced verbatim.
++      setEmailRemoveError(err instanceof Error ? err.message : 'Failed to remove the email');
++    } finally {
++      setEmailRemoveBusy(false);
++    }
++  }
++
++  // ---- Phone handlers ----
++
++  function openPhoneEdit() {
++    setPhoneError(null);
++    setPhoneNotice(null);
++    setPhoneValue('');
++    setPhoneRemoveOpen(false);
++    setPhoneEditMode('edit');
++  }
++
++  function cancelPhoneEdit() {
++    if (phoneBusy) return;
++    setPhoneEditMode('idle');
++    setPhoneValue('');
++    setPhoneError(null);
++  }
++
++  /**
++   * Add or change the phone through the EXISTING verification flow: the number
++   * is stored unverified by the server and ONLY a successful OTP to that exact
++   * number ever marks it VERIFIED (Parts 9/10).
++   */
++  async function onSubmitPhone(e: FormEvent) {
++    e.preventDefault();
++    if (phoneBusy) return; // double-submit guard
++    setPhoneError(null);
++    setPhoneNotice(null);
++    setPhoneBusy(true);
++    try {
++      await sendPhoneVerification(phoneValue.trim() || undefined);
++      // SUCCESS: close the number form, refresh, and open the OTP step.
++      setPhoneEditMode('idle');
++      setPhoneValue('');
++      setPhoneOtp('');
++      setPhoneOtpStep('sent');
++      setPhoneNotice('If the number is valid, a verification code has been sent.');
++      await refresh();
++    } catch (err) {
++      // FAILURE: form stays open with the entered number + server error.
++      setPhoneError(err instanceof Error ? err.message : 'Could not send the code');
++    } finally {
++      setPhoneBusy(false);
++    }
++  }
++
++  /** Sends a code to the CURRENT (still unverified) number. */
++  async function onSendPhoneOtp() {
++    if (phoneOtpSending) return;
++    setPhoneOtpError(null);
++    setPhoneNotice(null);
++    setPhoneOtpSending(true);
++    try {
++      await sendPhoneVerification();
++      setPhoneOtpStep('sent');
++      setPhoneNotice('If the number is valid, a verification code has been sent.');
++    } catch (err) {
++      setPhoneOtpError(err instanceof Error ? err.message : 'Could not send the code');
++    } finally {
++      setPhoneOtpSending(false);
++    }
++  }
++
++  async function onSubmitPhoneOtp(e: FormEvent) {
++    e.preventDefault();
++    if (phoneOtpBusy) return;
++    setPhoneOtpError(null);
++    setPhoneOtpBusy(true);
++    try {
++      const next = await verifyPhone(phoneOtp.trim());
++      setVerification(next);
++      setPhoneOtp('');
++      setPhoneOtpStep('idle');
++      setPhoneNotice('Phone verified.');
++      const [loginMethods, account] = await Promise.all([getLoginMethods(), getMe()]);
++      setMethods(loginMethods);
++      setMe(account);
++    } catch (err) {
++      // Wrong / expired / attempt-exhausted codes all land here and stay retryable.
++      setPhoneOtpError(err instanceof Error ? err.message : 'Invalid or expired code');
++    } finally {
++      setPhoneOtpBusy(false);
++    }
++  }
++
++  async function onSubmitRemovePhone(e: FormEvent) {
++    e.preventDefault();
++    if (phoneRemoveBusy) return;
++    setPhoneRemoveError(null);
++    setPhoneRemoveBusy(true);
++    try {
++      const next = await removePhone(phoneRemovePassword);
++      setVerification(next);
++      setPhoneRemoveOpen(false);
++      setPhoneRemovePassword('');
++      setPhoneOtpStep('idle');
++      setPhoneNotice('Phone number removed from this account.');
++      const [loginMethods, account] = await Promise.all([getLoginMethods(), getMe()]);
++      setMethods(loginMethods);
++      setMe(account);
++    } catch (err) {
++      // The server safety rule (last login/recovery path) is surfaced verbatim.
++      setPhoneRemoveError(err instanceof Error ? err.message : 'Failed to remove the phone');
++    } finally {
++      setPhoneRemoveBusy(false);
++    }
++  }
++
++  // Derived, server-truth-backed facts used by the cards below.
++  const hasEmail = (verification?.email.status ?? 'UNAVAILABLE') !== 'UNAVAILABLE';
++  const emailVerified = verification?.email.status === 'VERIFIED';
++  const hasPhone = Boolean(verification?.phone.phone);
++  const phoneVerified = verification?.phone.status === 'VERIFIED';
++  const oauthLinked = Boolean(methods?.google || methods?.facebook);
++  // Safety mirrors of the server rules ΓÇö the API re-checks and is the authority.
++  const canRemoveEmail = Boolean(verification?.phone.phone) || oauthLinked;
++  const canRemovePhone = hasEmail || oauthLinked;
++  const emailRemoveBlockReason =
++    'You need another sign-in or recovery method first: add and verify a phone number, or link Google/Facebook.';
++  const phoneRemoveBlockReason =
++    'You need another sign-in or recovery method first: add an email address, or link Google/Facebook.';
++
+   return (
+     <>
+       <main className="mx-auto max-w-3xl px-4 py-8">
+         <h1 className="text-2xl font-bold">Settings</h1>
++        <p className="mt-1 text-sm text-slate-500">
++          Account &amp; security ΓÇö sign-in details, verification status and sessions.
++        </p>
+         <div className="mt-6 space-y-4">
+-          {verification && (
+-            <Card>
+-              <CardHeader><CardTitle>Verification</CardTitle></CardHeader>
+-              <CardContent>
+-                <ul className="flex flex-col gap-2 text-sm">
+-                  <li className="flex items-center justify-between">
+-                    <span className="text-slate-500">Phone</span>
+-                    <span className="font-medium">{verification.phone.status}</span>
+-                  </li>
+-                  <li className="flex items-center justify-between">
+-                    <span className="text-slate-500">Email</span>
+-                    <span className="font-medium">{verification.email.status}</span>
+-                  </li>
+-                </ul>
+-              </CardContent>
+-            </Card>
+-          )}
++          {/* ---------------- A. Account information ---------------- */}
++          <Card>
++            <CardHeader><CardTitle>Account information</CardTitle></CardHeader>
++            <CardContent>
++              {!me ? (
++                <Skeleton className="h-16" />
++              ) : (
++                <dl className="grid gap-3 text-sm sm:grid-cols-2">
++                  <div>
++                    <dt className="text-xs uppercase tracking-wide text-slate-500">Username</dt>
++                    <dd className="font-medium">{me.username}</dd>
++                  </div>
++                  <div>
++                    <dt className="text-xs uppercase tracking-wide text-slate-500">Name</dt>
++                    <dd className="font-medium">
++                      {[me.firstName, me.lastName].filter(Boolean).join(' ') || 'ΓÇö'}
++                    </dd>
++                  </div>
++                  <div>
++                    <dt className="text-xs uppercase tracking-wide text-slate-500">Status</dt>
++                    <dd className="font-medium">{me.status}</dd>
++                  </div>
++                  <div>
++                    <dt className="text-xs uppercase tracking-wide text-slate-500">Member since</dt>
++                    <dd className="font-medium">{new Date(me.createdAt).toLocaleDateString()}</dd>
++                  </div>
++                </dl>
++              )}
++            </CardContent>
++          </Card>
++          {/* ---------------- B. Email ---------------- */}
++          <Card>
++            <CardHeader><CardTitle>Email</CardTitle></CardHeader>
++            <CardContent>
++              {!verification ? (
++                <Skeleton className="h-20" />
++              ) : (
++                <div className="flex flex-col gap-3">
++                  <div className="flex flex-wrap items-center justify-between gap-2">
++                    <div className="min-w-0">
++                      <p className="text-xs uppercase tracking-wide text-slate-500">Email address</p>
++                      <p className="break-all font-medium">
++                        {hasEmail ? verification.email.email : 'No email address on this account'}
++                      </p>
++                    </div>
++                    <StatusPill {...statusPill(verification.email.status)} />
++                  </div>
++
++                  {emailNotice && (
++                    <p role="status" className="rounded-md border border-emerald-500/40 bg-emerald-950/40 px-3 py-2 text-xs text-emerald-200">
++                      {emailNotice}
++                    </p>
++                  )}
++                  {emailError && (
++                    <p role="alert" className="rounded-md border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs text-red-200">
++                      {emailError}
++                    </p>
++                  )}
++
++                  {emailEditMode === 'edit' ? (
++                    <form onSubmit={onSubmitEmail} className="flex flex-col gap-3 rounded-md border border-ink-600 p-3">
++                      <label className="flex flex-col gap-1 text-sm">
++                        <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
++                          {hasEmail ? 'New email address' : 'Email address'}
++                        </span>
++                        <input
++                          type="email"
++                          required
++                          autoComplete="email"
++                          placeholder="name@example.com"
++                          value={emailValue}
++                          onChange={(e) => setEmailValue(e.target.value)}
++                          disabled={emailBusy}
++                          className={fieldClass}
++                        />
++                      </label>
++                      <label className="flex flex-col gap-1 text-sm">
++                        <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
++                          Current password (confirmation)
++                        </span>
++                        <input
++                          type="password"
++                          required
++                          autoComplete="current-password"
++                          value={emailPassword}
++                          onChange={(e) => setEmailPassword(e.target.value)}
++                          disabled={emailBusy}
++                          className={fieldClass}
++                        />
++                        <span className="text-xs text-slate-500">
++                          Changing a sign-in address always requires your password. Accounts without
++                          a password must set one first (Profile ΓåÆ Set password).
++                        </span>
++                      </label>
++                      <div className="flex flex-wrap gap-2">
++                        <Button type="submit" loading={emailBusy} size="sm">
++                          {hasEmail ? 'Change email' : 'Add email'}
++                        </Button>
++                        <Button type="button" variant="outline" size="sm" onClick={cancelEmailEdit} disabled={emailBusy}>
++                          Cancel
++                        </Button>
++                      </div>
++                    </form>
++                  ) : (
++                    <div className="flex flex-wrap gap-2">
++                      {!hasEmail && (
++                        <Button size="sm" onClick={openEmailEdit}>Add email</Button>
++                      )}
++                      {hasEmail && !emailVerified && (
++                        emailOtpStep === 'sent' ? (
++                          <form onSubmit={onSubmitEmailOtp} className="flex w-full flex-col gap-2 rounded-md border border-ink-600 p-3">
++                            <label className="flex flex-col gap-1 text-sm">
++                              <span className="text-xs font-medium uppercase tracking-wide text-slate-400">Verification code</span>
++                              <input
++                                inputMode="numeric"
++                                maxLength={6}
++                                required
++                                placeholder="6-digit code"
++                                autoComplete="one-time-code"
++                                value={emailOtp}
++                                onChange={(e) => setEmailOtp(e.target.value)}
++                                disabled={emailOtpBusy}
++                                className={fieldClass}
++                              />
++                            </label>
++                            {emailOtpError && (
++                              <p role="alert" className="text-xs text-red-300">{emailOtpError}</p>
++                            )}
++                            <div className="flex flex-wrap gap-2">
++                              <Button type="submit" size="sm" loading={emailOtpBusy}>Verify code</Button>
++                              <Button type="button" variant="outline" size="sm" onClick={onSendEmailOtp} disabled={emailOtpSending}>
++                                {emailOtpSending ? 'SendingΓÇª' : 'Resend code'}
++                              </Button>
++                              <Button type="button" variant="outline" size="sm" onClick={() => { setEmailOtpStep('idle'); setEmailOtp(''); setEmailOtpError(null); }}>
++                                Cancel
++                              </Button>
++                            </div>
++                          </form>
++                        ) : (
++                          <>
++                            <Button size="sm" onClick={onSendEmailOtp} loading={emailOtpSending}>Verify email</Button>
++                            <Button variant="outline" size="sm" onClick={openEmailEdit}>Change email</Button>
++                          </>
++                        )
++                      )}
++                      {hasEmail && emailVerified && (
++                        <Button variant="outline" size="sm" onClick={openEmailEdit}>Change email</Button>
++                      )}
++                      {hasEmail && !emailRemoveOpen && (
++                        canRemoveEmail ? (
++                          <Button variant="danger" size="sm" onClick={() => { setEmailRemoveOpen(true); setEmailRemoveError(null); setEmailRemovePassword(''); }}>
++                            Remove email
++                          </Button>
++                        ) : (
++                          <span className="self-center text-xs text-slate-500" title={emailRemoveBlockReason}>
++                            Removal unavailable ΓÇö another sign-in method is required
++                          </span>
++                        )
++                      )}
++
++                    </div>
++                  )}
++                  {emailRemoveOpen && (
++                    <form onSubmit={onSubmitRemoveEmail} className="flex flex-col gap-3 rounded-md border border-red-500/40 bg-red-950/20 p-3">
++                      <p className="text-xs text-red-200">
++                        Removing the email disables email sign-in and email password recovery for
++                        this account. Your phone or linked social sign-in will remain.
++                      </p>
++                      <label className="flex flex-col gap-1 text-sm">
++                        <span className="text-xs font-medium uppercase tracking-wide text-slate-400">Current password</span>
++                        <input
++                          type="password"
++                          required
++                          autoComplete="current-password"
++                          value={emailRemovePassword}
++                          onChange={(e) => setEmailRemovePassword(e.target.value)}
++                          disabled={emailRemoveBusy}
++                          className={fieldClass}
++                        />
++                      </label>
++                      {emailRemoveError && (
++                        <p role="alert" className="text-xs text-red-300">{emailRemoveError}</p>
++                      )}
++                      <div className="flex flex-wrap gap-2">
++                        <Button type="submit" variant="danger" size="sm" loading={emailRemoveBusy}>Confirm removal</Button>
++                        <Button type="button" variant="outline" size="sm" disabled={emailRemoveBusy}
++                          onClick={() => { setEmailRemoveOpen(false); setEmailRemovePassword(''); setEmailRemoveError(null); }}>
++                          Cancel
++                        </Button>
++                      </div>
++                    </form>
++                  )}
++
++                </div>
++              )}
++            </CardContent>
++          </Card>
++          {/* ---------------- C. Phone ---------------- */}
++          <Card>
++            <CardHeader><CardTitle>Phone</CardTitle></CardHeader>
++            <CardContent>
++              {!verification ? (
++                <Skeleton className="h-20" />
++              ) : (
++                <div className="flex flex-col gap-3">
++                  <div className="flex flex-wrap items-center justify-between gap-2">
++                    <div className="min-w-0">
++                      <p className="text-xs uppercase tracking-wide text-slate-500">Phone number</p>
++                      <p className="break-all font-medium">
++                        {hasPhone ? verification.phone.phone : 'No phone number on this account'}
++                      </p>
++                    </div>
++                    <StatusPill {...statusPill(verification.phone.status)} />
++                  </div>
++
++                  {phoneNotice && (
++                    <p role="status" className="rounded-md border border-emerald-500/40 bg-emerald-950/40 px-3 py-2 text-xs text-emerald-200">
++                      {phoneNotice}
++                    </p>
++                  )}
++                  {phoneError && (
++                    <p role="alert" className="rounded-md border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs text-red-200">
++                      {phoneError}
++                    </p>
++                  )}
++
++                  {phoneEditMode === 'edit' ? (
++                    <form onSubmit={onSubmitPhone} className="flex flex-col gap-3 rounded-md border border-ink-600 p-3">
++                      <label className="flex flex-col gap-1 text-sm">
++                        <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
++                          {hasPhone ? 'New phone number' : 'Phone number'}
++                        </span>
++                        <input
++                          type="tel"
++                          required
++                          autoComplete="tel"
++                          placeholder="+447911123456"
++                          value={phoneValue}
++                          onChange={(e) => setPhoneValue(e.target.value)}
++                          disabled={phoneBusy}
++                          className={fieldClass}
++                        />
++                        <span className="text-xs text-slate-500">
++                          International format, e.g. +447911123456. The number stays UNVERIFIED
++                          until you enter the OTP sent to it ΓÇö changing it never carries the old
++                          verification over.
++                        </span>
++                      </label>
++                      {phoneError && (
++                        <p role="alert" className="text-xs text-red-300">{phoneError}</p>
++                      )}
++                      <div className="flex flex-wrap gap-2">
++                        <Button type="submit" loading={phoneBusy} size="sm">
++                          {hasPhone ? 'Change number' : 'Send code'}
++                        </Button>
++                        <Button type="button" variant="outline" size="sm" onClick={cancelPhoneEdit} disabled={phoneBusy}>
++                          Cancel
++                        </Button>
++                      </div>
++                    </form>
++                  ) : (
++                    <div className="flex flex-wrap gap-2">
++                      {!hasPhone && (
++                        <Button size="sm" onClick={openPhoneEdit}>Add phone</Button>
++                      )}
++                      {hasPhone && !phoneVerified && (
++                        phoneOtpStep === 'sent' ? (
++                          <form onSubmit={onSubmitPhoneOtp} className="flex w-full flex-col gap-2 rounded-md border border-ink-600 p-3">
++                            <label className="flex flex-col gap-1 text-sm">
++                              <span className="text-xs font-medium uppercase tracking-wide text-slate-400">Verification code</span>
++                              <input
++                                inputMode="numeric"
++                                maxLength={6}
++                                required
++                                placeholder="6-digit code"
++                                autoComplete="one-time-code"
++                                value={phoneOtp}
++                                onChange={(e) => setPhoneOtp(e.target.value)}
++                                disabled={phoneOtpBusy}
++                                className={fieldClass}
++                              />
++                            </label>
++                            {phoneOtpError && (
++                              <p role="alert" className="text-xs text-red-300">{phoneOtpError}</p>
++                            )}
++                            <div className="flex flex-wrap gap-2">
++                              <Button type="submit" size="sm" loading={phoneOtpBusy}>Verify code</Button>
++                              <Button type="button" variant="outline" size="sm" onClick={onSendPhoneOtp} disabled={phoneOtpSending}>
++                                {phoneOtpSending ? 'SendingΓÇª' : 'Resend code'}
++                              </Button>
++                              <Button type="button" variant="outline" size="sm" onClick={() => { setPhoneOtpStep('idle'); setPhoneOtp(''); setPhoneOtpError(null); }}>
++                                Cancel
++                              </Button>
++                            </div>
++                          </form>
++                        ) : (
++                          <>
++                            <Button size="sm" onClick={onSendPhoneOtp} loading={phoneOtpSending}>Verify phone</Button>
++                            <Button variant="outline" size="sm" onClick={openPhoneEdit}>Change phone</Button>
++                          </>
++                        )
++                      )}
++                      {hasPhone && phoneVerified && (
++                        <Button variant="outline" size="sm" onClick={openPhoneEdit}>Change phone</Button>
++                      )}
++                      {hasPhone && !phoneRemoveOpen && (
++                        canRemovePhone ? (
++                          <Button variant="danger" size="sm" onClick={() => { setPhoneRemoveOpen(true); setPhoneRemoveError(null); setPhoneRemovePassword(''); }}>
++                            Remove phone
++                          </Button>
++                        ) : (
++                          <span className="self-center text-xs text-slate-500" title={phoneRemoveBlockReason}>
++                            Removal unavailable ΓÇö another sign-in method is required
++                          </span>
++                        )
++                      )}
++
++                    </div>
++                  )}
++                  {phoneRemoveOpen && (
++                    <form onSubmit={onSubmitRemovePhone} className="flex flex-col gap-3 rounded-md border border-red-500/40 bg-red-950/20 p-3">
++                      <p className="text-xs text-red-200">
++                        Removing the phone disables phone sign-in and phone-recovery codes for
++                        this account. Your email or linked social sign-in will remain.
++                      </p>
++                      <label className="flex flex-col gap-1 text-sm">
++                        <span className="text-xs font-medium uppercase tracking-wide text-slate-400">Current password</span>
++                        <input
++                          type="password"
++                          required
++                          autoComplete="current-password"
++                          value={phoneRemovePassword}
++                          onChange={(e) => setPhoneRemovePassword(e.target.value)}
++                          disabled={phoneRemoveBusy}
++                          className={fieldClass}
++                        />
++                      </label>
++                      {phoneRemoveError && (
++                        <p role="alert" className="text-xs text-red-300">{phoneRemoveError}</p>
++                      )}
++                      <div className="flex flex-wrap gap-2">
++                        <Button type="submit" variant="danger" size="sm" loading={phoneRemoveBusy}>Confirm removal</Button>
++                        <Button type="button" variant="outline" size="sm" disabled={phoneRemoveBusy}
++                          onClick={() => { setPhoneRemoveOpen(false); setPhoneRemovePassword(''); setPhoneRemoveError(null); }}>
++                          Cancel
++                        </Button>
++                      </div>
++                    </form>
++                  )}
++
++                </div>
++              )}
++            </CardContent>
++          </Card>
++          {/* ---------------- D. Verification ---------------- */}
++          <Card>
++            <CardHeader><CardTitle>Verification</CardTitle></CardHeader>
++            <CardContent>
++              {!verification ? (
++                <Skeleton className="h-24" />
++              ) : (
++                <div className="flex flex-col gap-3">
++                  <ul className="flex flex-col gap-2 text-sm">
++                    <li className="flex items-center justify-between gap-3">
++                      <span className="text-slate-500">Email</span>
++                      <StatusPill {...statusPill(verification.email.status)} />
++                    </li>
++                    <li className="flex items-center justify-between gap-3">
++                      <span className="text-slate-500">Phone</span>
++                      <StatusPill {...statusPill(verification.phone.status)} />
++                    </li>
++                    <li className="flex items-center justify-between gap-3">
++                      <span className="text-slate-500">Face</span>
++                      <StatusPill {...statusPill(verification.face.status)} />
++                    </li>
++                  </ul>
++                  <p className="text-xs text-slate-500">
++                    Statuses are read live from the server ΓÇö never inferred. Face verification and
++                    linked sign-in methods live in the Verification Center.
++                  </p>
++                  <Link href="/verification" className="text-sm font-medium text-teal-300 hover:underline">
++                    Open the Verification Center ΓåÆ
++                  </Link>
++                </div>
++              )}
++            </CardContent>
++          </Card>
++
++          {/* ---------------- E. KYC (display-only; no workflow exists yet) ---------------- */}
++          <Card>
++            <CardHeader><CardTitle>KYC verification</CardTitle></CardHeader>
++            <CardContent>
++              {!me ? (
++                <Skeleton className="h-16" />
++              ) : (
++                <div className="flex flex-col gap-3">
++                  <div className="flex flex-wrap items-center justify-between gap-2">
++                    <div>
++                      <p className="text-xs uppercase tracking-wide text-slate-500">Status</p>
++                      <p className="text-sm text-slate-400">
++                        Identity verification (Know Your Customer) is separate from email and
++                        phone verification.
++                      </p>
++                    </div>
++                    <StatusPill {...kycPill(String(me.kycStatus))} />
++                  </div>
++                  {kycInfo && (
++                    <p role="status" className="rounded-md border border-amber-500/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
++                      {kycInfo}
++                    </p>
++                  )}
++                  {String(me.kycStatus) === 'NOT_STARTED' && (
++                    <Button variant="outline" size="sm" className="self-start" onClick={onStartKyc}>
++                      Start KYC
++                    </Button>
++                  )}
++                </div>
++              )}
++            </CardContent>
++          </Card>
++          {/* ---------------- F. Password ---------------- */}
+           <Card>
+             <CardHeader><CardTitle>Change password</CardTitle></CardHeader>
+             <CardContent>
+@@ -121,6 +910,7 @@ export default function SettingsPage() {
+               </form>
+             </CardContent>
+           </Card>
++          {/* ---------------- G. Active sessions ---------------- */}
+           <Card>
+             <CardHeader><CardTitle>Active sessions</CardTitle></CardHeader>
+             <CardContent>
+@@ -152,3 +942,9 @@ export default function SettingsPage() {
+ }
+ 
+ 
++
++
++
++
++
++
+diff --git a/apps/web/lib/api/verification.ts b/apps/web/lib/api/verification.ts
+index f2bc7d1..aa8d131 100644
+--- a/apps/web/lib/api/verification.ts
++++ b/apps/web/lib/api/verification.ts
+@@ -1,5 +1,11 @@
+ /**
+  * Frontend Verification Center API (Phase 11).
++ *
++ * Settings Account & Security additions (master prompt Parts 5ΓÇô11):
++ * setEmail / removeEmail / removePhone ΓÇö password-confirmed identifier
++ * management whose responses are the same server-authoritative
++ * VerificationStatus as every other endpoint here (the client NEVER derives
++ * verification state on its own).
+  */
+ import { authFetch, apiFetch } from './client';
+ 
+@@ -54,6 +60,33 @@ export async function sendPhoneVerification(phone?: string): Promise<{ message:
+   });
+ }
+ 
++/** Add or change the account email. Stored UNVERIFIED ΓÇö never a fake success. */
++export async function setEmail(
++  email: string,
++  currentPassword: string,
++): Promise<VerificationStatus> {
++  return authFetch<VerificationStatus>('/verification/email/set', {
++    method: 'POST',
++    body: JSON.stringify({ email, currentPassword }),
++  });
++}
++
++/** Remove the email. The server refuses when it is the last login/recovery path. */
++export async function removeEmail(currentPassword: string): Promise<VerificationStatus> {
++  return authFetch<VerificationStatus>('/verification/email', {
++    method: 'DELETE',
++    body: JSON.stringify({ currentPassword }),
++  });
++}
++
++/** Remove the phone. The server refuses when it is the last login/recovery path. */
++export async function removePhone(currentPassword: string): Promise<VerificationStatus> {
++  return authFetch<VerificationStatus>('/verification/phone', {
++    method: 'DELETE',
++    body: JSON.stringify({ currentPassword }),
++  });
++}
++
+ export async function verifyPhone(code: string): Promise<VerificationStatus> {
+   return authFetch<VerificationStatus>('/verification/phone/verify', {
+     method: 'POST',

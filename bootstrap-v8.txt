@@ -1,0 +1,15 @@
+
+> tanvion-royale@0.1.0 db:bootstrap D:\tanvionRoyale
+> pnpm --filter @tanvion-royale/api prisma:bootstrap
+
+
+> @tanvion-royale/api@0.1.0 prisma:bootstrap D:\tanvionRoyale\apps\api
+> ts-node ../../database/scripts/bootstrap-catalog.ts
+
+(node:21812) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/tanvionRoyale/database/scripts/bootstrap-catalog.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to D:\tanvionRoyale\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Sport "football" ensured ACTIVE (id=4d9f9e2a-b466-469c-bae2-cd426dbfab0c).
+Sport "cricket" ensured ACTIVE (id=8ef7bfdd-549d-42ea-82ec-6c9b2150e02b).
+Catalog bootstrap complete: Football and Cricket are active. No events, markets, selections or odds were created (partner-provider driven only).

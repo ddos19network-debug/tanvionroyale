@@ -1,0 +1,252 @@
+# Render deployment configuration — BACKEND API ONLY.
+# The frontend (apps/web) is deployed on Vercel, not Render.
+services:
+  - type: web
+    name: tanvionroyale-api
+    runtime: node
+    rootDir: .
+    # Build (monorepo-aware, runs from the repo root):
+    #   1. corepack enable      -> activates pnpm pinned by root package.json "packageManager"
+    #   2. pnpm install         -> full workspace install from the committed lockfile
+    #                              (--prod=false keeps devDeps: @nestjs/cli, typescript, ...)
+    #   3. prisma:generate      -> generates apps/api/src/generated/prisma BEFORE nest build;
+    #                              the API imports the client via a relative path, so tsc
+    #                              compiles it into apps/api/dist/generated
+    #   4. prisma:migrate:deploy:strict
+    #                           -> applies ALL pending migrations to the production
+    #                              database BEFORE the new build goes live, then
+    #                              runs scripts/verify-migrations.cjs (fail-closed).
+    #                              Without this the API boots against a schema that
+    #                              is missing newer tables/enums and every query on
+    #                              them 500s (P2021/P2022) — the root cause of the
+    #                              production "Internal server error" incidents.
+    #                              Keep DIRECT_URL (Neon unpooled) configured in the
+    #                              Render dashboard: the CLI needs a session-persistent
+    #                              connection for its advisory lock.
+    #   5. verify-migrations    -> SECOND, explicit gate: runs `prisma migrate status`,
+    #                              parses it and ABORTS the build while any migration is
+    #                              still pending (the guard that caught the
+    #                              20260914010000_add_support_chat drift). Never remove
+    #                              this step and never weaken it to make a build green —
+    #                              a green build over a pending migration is a broken
+    #                              production API.
+    #   6. filtered build       -> builds @tanvion-royale/api AND every workspace package it
+    #                              depends on (types, config, validation, integrations),
+    #                              producing a flat apps/api/dist/main.js
+    #   7. test -f main.js      -> fail the BUILD (not the runtime) if the entry file is missing
+    #
+    # ORDER MATTERS: deploy -> verify -> build. The build (and therefore the deploy)
+    # only succeeds when the database genuinely matches the migration history.
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm --filter @tanvion-royale/api prisma:generate && pnpm --filter @tanvion-royale/api prisma:migrate:deploy:strict && node scripts/verify-migrations.cjs && pnpm --filter @tanvion-royale/api... run build && test -f apps/api/dist/main.js
+    # nest build emits a flat dist/main.js (tsconfig.build.json: rootDir=./src, outDir=./dist) —
+    # verified after a clean build. Do not change to dist/src/main.js.
+    startCommand: node apps/api/dist/main.js
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.1
+      - key: NODE_ENV
+        value: production
+      # Public production frontend origin (safe to commit — not a secret).
+      - key: CORS_ORIGIN
+        value: https://tanvionroyale.vercel.app
+      # PORT is supplied dynamically by Render — do not set it here.
+      # Secrets are set in the Render dashboard, never in source control.
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      # --- WinHouse embedded sportsbook (Model B; explicit production scope) ---
+      # Public/non-secret. Missing or invalid WINHOUSE_ENV can never select a
+      # production provider row because provider resolution fails closed.
+      - key: WINHOUSE_ENV
+        value: production
+      - key: WINHOUSE_PROVIDER
+        sync: false
+      # Public embed key (safe to display, but still never a wallet credential).
+      - key: WINHOUSE_EMBED_KEY
+        sync: false
+      - key: WINHOUSE_EMBED_BASE_URL
+        value: https://iframe.winhouse.bet
+      # Server-only secrets. Leave unset when secrets are stored encrypted via
+      # Admin → Partner providers instead. Never expose either as NEXT_PUBLIC_*.
+      - key: WINHOUSE_WALLET_API_KEY
+        sync: false
+      - key: WINHOUSE_CALLBACK_TOKEN
+        sync: false
+      - key: WINHOUSE_LAUNCH_TTL_MS
+        value: 300000
+      - key: WINHOUSE_TIMEOUT_MS
+        value: 10000
+      - key: WINHOUSE_LANG
+        value: en
+      - key: WINHOUSE_THEME
+        value: dark
+      - key: WINHOUSE_BOTTOM_GAP_PX
+        value: 56
+      - key: WINHOUSE_FRAME_HEIGHT
+        value: 900px
+      - key: OPERATOR_API_KEY
+        sync: false
+      - key: OPERATOR_API_SECRET
+        sync: false
+      - key: OPERATOR_WEBHOOK_SECRET
+        sync: false
+      # --- Partner casino (BIG CASINO / BIG LIVE CASINO -> BigBang) ---
+      # Environment the API process operates in. The resolver only ever uses the
+      # PartnerProvider row whose `environment` matches, so a sandbox credential
+      # can never be used in production (or vice versa).
+      - key: PARTNER_CASINO_ENV
+        value: sandbox
+      # Outbound budget for an INTERACTIVE provider call (launch, balance).
+      - key: PARTNER_CASINO_TIMEOUT_MS
+        value: 10000
+      # Outbound budget for a CATALOG page read. A catalog walk is several
+      # bounded page calls over a multi-thousand-row inventory, so it gets its
+      # own, larger budget instead of forcing the interactive timeout upward.
+      # Never allowed below PARTNER_CASINO_TIMEOUT_MS.
+      - key: PARTNER_CASINO_CATALOG_TIMEOUT_MS
+        value: 60000
+      # Rows requested per provider page while walking the catalog. The adapter
+      # clamps this to the provider's documented maximum. Keeping it bounded is
+      # what stopped the production sync from asking the provider for its whole
+      # ~1,860-game catalog in one response and aborting with a 10s timeout.
+      - key: PARTNER_CASINO_CATALOG_PAGE_SIZE
+        value: 500
+      # --- BigBang per-purpose budgets (public, non-secret) ---
+      # The BigBang adapter uses a DIFFERENT budget per kind of call, so raising
+      # the catalog ceiling for a large inventory can never make the admin
+      # health check or a game launch hang:
+      #   BIGBANG_HEALTH_TIMEOUT_MS  -> the cheap reachability probe (GET /games?limit=1)
+      #   BIGBANG_CATALOG_TIMEOUT_MS -> ONE catalog read (a /games page or /categories);
+      #                                 this is the budget that stops a slow
+      #                                 GET /categories from aborting a sync
+      #                                 with "timed out after 10000ms". It is
+      #                                 clamped to be >= BIGBANG_TIMEOUT_MS.
+      #   BIGBANG_LAUNCH_TIMEOUT_MS  -> an interactive launch/player call
+      # Leaving them unset falls back to the PARTNER_CASINO_* values above.
+      - key: BIGBANG_HEALTH_TIMEOUT_MS
+        value: 10000
+      - key: BIGBANG_CATALOG_TIMEOUT_MS
+        value: 60000
+      - key: BIGBANG_LAUNCH_TIMEOUT_MS
+        value: 10000
+      # Provider credentials are read from the encrypted PartnerProvider row
+      # (Admin -> Partner providers). Set these ONLY if the DB row is absent;
+      # never expose either as NEXT_PUBLIC_*.
+      - key: PARTNER_CASINO_MERCHANT_ID
+        sync: false
+      - key: PARTNER_CASINO_SECRET
+        sync: false
+      # --- Production Google OAuth (public, non-secret values) ---
+      # GOOGLE_CALLBACK_URL must EXACTLY match the Authorized redirect URI in
+      # the Google Cloud Console (no trailing slash). It is the API callback —
+      # never the frontend origin.
+      - key: GOOGLE_CALLBACK_URL
+        value: https://tanvionroyale.onrender.com/api/v1/auth/google/callback
+      # Frontend origins allowed to receive the one-time OAuth exchange
+      # redirect (first entry is the default). Only used for the frontend
+      # redirect destination — never as a Google redirect URI.
+      - key: OAUTH_ALLOWED_REDIRECTS
+        value: https://tanvionroyale.vercel.app
+      # Public frontend URL used for emailed verification/reset links.
+      - key: APP_URL
+        value: https://tanvionroyale.vercel.app
+      # GOOGLE_CLIENT_ID is a public identifier but app-specific; set it in the
+      # Render dashboard together with GOOGLE_CLIENT_SECRET. Never expose the
+      # secret to the web app or via NEXT_PUBLIC_* variables.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: FACEBOOK_CLIENT_ID
+        sync: false
+      - key: FACEBOOK_CLIENT_SECRET
+        sync: false
+      - key: FACEBOOK_CALLBACK_URL
+        value: https://tanvionroyale.onrender.com/api/v1/auth/facebook/callback
+      - key: OPERATOR_PROVIDER
+        sync: false
+      - key: PAYMENT_PROVIDER
+        sync: false
+      - key: PAYMENT_PROVIDER_URL
+        sync: false
+      - key: PAYMENT_PROVIDER_KEY
+        sync: false
+      - key: PAYMENT_PROVIDER_SECRET
+        sync: false
+      - key: PAYMENT_WEBHOOK_SECRET
+        sync: false
+      # SMS DELIVERY PROVIDER SELECTION.
+      #
+      # SMS_PROVIDER selects WHO delivers the one-time codes:
+      #   twilio -> Twilio only, vonage -> Vonage only,
+      #   auto   -> SMS_PRIMARY_PROVIDER first, then SMS_FALLBACK_PROVIDER
+      #             exactly once with the SAME one-time code.
+      # The Admin Panel (Admin -> Settings -> SMS provider) stores the same
+      # choice in the database and takes precedence over these variables; they
+      # remain the default when nothing has been saved in the panel.
+      - key: SMS_PROVIDER
+        sync: false
+      - key: SMS_PRIMARY_PROVIDER
+        sync: false
+      - key: SMS_FALLBACK_PROVIDER
+        sync: false
+      # Twilio (existing variables, unchanged). SMS_FROM_NUMBER is the Twilio
+      # "From" SENDER value: either an E.164 number verified on the Twilio
+      # account, or an APPROVED Alphanumeric Sender ID (some destinations, e.g.
+      # Bangladesh, require it). It is passed through exactly as set here —
+      # never invented server-side. The API logs the provider's real rejection
+      # reason as "[TwilioSmsCodeSender] Twilio SMS rejected: status=… code=…
+      # message=…" and never logs the SID, the token, the code or the recipient.
+      - key: SMS_ACCOUNT_SID
+        sync: false
+      - key: SMS_AUTH_TOKEN
+        sync: false
+      - key: SMS_FROM_NUMBER
+        sync: false
+      # Vonage (second provider). The API secret is the credential here: it is
+      # never returned by the admin API, never logged, and never sent to the
+      # browser. Use SMS_VONAGE_FROM only after the sender is registered and
+      # approved in the Vonage dashboard.
+      - key: SMS_VONAGE_API_KEY
+        sync: false
+      - key: SMS_VONAGE_API_SECRET
+        sync: false
+      - key: SMS_VONAGE_FROM
+        sync: false
+      - key: EMAIL_PROVIDER
+        sync: false
+      - key: EMAIL_API_KEY
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: FACE_VERIFICATION_PROVIDER
+        sync: false
+      - key: FACE_VERIFICATION_URL
+        sync: false
+      - key: FACE_VERIFICATION_KEY
+        sync: false
+      - key: FACE_VERIFICATION_SECRET
+        sync: false
+      # Master admin allowlist: comma-separated email addresses (the ONLY
+      # accounts that may ever hold SUPER_ADMIN — see
+      # apps/api/src/config/master-admins.ts). The real value is set in the
+      # Render dashboard ONLY, never committed (sync: false).
+      - key: MASTER_ADMIN_EMAILS
+        sync: false
+

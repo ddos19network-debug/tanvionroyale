@@ -1,0 +1,59 @@
+   Creating an optimized production build ...
+node.exe :  ΓÜá Compiled with warnings
+At C:\Users\sharm\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( ΓÜá Compiled with warnings:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+./app/games/play/[slug]/page.tsx
+Attempted import error: 'getActionGameConfig' is not exported from '@/components/games/action-game' (imported 
+as 'getActionGameConfig').
+
+Import trace for requested module:
+./app/games/play/[slug]/page.tsx
+
+./app/games/play/[slug]/page.tsx
+Attempted import error: 'getActionGameConfig' is not exported from '@/components/games/action-game' (imported 
+as 'getActionGameConfig').
+
+Import trace for requested module:
+./app/games/play/[slug]/page.tsx
+
+ ΓÜá Compiled with warnings
+
+./app/games/play/[slug]/page.tsx
+Attempted import error: 'getActionGameConfig' is not exported from '@/components/games/action-game' (imported 
+as 'getActionGameConfig').
+
+Import trace for requested module:
+./app/games/play/[slug]/page.tsx
+
+./app/games/play/[slug]/page.tsx
+Attempted import error: 'getActionGameConfig' is not exported from '@/components/games/action-game' (imported 
+as 'getActionGameConfig').
+
+Import trace for requested module:
+./app/games/play/[slug]/page.tsx
+
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+
+./app/games/play/[slug]/page.tsx:9:22
+Type error: '"@/components/games/action-game"' has no exported member named 'getActionGameConfig'. Did you mean 
+'ActionGameConfig'?
+
+[0m [90m  7 |[39m [36mimport[39m { [33mSkyRocketGame[39m } [36mfrom[39m 
+[32m'@/components/games/crash-game'[39m[33m;[39m[0m
+[0m [90m  8 |[39m [36mimport[39m { [33mLightningDiceGame[39m } [36mfrom[39m 
+[32m'@/components/games/dice-game'[39m[33m;[39m[0m
+[0m[31m[1m>[22m[39m[90m  9 |[39m [36mimport[39m { [33mActionGame[39m[33m,[39m getActionGameConfig 
+} [36mfrom[39m [32m'@/components/games/action-game'[39m[33m;[39m[0m
+[0m [90m    |[39m                      [31m[1m^[22m[39m[0m
+[0m [90m 10 |[39m [36mimport[39m { getFreePlayGame } [36mfrom[39m 
+[32m'@/lib/data/games'[39m[33m;[39m[0m
+[0m [90m 11 |[39m[0m
+[0m [90m 12 |[39m [90m/**[39m[0m
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

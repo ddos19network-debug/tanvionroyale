@@ -1,0 +1,39 @@
+{
+  "name": "@tanvion-royale/web",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.12.1",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "type-check": "tsc --noEmit",
+    "lint": "next lint",
+    "test": "node scripts/check-oauth-client.cjs && node scripts/check-winhouse-embed.cjs && node scripts/test-auth-flow.cjs && node scripts/test-admin-modal-flow.cjs && node scripts/test-form-flow.cjs && node scripts/test-input-readability.cjs && node scripts/test-crash-presentation.cjs && node scripts/test-partner-provider-bigbang.cjs && node scripts/test-home-catalog-flow.cjs && node scripts/test-studio-selection.cjs && node scripts/test-referral-flow.cjs && node scripts/test-affiliate-flow.cjs && node scripts/test-football-flow.cjs",
+    "test:crash-browser": "node scripts/test-sky-rocket-browser.cjs",
+    "test:home-browser": "node scripts/verify-home-catalog-browser.cjs",
+    "test:mobile-nav-browser": "node scripts/verify-mobile-nav-browser.cjs",
+    "icons:generate": "node scripts/generate-brand-icons.mjs && node scripts/generate-og-image.mjs"
+  },
+  "dependencies": {
+    "@tanvion-royale/config": "workspace:*",
+    "@tanvion-royale/types": "workspace:*",
+    "@tanvion-royale/ui": "workspace:*",
+    "@tanvion-royale/validation": "workspace:*",
+    "firebase": "^12.19.0",
+    "next": "14.2.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.11",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "eslint-config-next": "14.2.15",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.6.3"
+  }
+}

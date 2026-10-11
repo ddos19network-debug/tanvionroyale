@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+*.local
+
+# Env files — never commit secrets
+.env
+.env.*
+!.env.example
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+coverage/
+.turbo/
+.cache/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Test artifacts
+*.tsbuildinfo
+.tmp/
+
+# Prisma
+apps/api/prisma/*.db
+database/prisma/*.db
+# Generated Prisma client is compiled into the API and never committed
+apps/api/src/generated/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Docker — don't commit local dev volumes / sensitive provider config maps
+infra/docker/data/
+
+# Misc
+.secrets/
+keys/
+*.pem

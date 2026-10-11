@@ -1,0 +1,80 @@
+[32m[Nest] 9776  - [39m09/08/2026, 11:08:30 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_RECOVERY sms code for +447911123456: 137497[39m
+[32m[Nest] 9776  - [39m09/08/2026, 11:08:30 PM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email to reset@example.com ΓÇö subject: Reset your password ΓÇö body: Your one-time link: /reset-password?token=qCfRHnFJs2r1CS3wvYvdiDtxZR1kUH4I5Ls6vwVcN-M[39m
+PASS test/api.spec.ts
+PASS test/verification.spec.ts
+[32m[Nest] 16624  - [39m09/08/2026, 11:08:31 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY sms code for +447911123456: 687573[39m
+[32m[Nest] 16624  - [39m09/08/2026, 11:08:31 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY sms code for +447911123456: 716224[39m
+[32m[Nest] 16624  - [39m09/08/2026, 11:08:31 PM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email to x@y.z ΓÇö subject: Verify your email address ΓÇö body: Your verification link: /verify-email?token=ri2sZMwx7i8BvFCEn_AxBeP9g5dY_29q9-mh_zaxQ7o[39m
+[32m[Nest] 16624  - [39m09/08/2026, 11:08:31 PM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email to x@y.z ΓÇö subject: Verify your email address ΓÇö body: Your verification link: /verify-email?token=FpWtE4c0zSBxGFZcLkKhI3qsv3qipIEF8iDLTNllo8M[39m
+PASS test/session-auth.spec.ts (6.401 s)
+PASS test/partner-routing.spec.ts (5.364 s)
+PASS test/betting-bet.spec.ts (5.207 s)
+PASS test/settlement.spec.ts
+PASS test/wallet.spec.ts
+PASS test/betting-events.spec.ts
+PASS test/account-recovery.spec.ts (13.028 s)
+PASS test/users.spec.ts (7.545 s)
+PASS test/betting-odds-stake.spec.ts
+PASS test/cors.spec.ts
+PASS test/mock-provider.spec.ts
+PASS test/sports-sync.spec.ts
+[33m[Nest] 16624  - [39m09/08/2026, 11:08:36 PM [33m   WARN[39m [38;5;3m[SportsSyncService] [39m[33mSports sync failed (provider=real-partner): Betting provider is not configured[39m
+[33m[Nest] 16624  - [39m09/08/2026, 11:08:36 PM [33m   WARN[39m [38;5;3m[SportsSyncService] [39m[33mSports sync failed (provider=real-partner): upstream 500: provider exploded[39m
+[31m[Nest] 18988  - [39m09/08/2026, 11:08:36 PM [31m  ERROR[39m [38;5;3m[OtpService] [39m[31mOTP 
+delivery failed (channel=sms, purpose=PHONE_SIGNUP): SMS gateway timeout[39m
+PASS test/otp-delivery.spec.ts
+[32m[Nest] 8084  - [39m09/08/2026, 11:08:36 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 8084  - [39m09/08/2026, 11:08:36 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 8084  - [39m09/08/2026, 11:08:36 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 8084  - [39m09/08/2026, 11:08:36 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 8084  - [39m09/08/2026, 11:08:36 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mOAuth exchange succeeded (one-time code consumed, session issued)[39m
+[32m[Nest] 8084  - [39m09/08/2026, 11:08:36 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 8084  - [39m09/08/2026, 11:08:36 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mFACEBOOK OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 8084  - [39m09/08/2026, 11:08:36 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 18988  - [39m09/08/2026, 11:08:36 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_SIGNUP sms code for +447911123456: 546922[39m
+[33m[Nest] 8084  - [39m09/08/2026, 11:08:36 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+[32m[Nest] 8084  - [39m09/08/2026, 11:08:36 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mOAuth exchange succeeded (one-time code consumed, session issued)[39m
+[33m[Nest] 8084  - [39m09/08/2026, 11:08:36 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+[32m[Nest] 18988  - [39m09/08/2026, 11:08:36 PM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email to a@b.c ΓÇö subject: s ΓÇö body: b[39m
+PASS test/oauth.spec.ts
+  ΓùÅ Console
+    console.error
+      [Google OAuth] token exchange failed: undefined provider error body
+    [0m [90m 313 |[39m       [36mif[39m ([33m![39mtokenRes[33m.[39mok) {
+     [90m 314 |[39m         [36mconst[39m errorBody [33m=[39m [36mawait[39m 
+tokenRes[33m.[39mtext()[33m;[39m
+    [31m[1m>[22m[39m[90m 315 |[39m         console[33m.[39merror([32m'[Google OAuth] token exchange 
+failed:'[39m[33m,[39m tokenRes[33m.[39mstatus[33m,[39m errorBody)[33m;[39m
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 316 |[39m         [36mthrow[39m [36mnew[39m [33mUnauthorizedException[39m([32m'Google 
+authentication failed'[39m)[33m;[39m
+     [90m 317 |[39m       }
+     [90m 318 |[39m       [36mconst[39m token [33m=[39m ([36mawait[39m tokenRes[33m.[39mjson()) 
+[36mas[39m { access_token[33m?[39m[33m:[39m string }[33m;[39m[0m
+      at OAuthService.fetchProfile (src/modules/auth/oauth.service.ts:315:17)
+      at OAuthService.handleCallback (src/modules/auth/oauth.service.ts:160:21)
+      at Object.<anonymous> (test/oauth.spec.ts:328:5)
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests 
+leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also 
+cause this, ensure that .unref() was called on them.
+Summary of all failing tests
+FAIL test/trading.spec.ts
+  ΓùÅ Paper trading round-trips (integer P&L) ΓÇ║ order and transaction history are returned newest-first
+    expect(received).toBe(expected) // Object.is equality
+    Expected: "SELL"
+    Received: "BUY"
+    [0m [90m 347 |[39m
+     [90m 348 |[39m     expect(orders)[33m.[39mtoHaveLength([35m2[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 349 |[39m     
+expect(orders[[35m0[39m][33m.[39mside)[33m.[39mtoBe([32m'SELL'[39m)[33m;[39m
+     [90m     |[39m                            [31m[1m^[22m[39m
+     [90m 350 |[39m     expect(txs[33m.[39mlength)[33m.[39mtoBeGreaterThanOrEqual([35m2[39m)[33m;[39m
+     [90m 351 |[39m   })[33m;[39m
+     [90m 352 |[39m[0m
+      at Object.<anonymous> (test/trading.spec.ts:349:28)
+Test Suites: 1 failed, 24 passed, 25 total
+Tests:       1 failed, 303 passed, 304 total
+Snapshots:   0 total
+Time:        51.728 s, estimated 59 s
+Ran all test suites.
+ΓÇëELIFECYCLEΓÇë Test failed. See above for more details.

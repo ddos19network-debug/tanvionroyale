@@ -1,0 +1,164 @@
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:34 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +341ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +8ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +5ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGamesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPartnerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSportsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTradingModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWalletModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSportsbookModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mVerificationModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBettingModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[Bootstrap] [39m[32mCORS allowed origins: https://tanvionroyale.vercel.app[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/api} (version: 1):[39m[38;5;3m +45ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api, GET} (version: 1) route[39m[38;5;3m +2ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/auth} (version: 1):[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/register, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/login, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/refresh, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/logout, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/me, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/forgot-password, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/reset-password, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/verify-email, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/resend-verification, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/phone/send-otp, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/phone/verify-otp, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/phone/login, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/phone/recovery/send-otp, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/phone/recovery/reset-password, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/google, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/google/callback, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/facebook, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/facebook/callback, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/google/link, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/facebook/link, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/oauth/exchange, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/api/health} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUsersController {/api/users} (version: 1):[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/users/me, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/users/me, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/users/me/change-password, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/users/me/set-password, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/users/me/sessions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/users/me/sessions/:sessionId, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSportsController {/api/sports} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/sports, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/sports/:slug, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/sports/:slug/games, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/sports/:slug/competitions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mGamesController {/api/games} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/games/:slug, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminSportsController {/api/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/sports, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/sports/:id, PATCH} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/sports/:id, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/games, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/games/:id, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/games/:id, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/games/:id/availability, PATCH} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/games/:id/provider, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPartnerProvidersController {/api/admin/partner-providers} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/partner-providers, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/partner-providers, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/partner-providers/:id, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/partner-providers/:id, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/partner-providers/sync, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWalletController {/api/wallet} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/wallet, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/wallet/balance, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/wallet/transactions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/wallet/transactions/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/wallet/deposits, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/wallet/withdrawals, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminWalletController {/api/admin/wallets} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/wallets/:userId/adjustments, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mBetsController {/api/bets} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/bets, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/bets, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/bets/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEventsController {/api/events} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id/markets, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id/odds, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMarketsController {/api/markets} (version: 1):[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/markets/:id/selections, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPartnerEventsController {/api/events} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id/redirect, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminBettingController {/api/admin/betting} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/betting/bets/:id/settle, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/betting/events/:id/settle, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFreePlayGamesController {/api/games/play} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/games/play/:slug, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/games/play/:slug/sessions, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/games/play/:slug/sessions/active, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/games/play/:slug/sessions/:sessionId, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/games/play/:slug/sessions/:sessionId/actions, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/games/play/:slug/results, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/api/admin} (version: 1):[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/access, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/summary, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/audit-logs, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminUsersController {/api/admin/users} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/users, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/users/roles/list, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/users/permissions/list, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/users/:userId, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/users, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/users/:userId/roles, PUT} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/users/roles/:roleId/permissions, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminCatalogController {/api/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/sports, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/sports/:sportId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/competitions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/events, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/events/:eventId/status, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminBetsController {/api/admin/bets} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/bets, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminWalletsController {/api/admin/wallets} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/wallets/:userId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTradingController {/api/trading} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/trading/account, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/trading/account/portfolio, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/trading/instruments, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/trading/instruments/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/trading/orders, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/trading/orders, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/trading/positions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/trading/positions/:id/close, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/trading/history, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/trading/leaderboard, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminTradingController {/api/admin/trading} (version: 1):[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/trading/instruments, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/trading/instruments/:id, PATCH} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPartnerController {/api/partner} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/partner/status, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/partner/admin/status, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/partner/webhooks, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mVerificationController {/api/verification} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/verification/status, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/verification/methods, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/verification/phone/send, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/verification/phone/verify, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/verification/email/send, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/verification/email/verify, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/verification/email/send-otp, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/verification/email/verify-otp, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/verification/face/start, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/verification/methods/disconnect, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:35 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/verification/link/callback, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:36 AM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:36 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +12ms[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:36 AM [32m    LOG[39m [38;5;3m[Bootstrap] [39m[32mTANVIONROYALE API listening on 3111 (env=development)[39m
+[32m[Nest] 22172  - [39m09/09/2026, 1:30:36 AM [32m    LOG[39m [38;5;3m[Bootstrap] [39m[32mSwagger UI available at http://localhost:3111/docs[39m

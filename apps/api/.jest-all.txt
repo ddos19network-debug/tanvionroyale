@@ -1,0 +1,3015 @@
+﻿node.exe : PASS test/cors.spec.ts (30.612 s)
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (PASS test/cors.spec.ts (30.612 s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63C57D121 
+ 7: 00007FF63C463602 
+ 8: 00007FF63C462D7A 
+ 9: 00007FF63D04F311 
+10: 00007FF63D12DBBD 
+11: 00007FF63D0529A0 
+12: 00007FF63D056E47 
+13: 00007FF63D35B5C5 
+14: 00007FF63D35C27B 
+15: 00007FF63D129921 
+16: 00007FF63D227A21 
+17: 00007FF63D228BBA 
+18: 00007FF63D225522 
+19: 00007FF63D21F221 
+20: 00007FF63D147D57 
+21: 00007FF63D11A541 
+22: 00007FF63D147948 
+23: 00007FF63D1480FE 
+24: 00007FF63D147DE2 
+25: 00007FF63D11B343 
+26: 00007FF63D111FB5 
+27: 00007FF63D112B85 
+28: 00007FF63C8FC524 
+29: 00007FF63C8C3022 
+30: 00007FF63CB85856 
+31: 00007FF63BCF81A0 
+32: 00007FF63BE845F3 
+33: 00007FF63D710E0B 
+34: 00007FFE9963CD87 
+35: 00007FFE9B3ACAEC 
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63C1D69B4 
+ 7: 00007FF63D5A47E2 
+ 8: 00007FF63D118EBC 
+ 9: 00007FF63D112BAA 
+10: 00007FF63C8FC524 
+11: 00007FF63C8C3022 
+12: 00007FF63CB85856 
+13: 00007FF63BCF81A0 
+14: 00007FF63BE845F3 
+15: 00007FF63D710E0B 
+16: 00007FFE9963CD87 
+17: 00007FFE9B3ACAEC 
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63C1CD4AC 
+ 7: 00007FF63C1E4336 
+ 8: 00007FF63D6692C8 
+ 9: 00007FF63D64DE4E 
+10: 00007FF63D407A9E 
+11: 00007FF63D118B51 
+12: 00007FF63D112BAA 
+13: 00007FF63C8FC524 
+14: 00007FF63C8C3022 
+15: 00007FF63CB85856 
+16: 00007FF63BCF81A0 
+17: 00007FF63BE845F3 
+18: 00007FF63D710E0B 
+19: 00007FFE9963CD87 
+20: 00007FFE9B3ACAEC 
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63C1CD3E6 
+ 7: 00007FF63C1E42C6 
+ 8: 00007FF63D593F2D 
+ 9: 00007FF63D595953 
+10: 00007FF63D5957D2 
+11: 00007FF63D595B5F 
+12: 00007FF63D59B06F 
+13: 00007FF63D58ABE4 
+14: 00007FF63D577CAF 
+15: 00007FF63D589E1D 
+16: 00007FF63D5A486D 
+17: 00007FF63D118EBC 
+18: 00007FF63D112BAA 
+19: 00007FF63C8FC524 
+20: 00007FF63C8C3022 
+21: 00007FF63CB85856 
+22: 00007FF63BCF81A0 
+23: 00007FF63BE845F3 
+24: 00007FF63D710E0B 
+25: 00007FFE9963CD87 
+26: 00007FFE9B3ACAEC 
+PASS test/site-url.spec.ts (31.53 s)
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63C1D6978 
+ 7: 00007FF63D4F1FC2 
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63C1E0418 
+ 7: 00007FF63D5A49B5 
+ 8: 00007FF63D595222 
+ 9: 00007FF63D5A4509 
+10: 00007FF63D5A475D 
+11: 00007FF63D118EBC 
+12: 00007FF63D112BAA 
+13: 00007FF63C8FC524 
+14: 00007FF63C8C3022 
+15: 00007FF63CB85856 
+16: 00007FF63BCF81A0 
+17: 00007FF63BE845F3 
+18: 00007FF63D710E0B 
+19: 00007FFE9963CD87 
+20: 00007FFE9B3ACAEC 
+ 8: 00007FF63D118D92 
+ 9: 00007FF63D112BAA 
+10: 00007FF63C8FC524 
+11: 00007FF63C8C3022 
+12: 00007FF63CB85856 
+13: 00007FF63BCF81A0 
+14: 00007FF63BE845F3 
+15: 00007FF63D710E0B 
+16: 00007FFE9963CD87 
+17: 00007FFE9B3ACAEC 
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63D14FA7B 
+ 7: 00007FF63D148CCF 
+ 8: 00007FF63D14F7F1 
+ 9: 00007FF63D15BF1D 
+10: 00007FF63D15A2C2 
+11: 00007FF63D15A5BB 
+12: 00007FF63D434445 
+13: 00007FF63D11E771 
+14: 00007FF63D119269 
+15: 00007FF63D112BAA 
+16: 00007FF63C8FC524 
+17: 00007FF63C8C3022 
+18: 00007FF63CB85856 
+19: 00007FF63BCF81A0 
+20: 00007FF63BE845F3 
+21: 00007FF63D710E0B 
+22: 00007FFE9963CD87 
+23: 00007FFE9B3ACAEC 
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63C1CD3E6 
+ 7: 00007FF63C1E42C6 
+ 8: 00007FF63D63DF6A 
+ 9: 00007FF63D63A840 
+10: 00007FF63D66E9CA 
+11: 00007FF63D658217 
+12: 00007FF63D668FB5 
+13: 00007FF63D64DE4E 
+14: 00007FF63D407A9E 
+15: 00007FF63D118B51 
+16: 00007FF63D112BAA 
+17: 00007FF63C8FC524 
+18: 00007FF63C8C3022 
+19: 00007FF63CB85856 
+20: 00007FF63BCF81A0 
+21: 00007FF63BE845F3 
+22: 00007FF63D710E0B 
+23: 00007FFE9963CD87 
+24: 00007FFE9B3ACAEC 
+ 1: 00007FF63BE24BB7 node::SetCppgcReference+21127
+ 2: 00007FF63BCF53FF node::TriggerNodeReport+71455
+ 3: 00007FF63CFF8576 v8::base::FatalOOM+54
+ 4: 00007FF63C97F2D1 v8::Function::Experimental_IsNopFunction+2817
+ 5: 00007FF63C460B9B v8::SnapshotCreator::GetIsolate+50139
+ 6: 00007FF63D23DD39 v8::internal::compiler::CompilationDependencies::TransitionDependencyOffTheRecord+1082697
+ 7: 00007FF63D23DECF v8::internal::compiler::CompilationDependencies::TransitionDependencyOffTheRecord+1083103
+ 8: 00007FF63D10BAD4 v8::internal::compiler::CompilationDependencies::~CompilationDependencies+746084
+ 9: 00007FF63D117D8F v8::internal::compiler::CompilationDependencies::~CompilationDependencies+795935
+10: 00007FF63D112BAA v8::internal::compiler::CompilationDependencies::~CompilationDependencies+774970
+11: 00007FF63C8FC524 v8::SharedValueConveyor::SharedValueConveyor+30324
+12: 00007FF63C8C3022 v8::Private::Name+42818
+13: 00007FF63CB85856 v8::PropertyDescriptor::writable+2002518
+14: 00007FF63BCF81A0 v8::CpuProfileNode::GetParent+784
+15: 00007FF63BE845F3 uv_poll_stop+371
+16: 00007FF63D710E0B inflateValidate+186203
+17: 00007FFE9963CD87 BaseThreadInitThunk+23
+18: 00007FFE9B3ACAEC RtlUserThreadStart+44
+PASS test/referral-diagnostic.spec.ts (57.95 s)
+[33m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth state verification failed (GOOGLE): Error: bad state[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mOAuth exchange succeeded (one-time code consumed, session issued)[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mFACEBOOK OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mOAuth exchange succeeded (one-time code consumed, session issued)[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+PASS test/oauth.spec.ts (67.735 s)
+  ΓùÅ Console
+
+    console.error
+      [Google OAuth] token exchange failed: undefined provider error body
+
+    [0m [90m 379 |[39m       [36mif[39m ([33m![39mtokenRes[33m.[39mok) {
+     [90m 380 |[39m         [36mconst[39m errorBody [33m=[39m [36mawait[39m 
+tokenRes[33m.[39mtext()[33m;[39m
+    [31m[1m>[22m[39m[90m 381 |[39m         console[33m.[39merror([32m'[Google OAuth] token exchange 
+failed:'[39m[33m,[39m tokenRes[33m.[39mstatus[33m,[39m errorBody)[33m;[39m
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 382 |[39m         [36mthrow[39m [36mnew[39m [33mUnauthorizedException[39m([32m'Google 
+authentication failed'[39m)[33m;[39m
+     [90m 383 |[39m       }
+     [90m 384 |[39m       [36mconst[39m token [33m=[39m ([36mawait[39m tokenRes[33m.[39mjson()) 
+[36mas[39m { access_token[33m?[39m[33m:[39m string }[33m;[39m[0m
+
+      at OAuthService.fetchProfile (src/modules/auth/oauth.service.ts:381:17)
+      at OAuthService.handleCallback (src/modules/auth/oauth.service.ts:205:21)
+      at Object.<anonymous> (test/oauth.spec.ts:328:5)
+
+[33m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:26:26 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+FAIL test/settings-account.spec.ts (82.284 s)
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ rejects a duplicate email owned by 
+another account (Part 29.6)
+
+    Threading failure
+
+
+
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ rejects a wrong confirmation password 
+and changes nothing
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ refuses passwordless (OAuth-only) 
+accounts with set-password guidance
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ prevents removing the LAST 
+login/recovery path (email-only account) (Part 29.8)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ removes the email when a phone 
+remains, resetting state + auditing (Part 7)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ allows email removal for a 
+Google-linked account without a phone
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ CHANGING a verified phone resets 
+verification and requires a fresh OTP (Part 10)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ the full change flow reaches VERIFIED only 
+through the OTP to the new number
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ an unchanged verified phone still conflicts 
+(no spurious re-send) (Part 29.15)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ rejects a duplicate phone before anything is 
+written (Part 29.17)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ rejects a non-E.164 phone with the canonical 
+format message (Part 8)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ prevents removing the LAST login/recovery 
+path (phone-only account) (Part 29.18)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ removes the phone when an email remains: 
+flags reset, identity + codes burned, audited
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö profile phone edit hardening (Part 10) ΓÇ║ a profile phone change clears verification flags 
++ Verification row
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö profile phone edit hardening (Part 10) ΓÇ║ rejects a duplicate profile phone (Part 29.17)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö profile phone edit hardening (Part 10) ΓÇ║ rejects a non-E.164 profile phone with the 
+canonical message
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö profile phone edit hardening (Part 10) ΓÇ║ an unchanged phone keeps its verified state (no 
+false reset)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö KYC is server-authoritative only (Parts 13/16/19/29.23) ΓÇ║ a smuggled kycStatus in the 
+profile payload never reaches the account
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö KYC is server-authoritative only (Parts 13/16/19/29.23) ΓÇ║ verification status responses 
+never contain a KYC field (no mixing)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö KYC is server-authoritative only (Parts 13/16/19/29.23) ΓÇ║ getMe exposes the backend 
+kycStatus for the Settings card to DISPLAY
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö password change (Parts 20/29.28ΓÇô30) ΓÇ║ a successful change rewrites the hash, revokes 
+other sessions, audits safely
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö password change (Parts 20/29.28ΓÇô30) ΓÇ║ a failed change keeps the account intact and 
+records the failure event
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö password change (Parts 20/29.28ΓÇô30) ΓÇ║ passwords never appear in audit logs, security 
+events or logger calls (Part 29.30)
+
+    Memory allocation error
+
+
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63C38F2DA 
+ 7: 00007FF63D58FF24 
+ 8: 00007FF63D5904EC 
+ 9: 00007FF63D5906C4 
+10: 00007FF63D59007E 
+11: 00007FF63D5A46D2 
+12: 00007FF63D118EBC 
+13: 00007FF63D112BAA 
+14: 00007FF63C8FC524 
+15: 00007FF63C8C3022 
+16: 00007FF63CB85856 
+17: 00007FF63BCF81A0 
+18: 00007FF63BE845F3 
+19: 00007FF63D710E0B 
+20: 00007FFE9963CD87 
+21: 00007FFE9B3ACAEC 
+ 1: 00007FF63BE24BB7 
+FAIL test/admin-rbac.spec.ts (118.027 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/modules/admin/admin.service.ts:14:1)
+      at Object.<anonymous> (test/admin-rbac.spec.ts:8:1)
+
+  ΓùÅ Customer login refuses staff accounts (POST /auth/login) ΓÇ║ rejects an ADMIN account with 403, records 
+the attempt and creates no session
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See 
+https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 476 |[39m
+     [90m 477 |[39m describe([32m'Customer login refuses staff accounts (POST /auth/login)'[39m[33m,[39m 
+() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 478 |[39m   it([32m'rejects an ADMIN account with 403, records the attempt and 
+creates no session'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m     |[39m   [31m[1m^[22m[39m
+     [90m 479 |[39m     [36mconst[39m fake [33m=[39m makeAuthFake([36mawait[39m 
+authUserWithPassword([[32m'ADMIN'[39m]))[33m;[39m
+     [90m 480 |[39m
+     [90m 481 |[39m     [36mconst[39m error [33m=[39m [36mawait[39m fake[33m.[39mservice[0m
+
+      at test/admin-rbac.spec.ts:478:3
+      at Object.<anonymous> (test/admin-rbac.spec.ts:477:1)
+
+  ΓùÅ Customer login refuses staff accounts (POST /auth/login) ΓÇ║ rejects a SUPER_ADMIN account the same way
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See 
+https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 494 |[39m   })[33m;[39m
+     [90m 495 |[39m
+    [31m[1m>[22m[39m[90m 496 |[39m   it([32m'rejects a SUPER_ADMIN account the same way'[39m[33m,[39m 
+[36masync[39m () [33m=>[39m {
+     [90m     |[39m   [31m[1m^[22m[39m
+     [90m 497 |[39m     [36mconst[39m fake [33m=[39m makeAuthFake([36mawait[39m 
+authUserWithPassword([[32m'SUPER_ADMIN'[39m]))[33m;[39m
+     [90m 498 |[39m
+     [90m 499 |[39m     [36mawait[39m expect([0m
+
+      at test/admin-rbac.spec.ts:496:3
+      at Object.<anonymous> (test/admin-rbac.spec.ts:477:1)
+
+  ΓùÅ Session context separation (SessionKind) ΓÇ║ staff login creates a STAFF session; customer login creates 
+a CUSTOMER session
+
+    UnauthorizedException: Invalid credentials
+
+    [0m [90m 327 |[39m         })[33m;[39m
+     [90m 328 |[39m       }
+    [31m[1m>[22m[39m[90m 329 |[39m       [36mthrow[39m [36mnew[39m 
+[33mUnauthorizedException[39m([32m'Invalid credentials'[39m)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 330 |[39m     }
+     [90m 331 |[39m
+     [90m 332 |[39m     [36mconst[39m roles [33m=[39m user[33m.[39muserRoles[33m.[39mmap((ur) 
+[33m=>[39m ur[33m.[39mrole[33m.[39mname)[33m;[39m[0m
+
+      at AuthService.adminLogin (src/modules/auth/auth.service.ts:329:13)
+      at Object.<anonymous> (test/admin-rbac.spec.ts:568:5)
+
+  ΓùÅ Session context separation (SessionKind) ΓÇ║ admin login accepts the staff USERNAME as identifier 
+(Username / Gmail field)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Session context separation (SessionKind) ΓÇ║ rejects an invalid admin password with 401, audits it, and 
+creates no session
+
+    Memory allocation error
+
+
+
+  ΓùÅ Session context separation (SessionKind) ΓÇ║ rejects an INACTIVE (SUSPENDED) admin with 403 and no session
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer flows refuse staff accounts (completeLogin chokepoint) ΓÇ║ phone login refuses an ADMIN account 
+with 403 and creates no session
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer flows refuse staff accounts (completeLogin chokepoint) ΓÇ║ OAuth issueSession refuses an ADMIN 
+account with 403 and creates no session
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer flows refuse staff accounts (completeLogin chokepoint) ΓÇ║ phone login still works for an 
+ordinary customer
+
+    Memory allocation error
+
+
+
+[31m[Nest] 21732  - [39m09/27/2026, 3:26:42 PM [31m  ERROR[39m [38;5;3m[ReferralService] 
+[39m[31mreferral.attribute_failed newUserId=referred error=Error: database exploded[39m
+[33m[Nest] 21732  - [39m09/27/2026, 3:26:42 PM [33m   WARN[39m [38;5;3m[ReferralService] [39m[33mreferral.self_rejected newUserId=referrer[39m
+PASS test/referral.spec.ts (47.59 s)
+FAIL test/account-domains.spec.ts (18.906 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/modules/admin/admin.service.ts:14:1)
+      at Object.<anonymous> (test/account-domains.spec.ts:29:1)
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 1: a real customer appears in the 
+admin users directory
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 2: a staff/admin account does NOT 
+appear in /admin/users
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 3: both master admins do NOT appear 
+in /admin/users
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 18: the accountType split lives in 
+the WHERE clause, not the response
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 9: registration always classifies 
+the new account as CUSTOMER
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 9: a client-supplied accountType 
+cannot turn registration into staff creation
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 7: the customer login refuses a 
+staff account even without a staff role
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 8: the ordinary admin signs in 
+through the staff login (STAFF session)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 8: the staff login also accepts the 
+username identifier
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 8: a CUSTOMER is refused at the 
+staff login (no silent fallback)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 8: unknown staff credentials stay a 
+uniform 401
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer money surfaces ΓÇ║ CASE 16: the admin deposit queue is filtered to CUSTOMER 
+accounts
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer money surfaces ΓÇ║ CASE 16: the admin withdrawal queue is filtered to 
+CUSTOMER accounts
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer money surfaces ΓÇ║ CASE 15: the admin bet list is scoped to customer-owned 
+bets
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer detail route ΓÇ║ CASE 19: staff + master admin ids are NotFound through the 
+customer detail route
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer detail route ΓÇ║ CASE 19: a customer id still resolves through the customer 
+detail route
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/admins population (STAFF only) ΓÇ║ CASE 4: an ordinary admin appears in the 
+staff directory
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/admins population (STAFF only) ΓÇ║ CASE 5: both master admins appear in the 
+staff directory as SUPER_ADMIN
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/admins population (STAFF only) ΓÇ║ CASE 6: customers never appear in the staff 
+directory
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff creation (STAFF only) ΓÇ║ CASE 10: createAdminUser classifies the new account 
+as STAFF
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff creation (STAFF only) ΓÇ║ CASE 10: USER (the customer role) cannot be granted 
+at staff creation
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff creation (STAFF only) ΓÇ║ CASE 10: staff roles cannot be assigned to a CUSTOMER 
+account
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff creation (STAFF only) ΓÇ║ CASE 10: USER can never be assigned through role 
+management
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff creation (STAFF only) ΓÇ║ CASE 10: ordinary staff role updates still work for 
+STAFF accounts
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö master admin protection ΓÇ║ CASE 11: master admins keep SUPER_ADMIN (never USER + 
+SUPER_ADMIN)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö master admin protection ΓÇ║ CASE 12: a master admin cannot be deleted 
+(soft-delete/deactivate refused)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö master admin protection ΓÇ║ CASE 13: a master admin cannot be deactivated or suspended
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö master admin protection ΓÇ║ CASE 12/13: an ordinary staff account remains moderatable 
+by staff endpoints
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ edits a STAFF account profile and records 
+the staff audit action
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ refuses to edit a CUSTOMER through the 
+staff endpoint (domain separation)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ an ordinary staff actor cannot modify a 
+master admin identity (protected)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ resets a STAFF password writing ONLY 
+password fields (┬º17: classification/roles intact)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ refuses to reset a CUSTOMER password 
+through the staff endpoint
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ a master admin password reset is refused 
+entirely ΓÇö zero writes
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö wallet separation ΓÇ║ CASE 17: a STAFF account does not get a customer wallet created
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö wallet separation ΓÇ║ CASE 17: a CUSTOMER account still gets its wallet (unchanged 
+behaviour)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö wallet separation ΓÇ║ CASE 14: an EXISTING wallet is returned untouched for any 
+account
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer statistics ΓÇ║ counts CUSTOMER accounts only in the dashboard user totals
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer statistics ΓÇ║ filters the bet-statistics groupBy to customer-owned bets
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ is additive: the classification column lands 
+with a default, nothing is dropped
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ never deletes a User row (no "delete all users" 
+escape hatch exists)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ CASE 14: wallets are never written by the 
+migration
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ CASE 15: bets are never written by the migration
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ CASE 16: deposits and withdrawals are never 
+written by the migration
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ writes only the new column, the USER-role join 
+and session revocations
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ CASE 11: both fixed Master Admin identities are 
+classified STAFF, SUPER_ADMIN preserved
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ never writes customer-facing history tables 
+(support/notifications/audit)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö CUSTOMER vs STAFF session guards ΓÇ║ CASE 20: a CUSTOMER session is refused an admin 
+route (401, re-auth required)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö CUSTOMER vs STAFF session guards ΓÇ║ CASE 20: a PRE-separation token (no sessionKind 
+at all) is also refused
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö CUSTOMER vs STAFF session guards ΓÇ║ CASE 20: a STAFF session with the required role 
+is allowed
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö CUSTOMER vs STAFF session guards ΓÇ║ CASE 20: role checks still come first (a plain 
+customer gets the existing 403)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö CUSTOMER vs STAFF session guards ΓÇ║ CASE 20: customer routes stay open to CUSTOMER 
+sessions
+
+    Threading failure
+
+
+
+PASS test/migration-encoding.spec.ts
+PASS test/affiliate.spec.ts (9.084 s)
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:54 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY SMS delivery simulated[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:54 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY SMS delivery simulated[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:54 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY SMS delivery simulated[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:26:54 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY SMS delivery simulated[39m
+FAIL test/phone-auth.spec.ts (8.506 s)
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone signup: creates a PENDING user, a PHONE identity 
+and issues a hashed OTP
+
+    Memory allocation error
+
+
+
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone signup verify: correct OTP activates the account 
+and auto-verifies the phone
+
+    Memory allocation error
+
+
+
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone signup verify: invalid OTP is rejected and the 
+account stays unverified
+
+    Memory allocation error
+
+
+
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone login: correct credentials return tokens and 
+create a session
+
+    Memory allocation error
+
+
+
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone login: wrong password fails uniformly and 
+records LOGIN_FAILURE
+
+    Memory allocation error
+
+
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63D433ED7 
+ 7: 00007FF63D4336D9 
+ 8: 00007FF63D4341CF 
+ 9: 00007FF63D11E771 
+10: 00007FF63D119269 
+11: 00007FF63D112BAA 
+12: 00007FF63C8FC524 
+13: 00007FF63C8C3022 
+14: 00007FF63CB85856 
+15: 00007FF63BCF81A0 
+16: 00007FF63BE845F3 
+17: 00007FF63D710E0B 
+18: 00007FFE9963CD87 BaseThreadInitThunk+23
+19: 00007FFE9B3ACAEC 
+FAIL test/identifier-login.spec.ts (43.139 s)
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ wrong password on a phone 
+identifier ΓåÆ uniform 401 + LOGIN_FAILURE
+
+    Threading failure
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ staff email identifier 
+cannot customer-login (403, no session)
+
+    Threading failure
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ staff phone identifier 
+cannot customer-login (403, no session)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ a staff ROLE on a 
+customer-classified row is refused too (defense-in-depth)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ BOTH identifier paths create 
+a CUSTOMER session only
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ the dedicated phone endpoint 
+shares the same path and still works (Part 27)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ lockout still applies: 5 
+recent failures ΓåÆ 423 before password check
+
+    Memory allocation error
+
+
+
+[32m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[32m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[32m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[33m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[33m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+PASS test/crash-wallet-lifecycle.spec.ts (16.743 s)
+[32m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 24552  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+PASS test/sports.spec.ts (9.283 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/sports/sports.controller.ts:4:1)
+      at Object.<anonymous> (test/sports.spec.ts:6:1)
+
+[32m[Nest] 2652  - [39m09/27/2026, 3:27:05 PM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email delivery simulated for test@example.com[39m
+PASS test/session-auth.spec.ts (14.81 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (test/session-auth.spec.ts:8:1)
+
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:09 PM [33m   WARN[39m [38;5;3m[JwtAuthGuard] [39m[33mStripped non-allowlisted SUPER_ADMIN from request authorization (userId=u1)[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:09 PM [33m   WARN[39m [38;5;3m[JwtAuthGuard] [39m[33mStripped non-allowlisted SUPER_ADMIN from request authorization (userId=u1)[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:09 PM [33m   WARN[39m [38;5;3m[JwtAuthGuard] [39m[33mStripped non-allowlisted SUPER_ADMIN from request authorization (userId=u1)[39m
+FAIL test/admin-management.spec.ts
+  ΓùÅ Test suite failed to run
+
+    Jest worker encountered 4 child process exceptions, exceeding retry limit
+
+      at ChildProcessWorker.initialize (../../node_modules/.pnpm/jest-worker@29.7.0/node_modules/jest-worker/bui
+ld/workers/ChildProcessWorker.js:181:21)
+
+PASS test/permission-rbac.spec.ts (13.081 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/support/admin-support.controller.ts:16:1)
+      at Object.<anonymous> (test/permission-rbac.spec.ts:9:1)
+
+[32m[Nest] 21732  - [39m09/27/2026, 3:27:12 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_RECOVERY SMS delivery simulated[39m
+FAIL test/users.spec.ts (9.378 s)
+  ΓùÅ UsersService ΓÇ║ changes the password and revokes other sessions in a transaction
+
+    Memory allocation error
+
+
+
+  ΓùÅ UsersService ΓÇ║ rejects a wrong current password without changing anything
+
+    Memory allocation error
+
+
+
+PASS test/oauth-cors.http.spec.ts (77.868 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/auth/auth.controller.ts:5:1)
+      at Object.<anonymous> (test/oauth-cors.http.spec.ts:22:1)
+
+[32m[Nest] 21732  - [39m09/27/2026, 3:27:15 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_RECOVERY SMS delivery simulated[39m
+FAIL test/auth.spec.ts (21.097 s)
+  ΓùÅ AuthService (unit) ΓÇ║ successful login creates a session, tokens and a LOGIN_SUCCESS event
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See 
+https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 170 |[39m   })[33m;[39m
+     [90m 171 |[39m
+    [31m[1m>[22m[39m[90m 172 |[39m   it([32m'successful login creates a session, tokens and a 
+LOGIN_SUCCESS event'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m     |[39m   [31m[1m^[22m[39m
+     [90m 173 |[39m     [36mconst[39m fake [33m=[39m makePrismaFake()[33m;[39m
+     [90m 174 |[39m     [36mconst[39m svc [33m=[39m [36mnew[39m 
+[33mAuthService[39m(fake[33m.[39mprisma[33m,[39m makeJwtFake()[33m,[39m [36mnew[39m 
+[33mOtpService[39m(fake[33m.[39mprisma))[33m;[39m
+     [90m 175 |[39m     fake[33m.[39mprisma[33m.[39muser[33m.[39mfindUnique [33m=[39m 
+jest[33m.[39mfn([36masync[39m () [33m=>[39m ({[0m
+
+      at test/auth.spec.ts:172:3
+      at Object.<anonymous> (test/auth.spec.ts:97:1)
+
+[32m[Nest] 21732  - [39m09/27/2026, 3:27:18 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_RECOVERY SMS delivery simulated[39m
+[32m[Nest] 21732  - [39m09/27/2026, 3:27:19 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_RECOVERY SMS delivery simulated[39m
+[32m[Nest] 21732  - [39m09/27/2026, 3:27:19 PM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email delivery simulated for reset@example.com[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:23 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=user-data outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=user-data outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=unknown_player[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=wallet_inactive[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=player_ineligible[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=win outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=win outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=duplicate provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=duplicate provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=win outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=win outcome=duplicate provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=transaction_conflict[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=win outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=transaction_conflict[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=transaction_conflict[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=transaction_conflict[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:24 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=duplicate provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=session.started outcome=accepted requestId=req-1[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[BigBangWebhookService] [39m[33mbigbang.webhook outcome=rejected reason=BAD_SIGNATURE requestId=req-1[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[BigBangWebhookService] [39m[33mbigbang.webhook outcome=rejected reason=BIGBANG_WEBHOOK_NOT_CONFIGURED requestId=req-1[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[BigBangWebhookService] [39m[33mbigbang.webhook outcome=rejected reason=BAD_SIGNATURE requestId=req-1[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[BigBangWebhookService] [39m[33mbigbang.webhook outcome=rejected reason=BAD_SIGNATURE requestId=req-1[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[BigBangWebhookService] [39m[33mbigbang.webhook outcome=rejected reason=MISSING_SIGNATURE requestId=req-1[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[BigBangWebhookService] [39m[33mbigbang.webhook outcome=rejected reason=STALE_TIMESTAMP requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=session.started outcome=accepted requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=round.completed outcome=accepted requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=round.completed outcome=duplicate requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=round.completed outcome=duplicate requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=round.completed outcome=accepted requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=round.completed outcome=duplicate requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=round.completed outcome=accepted requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=round.completed outcome=accepted requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=session.started outcome=accepted requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=session.ended outcome=accepted requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=round.completed outcome=accepted requestId=req-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[BigBangWebhookService] [39m[33mbigbang.webhook outcome=rejected reason=BIGBANG_WEBHOOK_UNSUPPORTED_EVENT requestId=req-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[BigBangWebhookService] [39m[33mbigbang.webhook outcome=rejected reason=BAD_SIGNATURE requestId=req-1[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=insufficient_funds[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=insufficient_funds[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=balance-change outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=balance-change outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[BigBangWebhookService] [39m[33mbigbang.webhook outcome=rejected reason=BIGBANG_WEBHOOK_MALFORMED_BODY requestId=req-1[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[BigBangWebhookService] [39m[33mbigbang.webhook outcome=rejected reason=BAD_SIGNATURE requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=session.started outcome=accepted requestId=req-1[39m
+[32m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[BigBangWebhookService] [39m[32mbigbang.webhook event=session.started outcome=accepted requestId=req-1[39m
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[BigBangWebhookService] [39m[33mbigbang.webhook outcome=rejected reason=BAD_SIGNATURE requestId=req-1[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=currency_mismatch[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=currency_mismatch[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=currency_mismatch[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=balance-change outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseCallbacksController] [39m[33mwinhouse.callback kind=balance-change outcome=rejected reason=malformed_body[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=action_amount_mismatch[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=win outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=action_amount_mismatch[39m
+PASS test/bigbang-webhook.spec.ts (16.048 s)
+PASS test/winhouse-wallet.spec.ts (12.07 s)
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 reason=unknown_player[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=session_mismatch[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=duplicate provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=balance-change outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=insufficient_funds[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=currency_mismatch[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:25 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=balance-change outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=none user=unknown reason=not_configured[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=user-1 reason=nonce_reused[39m
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=user-1 reason=Insufficient available balance[39m
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=unknown reason=player_not_recognized[39m
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=unknown reason=currency_mismatch[39m
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=unknown reason=invalid_amount[39m
+PASS test/casino-wallet-callbacks.spec.ts (12.203 s)
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=win outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=win outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=win outcome=duplicate provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=win outcome=rejected provider=provider-row-1 user=unknown reason=player_not_recognized[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=refund outcome=rejected provider=provider-row-1 user=unknown reason=missing_reference_transaction_id[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=win outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=win outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=rollback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=rollback outcome=rejected provider=provider-row-1 user=unknown reason=missing_reference_transaction_id[39m
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=unknown reason=amount_above_maximum[39m
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=unknown reason=missing_transaction_id[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:26 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=balance outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=not_configured[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=provider_disabled[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=environment_mismatch[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=invalid_base_url[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=credentials_missing[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=unknown_player[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=missing_username[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=wallet_inactive[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_signature[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_signature[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=missing_signature[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_signature[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1 reason=round_close[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=insufficient_funds[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=currency_mismatch[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=unknown_player[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=malformed_body[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=malformed_body[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=malformed_body[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=malformed_body[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=invalid_amount[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=invalid_amount[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=transaction_conflict[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=duplicate provider=provider-row-1 user=user-1[39m
+PASS test/bigbang-wallet.spec.ts (15.286 s)
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangCallbacksController] [39m[33mbigbang.callback outcome=rejected reason=malformed_body[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:27 PM [33m   WARN[39m [38;5;3m[BigBangCallbacksController] [39m[33mbigbang.callback outcome=rejected reason=malformed_body[39m
+FAIL test/account-recovery.spec.ts (42.094 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/auth/auth.controller.ts:5:1)
+      at Object.<anonymous> (test/account-recovery.spec.ts:292:32)
+
+  ΓùÅ Phase 12 ΓÇö account recovery ΓÇ║ phone recovery ΓÇ║ recovers an account: correct OTP sets a new password 
+and revokes all sessions
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See 
+https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 81 |[39m     })[33m;[39m
+     [90m 82 |[39m
+    [31m[1m>[22m[39m[90m 83 |[39m     it([32m'recovers an account: correct OTP sets a new password and 
+revokes all sessions'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m    |[39m     [31m[1m^[22m[39m
+     [90m 84 |[39m       [36mconst[39m { prisma[33m,[39m state } [33m=[39m makePrismaFake()[33m;[39m
+     [90m 85 |[39m       [36mconst[39m oldHash [33m=[39m [36mawait[39m 
+argon2[33m.[39mhash([32m'OldPassword1'[39m)[33m;[39m
+     [90m 86 |[39m       state[33m.[39musers[33m.[39mpush(makeUser({ phoneVerified[33m:[39m 
+[36mtrue[39m[33m,[39m passwordHash[33m:[39m oldHash }))[33m;[39m[0m
+
+      at test/account-recovery.spec.ts:83:5
+      at test/account-recovery.spec.ts:59:3
+      at Object.<anonymous> (test/account-recovery.spec.ts:58:1)
+
+PASS test/partner-providers.spec.ts (10.455 s)
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63D23622A 
+ 7: 00007FF63D23689A 
+ 8: 00007FF63D23BBB0 
+ 9: 00007FF63D23A87E 
+10: 00007FF63D147D57 
+11: 00007FF63D11A541 
+12: 00007FF63D147948 
+13: 00007FF63D1480FE 
+14: 00007FF63D147DE2 
+15: 00007FF63D11C12D 
+16: 00007FF63D117E75 
+17: 00007FF63D112BAA 
+18: 00007FF63C8FC524 
+19: 00007FF63C8C3022 
+20: 00007FF63CB85856 
+21: 00007FF63BCF81A0 
+22: 00007FF63BE845F3 
+23: 00007FF63D710E0B 
+24: 00007FFE9963CD87 
+25: 00007FFE9B3ACAEC 
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63C38F2DA 
+ 7: 00007FF63D58FF24 
+ 8: 00007FF63D5904EC 
+ 9: 00007FF63D5906C4 
+10: 00007FF63D59007E 
+11: 00007FF63D5A46D2 
+12: 00007FF63D118EBC 
+13: 00007FF63D112BAA 
+14: 00007FF63C8FC524 
+15: 00007FF63C8C3022 
+16: 00007FF63CB85856 
+17: 00007FF63BCF81A0 
+18: 00007FF63BE845F3 
+19: 00007FF63D710E0B 
+20: 00007FFE9963CD87 
+21: 00007FFE9B3ACAEC RtlUserThreadStart+44
+PASS test/profile-activity.spec.ts (5.328 s)
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:32 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY SMS delivery simulated[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:32 PM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email delivery simulated for pending@example.com[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:32 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY SMS delivery simulated[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:32 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY SMS delivery simulated[39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:32 PM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email delivery simulated for x@y.z[39m
+PASS test/verification.spec.ts (5.87 s)
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:32 PM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email delivery simulated for x@y.z[39m
+PASS test/crash-void-refund.spec.ts (5.059 s)
+[33m[Nest] 2652  - [39m09/27/2026, 3:27:33 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #42 voided safely ΓÇö refunds issued[39m
+[33m[Nest] 2652  - [39m09/27/2026, 3:27:33 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #42 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=9 returned=9 providers=3 [Provider A=3, Provider B=4, Provider C=2][39m
+[33m[Nest] 2652  - [39m09/27/2026, 3:27:33 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #42 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=9 returned=9 providers=3 [Provider A=3, Provider B=4, Provider C=2][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=provider-a-id category=all search=none page=1 pageSize=48 total=3 returned=3 providers=1 [Provider A=3][39m
+[33m[Nest] 2652  - [39m09/27/2026, 3:27:33 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #42 voided safely ΓÇö refunds issued[39m
+[33m[Nest] 2652  - [39m09/27/2026, 3:27:33 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #42 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=provider-b-id category=all search=none page=1 pageSize=48 total=4 returned=4 providers=1 [Provider B=4][39m
+[33m[Nest] 2652  - [39m09/27/2026, 3:27:33 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #42 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=provider-c-id category=all search=none page=1 pageSize=48 total=2 returned=2 providers=1 [Provider C=2][39m
+[33m[Nest] 2652  - [39m09/27/2026, 3:27:33 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #42 voided safely ΓÇö refunds issued[39m
+[33m[Nest] 2652  - [39m09/27/2026, 3:27:33 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #42 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=9 returned=9 providers=3 [Provider A=3, Provider B=4, Provider C=2][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=12 returned=12 providers=4 [Provider A=3, Provider B=5, Provider C=2, Provider D=2][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=9 returned=9 providers=3 [Provider A=3, Provider B=4, Provider C=2][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=12 returned=12 providers=4 [Provider A=3, Provider B=5, Provider C=2, Provider D=2][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=Sweet Bonanza page=1 pageSize=48 total=3 returned=3 providers=3 [Provider A=1, Provider B=1, Provider C=1][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=4 total=9 returned=4 providers=3 [Provider A=3, Provider B=4, Provider C=2][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=2 pageSize=4 total=9 returned=4 providers=3 [Provider A=3, Provider B=4, Provider C=2][39m
+[31m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [31m  ERROR[39m [38;5;3m[CasinoCatalogService] 
+[39m[31mcasino.sync.provider_error provider=Provider B env=sandbox error=provider provider-b-id 
+unreachable[39m
+[31m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [31m  ERROR[39m [38;5;3m[CasinoCatalogService] 
+[39m[31mcasino.sync.provider_error provider=Provider B env=sandbox error=provider provider-b-id 
+unreachable[39m
+PASS test/betting-bet.spec.ts (8.333 s)
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=3 pageSize=4 total=9 returned=1 providers=3 [Provider A=3, Provider B=4, Provider C=2][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=Book page=1 pageSize=48 total=3 returned=3 providers=3 [Provider A=1, Provider B=1, Provider C=1][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=provider-c-id category=slots search=Sweet page=1 pageSize=48 total=1 returned=1 providers=1 [Provider C=1][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=provider-a-id category=all search=Shadows page=1 pageSize=48 total=0 returned=0 providers=0 [][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=9 returned=9 providers=3 [Provider A=3, Provider B=4, Provider C=2][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=LIVE_CASINO provider=all category=all search=none page=1 pageSize=48 total=1 returned=1 providers=1 [Provider B=1][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=studio-two category=all search=none page=1 pageSize=48 total=4 returned=4 providers=1 [Provider B=4][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=provider-b-id category=all search=none page=1 pageSize=48 total=4 returned=4 providers=1 [Provider B=4][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=provider-that-does-not-exist category=all search=none page=1 pageSize=48 total=0 returned=0 providers=0 [][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.start providers=3 env=sandbox[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider A fetched=3 created=3 updated=0 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider B fetched=4 created=4 updated=0 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider C fetched=2 created=2 updated=0 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.end providers discovered=3 synced=3 failed=0 fetched=9 created=9 updated=0 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.start providers=3 env=sandbox[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider A fetched=3 created=3 updated=0 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider B fetched=4 created=4 updated=0 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider C fetched=2 created=2 updated=0 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.end providers discovered=3 synced=3 failed=0 fetched=9 created=9 updated=0 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=9 returned=9 providers=3 [Provider A=3, Provider B=4, Provider C=2][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.start providers=3 env=sandbox[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider A fetched=3 created=3 updated=0 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider C fetched=2 created=2 updated=0 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.end providers discovered=3 synced=2 failed=1 fetched=5 created=5 updated=0 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=5 returned=5 providers=2 [Provider A=3, Provider C=2][39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.start providers=3 env=sandbox[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider A fetched=2 created=0 updated=2 categories=2 deactivated=1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider C fetched=2 created=0 updated=2 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.end providers discovered=3 synced=2 failed=1 fetched=4 created=0 updated=4 deactivated=1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.start providers=3 env=sandbox[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider A fetched=3 created=3 updated=0 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider B fetched=4 created=4 updated=0 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider C fetched=2 created=2 updated=0 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.end providers discovered=3 synced=3 failed=0 fetched=9 created=9 updated=0 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.start providers=3 env=sandbox[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider A fetched=3 created=0 updated=3 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider B fetched=4 created=0 updated=4 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=Provider C fetched=2 created=0 updated=2 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.end providers discovered=3 synced=3 failed=0 fetched=9 created=0 updated=9 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoLaunchService] [39m[32mcasino.launch provider=Provider A env=sandbox game=a-book-of-ra product=CASINO mode=REAL user=user-1 session=session-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoLaunchService] [39m[32mcasino.launch provider=Provider B env=sandbox game=sweet-bonanza product=CASINO mode=REAL user=user-1 session=session-1[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoLaunchService] [39m[32mcasino.launch provider=Provider C env=sandbox game=c-sweet-bonanza product=CASINO mode=DEMO user=user-1 session=demo[39m
+PASS test/casino-multi-provider.spec.ts (6.493 s)
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.start providers=1 env=sandbox[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.provider_end provider=BigBang fetched=2 created=0 updated=2 categories=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.sync.end providers discovered=1 synced=1 failed=0 fetched=2 created=0 updated=2 deactivated=0[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=2 returned=2 providers=1 [BigBang=2][39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:33 PM [33m   WARN[39m [38;5;3m[CasinoCatalogService] [39m[33mcasino.sync.skipped providers=0 env=sandbox reason=Provider "" is disabled.[39m
+PASS test/partner-webhook.spec.ts
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/partner/partner.controller.ts:28:1)
+      at Object.<anonymous> (test/partner-webhook.spec.ts:3:1)
+
+[33m[Nest] 22900  - [39m09/27/2026, 3:27:35 PM [33m   WARN[39m [38;5;3m[PartnerController] [39m[33mPartner webhook rejected (bad_signature)[39m
+PASS test/partner-routing.spec.ts
+PASS test/payment-gateways.spec.ts (5.479 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/wallet/payment-webhooks.controller.ts:17:1)
+      at Object.<anonymous> (test/payment-gateways.spec.ts:11:1)
+
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=2 returned=2 providers=1 [Script Casino Partner=2][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=LIVE_CASINO provider=all category=all search=none page=1 pageSize=48 total=1 returned=1 providers=1 [Script Casino Partner=1][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=Live page=1 pageSize=48 total=0 returned=0 providers=0 [][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=blackjack page=1 pageSize=48 total=1 returned=1 providers=1 [Script Casino Partner=1][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=LIVE_CASINO provider=all category=all search=blackjack page=1 pageSize=48 total=0 returned=0 providers=0 [][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=1 returned=1 providers=1 [Script Casino Partner=1][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=LIVE_CASINO provider=all category=all search=none page=1 pageSize=48 total=0 returned=0 providers=0 [][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=slots search=none page=1 pageSize=48 total=1 returned=1 providers=1 [Script Casino Partner=1][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=does-not-exist search=none page=1 pageSize=48 total=0 returned=0 providers=0 [][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=LIVE_CASINO provider=all category=all search=none page=1 pageSize=48 total=1 returned=1 providers=1 [Script Casino Partner=1][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=LIVE_CASINO provider=all category=all search=none page=1 pageSize=48 total=2 returned=2 providers=1 [Script Casino Partner=2][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=2 returned=2 providers=1 [Script Casino Partner=2][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=LIVE_CASINO provider=all category=all search=none page=1 pageSize=48 total=1 returned=1 providers=1 [Script Casino Partner=1][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=studio-two category=all search=none page=1 pageSize=48 total=1 returned=1 providers=1 [Script Casino Partner=1][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=Studio Two category=all search=none page=1 pageSize=48 total=1 returned=1 providers=1 [Script Casino Partner=1][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=provider-row-1 category=all search=none page=1 pageSize=48 total=2 returned=2 providers=1 [Script Casino Partner=2][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=Script Casino Partner category=all search=none page=1 pageSize=48 total=2 returned=2 providers=1 [Script Casino Partner=2][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=does-not-exist category=all search=none page=1 pageSize=48 total=0 returned=0 providers=0 [][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=Golden page=1 pageSize=48 total=1 returned=1 providers=1 [Script Casino Partner=1][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=2 returned=2 providers=1 [Script Casino Partner=2][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=1 total=2 returned=1 providers=1 [Script Casino Partner=2][39m
+PASS test/casino-catalog.spec.ts
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=0 returned=0 providers=0 [][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=all category=all search=none page=1 pageSize=48 total=2 returned=2 providers=1 [Script Casino Partner=2][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=studio-two category=table-games search=none page=1 pageSize=48 total=1 returned=1 providers=1 [Script Casino Partner=1][39m
+[32m[Nest] 24644  - [39m09/27/2026, 3:27:36 PM [32m    LOG[39m [38;5;3m[CasinoCatalogService] [39m[32mcasino.catalog.diagnostic product=CASINO provider=live-studio category=live-roulette search=none page=1 pageSize=48 total=0 returned=0 providers=0 [][39m
+PASS test/provably-fair.spec.ts
+[31m[Nest] 24552  - [39m09/27/2026, 3:27:37 PM [31m  ERROR[39m [38;5;3m[AllExceptionsFilter] 
+[39m[31m[requestId=req-123] GET /api/v1/admin/payment-methods -> 500 (PrismaClientKnownRequestError) 
+prismaCode=P2021 known[39m
+PrismaClientKnownRequestError: known
+    at prismaKnown (D:\tanvionRoyale\apps\api\test\all-exceptions-filter.spec.ts:66:10)
+    at Object.<anonymous> (D:\tanvionRoyale\apps\api\test\all-exceptions-filter.spec.ts:120:18)
+    at Promise.then.completed 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\utils.js:298:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\utils.js:231:10)
+    at _callCircusTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:316:40)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at _runTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:252:3)
+    at _runTestsForDescribeBlock 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:126:9)
+    at _runTestsForDescribeBlock 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:121:9)
+    at run (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:71:3)
+    at runAndTransformResultsToJestFormat (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\j
+est-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+    at jestAdapter (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\legacy
+-code-todo-rewrite\jestAdapter.js:79:19)
+    at runTestInternal 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\runTest.js:367:16)
+    at runTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\runTest.js:444:34)
+    at Object.worker 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\testWorker.js:106:12)
+[31m[Nest] 24552  - [39m09/27/2026, 3:27:37 PM [31m  ERROR[39m [38;5;3m[AllExceptionsFilter] 
+[39m[31m[requestId=req-123] GET /api/v1/admin/payment-methods -> 500 (PrismaClientKnownRequestError) 
+prismaCode=P2022 known[39m
+PrismaClientKnownRequestError: known
+    at prismaKnown (D:\tanvionRoyale\apps\api\test\all-exceptions-filter.spec.ts:66:10)
+    at Object.<anonymous> (D:\tanvionRoyale\apps\api\test\all-exceptions-filter.spec.ts:140:7)
+    at Promise.then.completed 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\utils.js:298:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\utils.js:231:10)
+    at _callCircusTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:316:40)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at _runTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:252:3)
+    at _runTestsForDescribeBlock 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:126:9)
+    at _runTestsForDescribeBlock 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:121:9)
+    at run (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:71:3)
+    at runAndTransformResultsToJestFormat (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\j
+est-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+    at jestAdapter (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\legacy
+-code-todo-rewrite\jestAdapter.js:79:19)
+    at runTestInternal 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\runTest.js:367:16)
+    at runTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\runTest.js:444:34)
+    at Object.worker 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\testWorker.js:106:12)
+[31m[Nest] 24552  - [39m09/27/2026, 3:27:37 PM [31m  ERROR[39m [38;5;3m[AllExceptionsFilter] 
+[39m[31m[requestId=req-123] GET /api/v1/admin/payment-methods -> 500 (Error) Sensitive internals: connection 
+string postgres://...[39m
+Error: Sensitive internals: connection string postgres://...
+    at Object.<anonymous> (D:\tanvionRoyale\apps\api\test\all-exceptions-filter.spec.ts:152:18)
+    at Promise.then.completed 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\utils.js:298:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\utils.js:231:10)
+    at _callCircusTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:316:40)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at _runTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:252:3)
+    at _runTestsForDescribeBlock 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:126:9)
+    at _runTestsForDescribeBlock 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:121:9)
+    at run (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:71:3)
+    at runAndTransformResultsToJestFormat (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\j
+est-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+    at jestAdapter (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\legacy
+-code-todo-rewrite\jestAdapter.js:79:19)
+    at runTestInternal 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\runTest.js:367:16)
+    at runTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\runTest.js:444:34)
+    at Object.worker 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\testWorker.js:106:12)
+[31m[Nest] 24552  - [39m09/27/2026, 3:27:37 PM [31m  ERROR[39m [38;5;3m[AllExceptionsFilter] 
+[39m[31mException raised after response was already sent for this request (headersSent=true); skipping 
+response write. Error: boom
+    at Object.<anonymous> (D:\tanvionRoyale\apps\api\test\all-exceptions-filter.spec.ts:163:18)
+    at Promise.then.completed 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\utils.js:298:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\utils.js:231:10)
+    at _callCircusTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:316:40)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at _runTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:252:3)
+    at _runTestsForDescribeBlock 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:126:9)
+    at _runTestsForDescribeBlock 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:121:9)
+    at run (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:71:3)
+    at runAndTransformResultsToJestFormat (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\j
+est-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+    at jestAdapter (D:\tanvionRoyale\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\legacy
+-code-todo-rewrite\jestAdapter.js:79:19)
+    at runTestInternal 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\runTest.js:367:16)
+    at runTest 
+(D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\runTest.js:444:34)
+    at Object.worker (D:\tanvionRoyale\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\test
+Worker.js:106:12)[39m
+PASS test/all-exceptions-filter.spec.ts
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:37 PM [33m   WARN[39m [38;5;3m[AllExceptionsFilter] [39m[33m[requestId=req-123] GET /api/v1/admin/payment-methods -> 400 (BadRequestException) Payment method code is required[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:37 PM [33m   WARN[39m [38;5;3m[AllExceptionsFilter] [39m[33m[requestId=req-123] GET /api/v1/admin/payment-methods -> 404 (PrismaClientKnownRequestError) prismaCode=P2025 known[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:37 PM [33m   WARN[39m [38;5;3m[AllExceptionsFilter] [39m[33m[requestId=req-123] GET /api/v1/admin/payment-methods -> 409 (PrismaClientKnownRequestError) prismaCode=P2002 known[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:37 PM [33m   WARN[39m [38;5;3m[AllExceptionsFilter] [39m[33m[requestId=req-123] GET /api/v1/admin/payment-methods -> 409 (PrismaClientKnownRequestError) prismaCode=P2003 known[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:37 PM [33m   WARN[39m [38;5;3m[AllExceptionsFilter] [39m[33m[requestId=33223367-35cd-4913-8757-7706dae15ea5] POST /x -> 400 (BadRequestException) x[39m
+PASS test/raw-body-capture.spec.ts
+PASS test/bigbang-provider.spec.ts
+PASS test/settlement.spec.ts
+PASS test/betting-odds-stake.spec.ts
+PASS test/crash-sequence.spec.ts
+PASS test/admin-payment-methods.spec.ts (6.261 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/wallet/admin-payment-methods.controller.ts:16:1)
+      at Object.<anonymous> (test/admin-payment-methods.spec.ts:9:1)
+
+[33m[Nest] 2652  - [39m09/27/2026, 3:27:41 PM [33m   WARN[39m [38;5;3m[HealthService] [39m[33mDATABASE SCHEMA DRIFT DETECTED ΓÇö the database is missing columns/tables the API expects. Run `prisma migrate deploy` against the deployment database (Render runs it in buildCommand).[39m
+PASS test/api.spec.ts (5.993 s)
+PASS test/betting-events.spec.ts
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:42 PM [33m   WARN[39m [38;5;3m[WinHouseAdminController] [39m[33mwinhouse.selftest provider=WinHouse env=sandbox failed=provider_resolved,embed_key_format,callback_token_configured,wallet_api_key_configured,required_credentials_resolved[39m
+PASS test/crash-real-money-gate.spec.ts
+PASS test/winhouse-admin.spec.ts
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/winhouse/winhouse-admin.controller.ts:4:1)
+      at Object.<anonymous> (test/winhouse-admin.spec.ts:2:1)
+
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:43 PM [33m   WARN[39m [38;5;3m[WinHouseAdminController] [39m[33mwinhouse.selftest provider=WinHouse env=sandbox failed=wallet_round_trip_rolled_back[39m
+[33m[Nest] 24552  - [39m09/27/2026, 3:27:43 PM [33m   WARN[39m [38;5;3m[WinHouseAdminController] [39m[33mwinhouse.selftest provider=WinHouse env=sandbox failed=provider_resolved,embed_key_format,callback_token_configured,wallet_api_key_configured,required_credentials_resolved[39m
+PASS test/migration-sql-structure.spec.ts
+[33m[Nest] 24644  - [39m09/27/2026, 3:27:44 PM [33m   WARN[39m [38;5;3m[NotificationService] [39m[33msendPush failed (notification kept): FCM unavailable[39m
+PASS test/notifications.spec.ts
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:45 PM [33m   WARN[39m [38;5;3m[SportsSyncService] [39m[33mSports sync failed (provider=real-partner): Betting provider is not configured[39m
+[33m[Nest] 22812  - [39m09/27/2026, 3:27:45 PM [33m   WARN[39m [38;5;3m[SportsSyncService] [39m[33mSports sync failed (provider=real-partner): upstream 500: provider exploded[39m
+PASS test/sports-sync.spec.ts
+PASS test/wallet.spec.ts
+PASS test/schema-migration-drift.spec.ts
+PASS test/crash-math.spec.ts
+PASS test/winhouse-launch.spec.ts
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=299998[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=299999[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=300000[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=300000[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=300000[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=600000[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=119999[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=300000[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=300000[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=300000[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=60000[39m
+[32m[Nest] 24552  - [39m09/27/2026, 3:27:47 PM [32m    LOG[39m [38;5;3m[WinHouseLaunchService] [39m[32mwinhouse.launch provider=WinHouse env=sandbox user=user-1 player=trwhc6c289e49e9c05b2145860387b73 ttlMs=300000[39m
+PASS test/winhouse-signature.spec.ts
+PASS test/bigbang-factory.spec.ts
+PASS test/winhouse-money.spec.ts
+PASS test/production-secrets.spec.ts
+PASS test/mock-provider.spec.ts
+PASS test/round-state.spec.ts
+PASS test/casino-money.spec.ts
+PASS test/casino-player-identity.spec.ts
+PASS test/casino-signature.spec.ts
+PASS test/trading.spec.ts (5.094 s)
+[31m[Nest] 22812  - [39m09/27/2026, 3:27:49 PM [31m  ERROR[39m [38;5;3m[OtpService] [39m[31mOTP delivery 
+failed (channel=sms, purpose=PHONE_SIGNUP): SMS gateway timeout[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:49 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_SIGNUP SMS delivery simulated[39m
+[32m[Nest] 22812  - [39m09/27/2026, 3:27:49 PM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email delivery simulated for a@b.c[39m
+PASS test/otp-delivery.spec.ts
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63C1CD4AC 
+ 7: 00007FF63C1D6B17 
+ 8: 00007FF63D4F1FC2 
+ 9: 00007FF63D118D92 
+10: 00007FF63D112BAA 
+11: 00007FF63C8FC524 
+12: 00007FF63C8C3022 
+13: 00007FF63CB85856 
+14: 00007FF63BCF81A0 
+15: 00007FF63BE845F3 
+16: 00007FF63D710E0B 
+17: 00007FFE9963CD87 
+18: 00007FFE9B3ACAEC 
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63C1CD4AC 
+ 7: 00007FF63C1E4336 
+ 8: 00007FF63D4BA96E 
+ 9: 00007FF63D4F204F 
+10: 00007FF63D118D92 
+11: 00007FF63D112BAA 
+12: 00007FF63C8FC524 
+13: 00007FF63C8C3022 
+14: 00007FF63CB85856 
+15: 00007FF63BCF81A0 
+16: 00007FF63BE845F3 
+17: 00007FF63D710E0B 
+18: 00007FFE9963CD87 
+19: 00007FFE9B3ACAEC 
+ 1: 00007FF63BE24BB7 node::SetCppgcReference+21127
+ 2: 00007FF63BCF53FF node::TriggerNodeReport+71455
+ 3: 00007FF63CFF8576 v8::base::FatalOOM+54
+ 4: 00007FF63C97F2D1 v8::Function::Experimental_IsNopFunction+2817
+ 5: 00007FF63C460B9B v8::SnapshotCreator::GetIsolate+50139
+ 6: 00007FF63D23DD39 v8::internal::compiler::CompilationDependencies::TransitionDependencyOffTheRecord+1082697
+ 7: 00007FF63D23DECF v8::internal::compiler::CompilationDependencies::TransitionDependencyOffTheRecord+1083103
+ 8: 00007FF63D10BAD4 v8::internal::compiler::CompilationDependencies::~CompilationDependencies+746084
+ 9: 00007FF63D117D8F v8::internal::compiler::CompilationDependencies::~CompilationDependencies+795935
+10: 00007FF63D112BAA v8::internal::compiler::CompilationDependencies::~CompilationDependencies+774970
+11: 00007FF63C8FC524 v8::SharedValueConveyor::SharedValueConveyor+30324
+12: 00007FF63C8C3022 v8::Private::Name+42818
+13: 00007FF63CB85856 v8::PropertyDescriptor::writable+2002518
+14: 00007FF63BCF81A0 v8::CpuProfileNode::GetParent+784
+15: 00007FF63BE845F3 uv_poll_stop+371
+16: 00007FF63D710E0B inflateValidate+186203
+17: 00007FFE9963CD87 BaseThreadInitThunk+23
+18: 00007FFE9B3ACAEC RtlUserThreadStart+44
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63D23DD39 
+ 7: 00007FF63D23DECF 
+ 8: 00007FF63D10BAD4 
+ 9: 00007FF63D117D8F 
+10: 00007FF63D112BAA 
+11: 00007FF63C8FC524 
+12: 00007FF63C8C3022 
+13: 00007FF63CB85856 
+14: 00007FF63BCF81A0 
+15: 00007FF63BE845F3 
+16: 00007FF63D710E0B 
+17: 00007FFE9963CD87 
+18: 00007FFE9B3ACAEC 
+FAIL test/crash-log-secrecy.spec.ts
+  ΓùÅ Test suite failed to run
+
+    Jest worker encountered 4 child process exceptions, exceeding retry limit
+
+      at ChildProcessWorker.initialize (../../node_modules/.pnpm/jest-worker@29.7.0/node_modules/jest-worker/bui
+ld/workers/ChildProcessWorker.js:181:21)
+
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63D23622A 
+ 7: 00007FF63D2393CF 
+ 8: 00007FF63D23C63B 
+ 9: 00007FF63D23A89C 
+10: 00007FF63D147D57 
+11: 00007FF63D11A541 
+12: 00007FF63D147948 
+13: 00007FF63D1480FE 
+14: 00007FF63D147DE2 
+15: 00007FF63D11C12D 
+16: 00007FF63D117E75 
+17: 00007FF63D112BAA 
+18: 00007FF63C8FC524 
+19: 00007FF63C8C3022 
+20: 00007FF63CB85856 
+21: 00007FF63BCF81A0 
+22: 00007FF63BE845F3 
+23: 00007FF63D710E0B 
+24: 00007FFE9963CD87 BaseThreadInitThunk+23
+25: 00007FFE9B3ACAEC RtlUserThreadStart+44
+ 1: 00007FF63BE24BB7 
+ 2: 00007FF63BCF53FF 
+ 3: 00007FF63CFF8576 
+ 4: 00007FF63C97F2D1 
+ 5: 00007FF63C460B9B 
+ 6: 00007FF63D23622A 
+ 7: 00007FF63D23689A 
+ 8: 00007FF63D23C8AF 
+ 9: 00007FF63D23A89C 
+10: 00007FF63D147D57 
+11: 00007FF63D11A541 
+12: 00007FF63D147948 
+13: 00007FF63D1480FE 
+14: 00007FF63D147DE2 
+15: 00007FF63D11C12D 
+16: 00007FF63D117E75 
+17: 00007FF63D112BAA 
+18: 00007FF63C8FC524 
+19: 00007FF63C8C3022 
+20: 00007FF63CB85856 
+21: 00007FF63BCF81A0 
+22: 00007FF63BE845F3 
+23: 00007FF63D710E0B 
+24: 00007FFE9963CD87 
+25: 00007FFE9B3ACAEC 
+[31m[Nest] 24420  - [39m09/27/2026, 3:28:18 PM [31m  ERROR[39m [38;5;3m[OtpService] [39m[31mOTP delivery 
+failed (channel=email, purpose=EMAIL_VERIFY): SMTP connection refused[39m
+[31m[Nest] 24420  - [39m09/27/2026, 3:28:18 PM [31m  ERROR[39m [38;5;3m[OtpService] [39m[31mOTP delivery 
+failed (channel=sms, purpose=PHONE_VERIFY): Twilio API 500[39m
+[31m[Nest] 24420  - [39m09/27/2026, 3:28:18 PM [31m  ERROR[39m [38;5;3m[OtpService] [39m[31mOTP delivery 
+failed (channel=email, purpose=EMAIL_VERIFY): delivery down[39m
+PASS test/email-otp.spec.ts (13.731 s)
+
+Summary of all failing tests
+FAIL test/settings-account.spec.ts (82.284 s)
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ rejects a duplicate email owned by 
+another account (Part 29.6)
+
+    Threading failure
+
+
+
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ rejects a wrong confirmation password 
+and changes nothing
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ refuses passwordless (OAuth-only) 
+accounts with set-password guidance
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ prevents removing the LAST 
+login/recovery path (email-only account) (Part 29.8)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ removes the email when a phone 
+remains, resetting state + auditing (Part 7)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö email add / change / remove (server-authoritative) ΓÇ║ allows email removal for a 
+Google-linked account without a phone
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ CHANGING a verified phone resets 
+verification and requires a fresh OTP (Part 10)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ the full change flow reaches VERIFIED only 
+through the OTP to the new number
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ an unchanged verified phone still conflicts 
+(no spurious re-send) (Part 29.15)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ rejects a duplicate phone before anything is 
+written (Part 29.17)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ rejects a non-E.164 phone with the canonical 
+format message (Part 8)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ prevents removing the LAST login/recovery 
+path (phone-only account) (Part 29.18)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö phone change / OTP / removal (Parts 8ΓÇô11) ΓÇ║ removes the phone when an email remains: 
+flags reset, identity + codes burned, audited
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö profile phone edit hardening (Part 10) ΓÇ║ a profile phone change clears verification flags 
++ Verification row
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö profile phone edit hardening (Part 10) ΓÇ║ rejects a duplicate profile phone (Part 29.17)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö profile phone edit hardening (Part 10) ΓÇ║ rejects a non-E.164 profile phone with the 
+canonical message
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö profile phone edit hardening (Part 10) ΓÇ║ an unchanged phone keeps its verified state (no 
+false reset)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö KYC is server-authoritative only (Parts 13/16/19/29.23) ΓÇ║ a smuggled kycStatus in the 
+profile payload never reaches the account
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö KYC is server-authoritative only (Parts 13/16/19/29.23) ΓÇ║ verification status responses 
+never contain a KYC field (no mixing)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö KYC is server-authoritative only (Parts 13/16/19/29.23) ΓÇ║ getMe exposes the backend 
+kycStatus for the Settings card to DISPLAY
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö password change (Parts 20/29.28ΓÇô30) ΓÇ║ a successful change rewrites the hash, revokes 
+other sessions, audits safely
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö password change (Parts 20/29.28ΓÇô30) ΓÇ║ a failed change keeps the account intact and 
+records the failure event
+
+    Memory allocation error
+
+
+
+  ΓùÅ Settings ΓÇö password change (Parts 20/29.28ΓÇô30) ΓÇ║ passwords never appear in audit logs, security 
+events or logger calls (Part 29.30)
+
+    Memory allocation error
+
+
+
+FAIL test/admin-rbac.spec.ts (118.027 s)
+  ΓùÅ Customer login refuses staff accounts (POST /auth/login) ΓÇ║ rejects an ADMIN account with 403, records 
+the attempt and creates no session
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See 
+https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 476 |[39m
+     [90m 477 |[39m describe([32m'Customer login refuses staff accounts (POST /auth/login)'[39m[33m,[39m 
+() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 478 |[39m   it([32m'rejects an ADMIN account with 403, records the attempt and 
+creates no session'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m     |[39m   [31m[1m^[22m[39m
+     [90m 479 |[39m     [36mconst[39m fake [33m=[39m makeAuthFake([36mawait[39m 
+authUserWithPassword([[32m'ADMIN'[39m]))[33m;[39m
+     [90m 480 |[39m
+     [90m 481 |[39m     [36mconst[39m error [33m=[39m [36mawait[39m fake[33m.[39mservice[0m
+
+      at test/admin-rbac.spec.ts:478:3
+      at Object.<anonymous> (test/admin-rbac.spec.ts:477:1)
+
+  ΓùÅ Customer login refuses staff accounts (POST /auth/login) ΓÇ║ rejects a SUPER_ADMIN account the same way
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See 
+https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 494 |[39m   })[33m;[39m
+     [90m 495 |[39m
+    [31m[1m>[22m[39m[90m 496 |[39m   it([32m'rejects a SUPER_ADMIN account the same way'[39m[33m,[39m 
+[36masync[39m () [33m=>[39m {
+     [90m     |[39m   [31m[1m^[22m[39m
+     [90m 497 |[39m     [36mconst[39m fake [33m=[39m makeAuthFake([36mawait[39m 
+authUserWithPassword([[32m'SUPER_ADMIN'[39m]))[33m;[39m
+     [90m 498 |[39m
+     [90m 499 |[39m     [36mawait[39m expect([0m
+
+      at test/admin-rbac.spec.ts:496:3
+      at Object.<anonymous> (test/admin-rbac.spec.ts:477:1)
+
+  ΓùÅ Session context separation (SessionKind) ΓÇ║ staff login creates a STAFF session; customer login creates 
+a CUSTOMER session
+
+    UnauthorizedException: Invalid credentials
+
+    [0m [90m 327 |[39m         })[33m;[39m
+     [90m 328 |[39m       }
+    [31m[1m>[22m[39m[90m 329 |[39m       [36mthrow[39m [36mnew[39m 
+[33mUnauthorizedException[39m([32m'Invalid credentials'[39m)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 330 |[39m     }
+     [90m 331 |[39m
+     [90m 332 |[39m     [36mconst[39m roles [33m=[39m user[33m.[39muserRoles[33m.[39mmap((ur) 
+[33m=>[39m ur[33m.[39mrole[33m.[39mname)[33m;[39m[0m
+
+      at AuthService.adminLogin (src/modules/auth/auth.service.ts:329:13)
+      at Object.<anonymous> (test/admin-rbac.spec.ts:568:5)
+
+  ΓùÅ Session context separation (SessionKind) ΓÇ║ admin login accepts the staff USERNAME as identifier 
+(Username / Gmail field)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Session context separation (SessionKind) ΓÇ║ rejects an invalid admin password with 401, audits it, and 
+creates no session
+
+    Memory allocation error
+
+
+
+  ΓùÅ Session context separation (SessionKind) ΓÇ║ rejects an INACTIVE (SUSPENDED) admin with 403 and no session
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer flows refuse staff accounts (completeLogin chokepoint) ΓÇ║ phone login refuses an ADMIN account 
+with 403 and creates no session
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer flows refuse staff accounts (completeLogin chokepoint) ΓÇ║ OAuth issueSession refuses an ADMIN 
+account with 403 and creates no session
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer flows refuse staff accounts (completeLogin chokepoint) ΓÇ║ phone login still works for an 
+ordinary customer
+
+    Memory allocation error
+
+
+
+FAIL test/account-domains.spec.ts (18.906 s)
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 1: a real customer appears in the 
+admin users directory
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 2: a staff/admin account does NOT 
+appear in /admin/users
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 3: both master admins do NOT appear 
+in /admin/users
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 18: the accountType split lives in 
+the WHERE clause, not the response
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 9: registration always classifies 
+the new account as CUSTOMER
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 9: a client-supplied accountType 
+cannot turn registration into staff creation
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 7: the customer login refuses a 
+staff account even without a staff role
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 8: the ordinary admin signs in 
+through the staff login (STAFF session)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 8: the staff login also accepts the 
+username identifier
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 8: a CUSTOMER is refused at the 
+staff login (no silent fallback)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/users population (CUSTOMER only) ΓÇ║ CASE 8: unknown staff credentials stay a 
+uniform 401
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer money surfaces ΓÇ║ CASE 16: the admin deposit queue is filtered to CUSTOMER 
+accounts
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer money surfaces ΓÇ║ CASE 16: the admin withdrawal queue is filtered to 
+CUSTOMER accounts
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer money surfaces ΓÇ║ CASE 15: the admin bet list is scoped to customer-owned 
+bets
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer detail route ΓÇ║ CASE 19: staff + master admin ids are NotFound through the 
+customer detail route
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer detail route ΓÇ║ CASE 19: a customer id still resolves through the customer 
+detail route
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/admins population (STAFF only) ΓÇ║ CASE 4: an ordinary admin appears in the 
+staff directory
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/admins population (STAFF only) ΓÇ║ CASE 5: both master admins appear in the 
+staff directory as SUPER_ADMIN
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö /admin/admins population (STAFF only) ΓÇ║ CASE 6: customers never appear in the staff 
+directory
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff creation (STAFF only) ΓÇ║ CASE 10: createAdminUser classifies the new account 
+as STAFF
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff creation (STAFF only) ΓÇ║ CASE 10: USER (the customer role) cannot be granted 
+at staff creation
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff creation (STAFF only) ΓÇ║ CASE 10: staff roles cannot be assigned to a CUSTOMER 
+account
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff creation (STAFF only) ΓÇ║ CASE 10: USER can never be assigned through role 
+management
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff creation (STAFF only) ΓÇ║ CASE 10: ordinary staff role updates still work for 
+STAFF accounts
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö master admin protection ΓÇ║ CASE 11: master admins keep SUPER_ADMIN (never USER + 
+SUPER_ADMIN)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö master admin protection ΓÇ║ CASE 12: a master admin cannot be deleted 
+(soft-delete/deactivate refused)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö master admin protection ΓÇ║ CASE 13: a master admin cannot be deactivated or suspended
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö master admin protection ΓÇ║ CASE 12/13: an ordinary staff account remains moderatable 
+by staff endpoints
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ edits a STAFF account profile and records 
+the staff audit action
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ refuses to edit a CUSTOMER through the 
+staff endpoint (domain separation)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ an ordinary staff actor cannot modify a 
+master admin identity (protected)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ resets a STAFF password writing ONLY 
+password fields (┬º17: classification/roles intact)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ refuses to reset a CUSTOMER password 
+through the staff endpoint
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö staff edit & password-reset endpoints ΓÇ║ a master admin password reset is refused 
+entirely ΓÇö zero writes
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö wallet separation ΓÇ║ CASE 17: a STAFF account does not get a customer wallet created
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö wallet separation ΓÇ║ CASE 17: a CUSTOMER account still gets its wallet (unchanged 
+behaviour)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö wallet separation ΓÇ║ CASE 14: an EXISTING wallet is returned untouched for any 
+account
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer statistics ΓÇ║ counts CUSTOMER accounts only in the dashboard user totals
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö customer statistics ΓÇ║ filters the bet-statistics groupBy to customer-owned bets
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ is additive: the classification column lands 
+with a default, nothing is dropped
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ never deletes a User row (no "delete all users" 
+escape hatch exists)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ CASE 14: wallets are never written by the 
+migration
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ CASE 15: bets are never written by the migration
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ CASE 16: deposits and withdrawals are never 
+written by the migration
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ writes only the new column, the USER-role join 
+and session revocations
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ CASE 11: both fixed Master Admin identities are 
+classified STAFF, SUPER_ADMIN preserved
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö add_account_type migration safety ΓÇ║ never writes customer-facing history tables 
+(support/notifications/audit)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö CUSTOMER vs STAFF session guards ΓÇ║ CASE 20: a CUSTOMER session is refused an admin 
+route (401, re-auth required)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö CUSTOMER vs STAFF session guards ΓÇ║ CASE 20: a PRE-separation token (no sessionKind 
+at all) is also refused
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö CUSTOMER vs STAFF session guards ΓÇ║ CASE 20: a STAFF session with the required role 
+is allowed
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö CUSTOMER vs STAFF session guards ΓÇ║ CASE 20: role checks still come first (a plain 
+customer gets the existing 403)
+
+    Threading failure
+
+
+
+  ΓùÅ Account domains ΓÇö CUSTOMER vs STAFF session guards ΓÇ║ CASE 20: customer routes stay open to CUSTOMER 
+sessions
+
+    Threading failure
+
+
+
+FAIL test/phone-auth.spec.ts (8.506 s)
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone signup: creates a PENDING user, a PHONE identity 
+and issues a hashed OTP
+
+    Memory allocation error
+
+
+
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone signup verify: correct OTP activates the account 
+and auto-verifies the phone
+
+    Memory allocation error
+
+
+
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone signup verify: invalid OTP is rejected and the 
+account stays unverified
+
+    Memory allocation error
+
+
+
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone login: correct credentials return tokens and 
+create a session
+
+    Memory allocation error
+
+
+
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone login: wrong password fails uniformly and 
+records LOGIN_FAILURE
+
+    Memory allocation error
+
+
+
+FAIL test/identifier-login.spec.ts (43.139 s)
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ wrong password on a phone 
+identifier ΓåÆ uniform 401 + LOGIN_FAILURE
+
+    Threading failure
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ staff email identifier 
+cannot customer-login (403, no session)
+
+    Threading failure
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ staff phone identifier 
+cannot customer-login (403, no session)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ a staff ROLE on a 
+customer-classified row is refused too (defense-in-depth)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ BOTH identifier paths create 
+a CUSTOMER session only
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ the dedicated phone endpoint 
+shares the same path and still works (Part 27)
+
+    Memory allocation error
+
+
+
+  ΓùÅ Customer login ΓÇö unified identifier (email OR phone, POST /auth/login) ΓÇ║ lockout still applies: 5 
+recent failures ΓåÆ 423 before password check
+
+    Memory allocation error
+
+
+
+FAIL test/admin-management.spec.ts
+  ΓùÅ Test suite failed to run
+
+    Jest worker encountered 4 child process exceptions, exceeding retry limit
+
+      at ChildProcessWorker.initialize (../../node_modules/.pnpm/jest-worker@29.7.0/node_modules/jest-worker/bui
+ld/workers/ChildProcessWorker.js:181:21)
+
+FAIL test/users.spec.ts (9.378 s)
+  ΓùÅ UsersService ΓÇ║ changes the password and revokes other sessions in a transaction
+
+    Memory allocation error
+
+
+
+  ΓùÅ UsersService ΓÇ║ rejects a wrong current password without changing anything
+
+    Memory allocation error
+
+
+
+FAIL test/auth.spec.ts (21.097 s)
+  ΓùÅ AuthService (unit) ΓÇ║ successful login creates a session, tokens and a LOGIN_SUCCESS event
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See 
+https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 170 |[39m   })[33m;[39m
+     [90m 171 |[39m
+    [31m[1m>[22m[39m[90m 172 |[39m   it([32m'successful login creates a session, tokens and a 
+LOGIN_SUCCESS event'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m     |[39m   [31m[1m^[22m[39m
+     [90m 173 |[39m     [36mconst[39m fake [33m=[39m makePrismaFake()[33m;[39m
+     [90m 174 |[39m     [36mconst[39m svc [33m=[39m [36mnew[39m 
+[33mAuthService[39m(fake[33m.[39mprisma[33m,[39m makeJwtFake()[33m,[39m [36mnew[39m 
+[33mOtpService[39m(fake[33m.[39mprisma))[33m;[39m
+     [90m 175 |[39m     fake[33m.[39mprisma[33m.[39muser[33m.[39mfindUnique [33m=[39m 
+jest[33m.[39mfn([36masync[39m () [33m=>[39m ({[0m
+
+      at test/auth.spec.ts:172:3
+      at Object.<anonymous> (test/auth.spec.ts:97:1)
+
+FAIL test/account-recovery.spec.ts (42.094 s)
+  ΓùÅ Phase 12 ΓÇö account recovery ΓÇ║ phone recovery ΓÇ║ recovers an account: correct OTP sets a new password 
+and revokes all sessions
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See 
+https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 81 |[39m     })[33m;[39m
+     [90m 82 |[39m
+    [31m[1m>[22m[39m[90m 83 |[39m     it([32m'recovers an account: correct OTP sets a new password and 
+revokes all sessions'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m    |[39m     [31m[1m^[22m[39m
+     [90m 84 |[39m       [36mconst[39m { prisma[33m,[39m state } [33m=[39m makePrismaFake()[33m;[39m
+     [90m 85 |[39m       [36mconst[39m oldHash [33m=[39m [36mawait[39m 
+argon2[33m.[39mhash([32m'OldPassword1'[39m)[33m;[39m
+     [90m 86 |[39m       state[33m.[39musers[33m.[39mpush(makeUser({ phoneVerified[33m:[39m 
+[36mtrue[39m[33m,[39m passwordHash[33m:[39m oldHash }))[33m;[39m[0m
+
+      at test/account-recovery.spec.ts:83:5
+      at test/account-recovery.spec.ts:59:3
+      at Object.<anonymous> (test/account-recovery.spec.ts:58:1)
+
+FAIL test/crash-log-secrecy.spec.ts
+  ΓùÅ Test suite failed to run
+
+    Jest worker encountered 4 child process exceptions, exceeding retry limit
+
+      at ChildProcessWorker.initialize (../../node_modules/.pnpm/jest-worker@29.7.0/node_modules/jest-worker/bui
+ld/workers/ChildProcessWorker.js:181:21)
+
+
+Test Suites: 10 failed, 57 passed, 67 total
+Tests:       100 failed, 1046 passed, 1146 total
+Snapshots:   0 total
+Time:        217.549 s
+Ran all test suites.

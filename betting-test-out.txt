@@ -1,0 +1,38 @@
+PASS test/schema-migration-drift.spec.ts (14.794 s)
+PASS test/mock-provider.spec.ts (14.984 s)
+FAIL test/migration-sql-structure.spec.ts (15.392 s)
+  ● migration SQL structure › 20260929000000_add_affiliate_individual_content › is ADDITIVE ONLY - it deletes, drops and backfills nothing
+
+    expect(received).not.toMatch(expected)
+
+    Expected pattern: not /\bDELETE\b/
+    Received string:      "ALTER TABLE \"AFFILIATECONTENTBLOCK\"
+      ADD COLUMN \"AFFILIATEUSERID\" TEXT;
+    CREATE INDEX \"AFFILIATECONTENTBLOCK_AFFILIATEUSERID_ISENABLED_SORTORDER_IDX\"
+      ON \"AFFILIATECONTENTBLOCK\"(\"AFFILIATEUSERID\", \"ISENABLED\", \"SORTORDER\");
+    CREATE INDEX \"AFFILIATECONTENTBLOCK_AFFILIATEUSERID_SORTORDER_IDX\"
+      ON \"AFFILIATECONTENTBLOCK\"(\"AFFILIATEUSERID\", \"SORTORDER\");
+    ALTER TABLE \"AFFILIATECONTENTBLOCK\"
+      ADD CONSTRAINT \"AFFILIATECONTENTBLOCK_AFFILIATEUSERID_FKEY\"
+      FOREIGN KEY (\"AFFILIATEUSERID\") REFERENCES \"USER\"(\"ID\") ON DELETE CASCADE ON UPDATE CASCADE"
+
+    [0m [90m 264 |[39m       [90m// No existing content may be deleted, dropped, truncated or reassigned to[39m
+     [90m 265 |[39m       [90m// an arbitrary affiliate.[39m
+    [31m[1m>[22m[39m[90m 266 |[39m       expect(upper)[33m.[39mnot[33m.[39mtoMatch([35m/\bDELETE\b/[39m)[33m;[39m
+     [90m     |[39m                         [31m[1m^[22m[39m
+     [90m 267 |[39m       expect(upper)[33m.[39mnot[33m.[39mtoMatch([35m/\bDROP\b/[39m)[33m;[39m
+     [90m 268 |[39m       expect(upper)[33m.[39mnot[33m.[39mtoMatch([35m/\bTRUNCATE\b/[39m)[33m;[39m
+     [90m 269 |[39m       expect(upper)[33m.[39mnot[33m.[39mtoMatch([35m/\bUPDATE\b/[39m)[33m;[39m[0m
+
+      at Object.<anonymous> (test/migration-sql-structure.spec.ts:266:25)
+
+PASS test/betting-odds-stake.spec.ts (16.762 s)
+PASS test/betting-bet.spec.ts (16.97 s)
+PASS test/betting-events.spec.ts (17.047 s)
+PASS test/settlement.spec.ts (17.136 s)
+
+Test Suites: 1 failed, 6 passed, 7 total
+Tests:       1 failed, 72 passed, 73 total
+Snapshots:   0 total
+Time:        18.664 s
+Ran all test suites matching /betting-bet|betting-events|betting-odds-stake|settlement|mock-provider|schema-migration-drift|migration-sql-structure/i.

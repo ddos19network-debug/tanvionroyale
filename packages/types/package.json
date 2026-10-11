@@ -1,0 +1,17 @@
+{
+  "name": "@tanvion-royale/types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TanvionRoyale shared TypeScript enums, interfaces and DTO types.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit -p tsconfig.json",
+    "lint": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

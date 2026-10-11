@@ -1,0 +1,23 @@
+﻿PASS  GET /sports returns 200 ΓÇö status=200
+PASS  football sport active
+PASS  cricket sport active
+PASS  GET /sports/football/competitions ΓÇö status=200 count=0
+PASS  GET /sports/cricket/competitions ΓÇö status=200 count=0
+PASS  GET /events returns 200 ΓÇö status=200
+FAIL  register ΓÇö status=503
+FAIL  login + access token ΓÇö status=500
+PASS  session without token rejected (401) ΓÇö status=401
+FAIL  unknown game slug rejected (404) ΓÇö status=401
+FAIL  sky-rocket: create session ΓÇö status=401 body={"statusCode":401,"message":"Missing access token","error":"Unauthorized","code":"UNAUTHORIZED"}
+FAIL  lightning-dice: create session ΓÇö status=401 body={"statusCode":401,"message":"Missing access token","error":"Unauthorized","code":"UNAUTHORIZED"}
+FAIL  coin-flip: create session ΓÇö status=401 body={"statusCode":401,"message":"Missing access token","error":"Unauthorized","code":"UNAUTHORIZED"}
+FAIL  higher-or-lower: create session ΓÇö status=401 body={"statusCode":401,"message":"Missing access token","error":"Unauthorized","code":"UNAUTHORIZED"}
+FAIL  rock-paper-scissors: create session ΓÇö status=401 body={"statusCode":401,"message":"Missing access token","error":"Unauthorized","code":"UNAUTHORIZED"}
+FAIL  dice-roll: create session ΓÇö status=401 body={"statusCode":401,"message":"Missing access token","error":"Unauthorized","code":"UNAUTHORIZED"}
+FAIL  wheel-spin: create session ΓÇö status=401 body={"statusCode":401,"message":"Missing access token","error":"Unauthorized","code":"UNAUTHORIZED"}
+FAIL  color-prediction: create session ΓÇö status=401 body={"statusCode":401,"message":"Missing access token","error":"Unauthorized","code":"UNAUTHORIZED"}
+FAIL  lucky-number: create session ΓÇö status=401 body={"statusCode":401,"message":"Missing access token","error":"Unauthorized","code":"UNAUTHORIZED"}
+FAIL  high-card: create session ΓÇö status=401 body={"statusCode":401,"message":"Missing access token","error":"Unauthorized","code":"UNAUTHORIZED"}
+FAIL  number-guess: create session ΓÇö status=401 body={"statusCode":401,"message":"Missing access token","error":"Unauthorized","code":"UNAUTHORIZED"}
+
+E2E_SUMMARY pass=7 fail=14 total=21

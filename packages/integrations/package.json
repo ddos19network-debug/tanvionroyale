@@ -1,0 +1,21 @@
+{
+  "name": "@tanvion-royale/integrations",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TanvionRoyale licensed-operator integration layer: interfaces, core errors and mock provider.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit -p tsconfig.json",
+    "lint": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tanvion-royale/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.11",
+    "typescript": "^5.6.3"
+  }
+}

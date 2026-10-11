@@ -1,0 +1,3 @@
+[31m[Nest] 22172  - [39m09/09/2026, 1:32:49 AM [31m  ERROR[39m [38;5;3m[AllExceptionsFilter] [39m[31mUnhandled exception: Error: secretOrPrivateKey must have a value
+    at module.exports [as sign] (D:\tanvionRoyale\node_modules\.pnpm\jsonwebtoken@9.0.2\node_modules\jsonwebtoken\sign.js:111:20)
+    at D:\tanvionRoyale\node_modules\.pnpm\@nestjs+jwt@10.2.0_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_refl_rckjpaoa6n2olcmw4itpv4i7uu\node_modules\@nestjs\jwt\dist\jwt.service.js:56:17[39m

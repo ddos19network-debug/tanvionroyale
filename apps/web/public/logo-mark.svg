@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="TANVIONROYALE logo">
+  <defs>
+    <linearGradient id="tr-gold-mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd85e" />
+      <stop offset="1" stop-color="#b28418" />
+    </linearGradient>
+    <linearGradient id="tr-blue-mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#38bdf8" />
+      <stop offset="1" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="tr-navy-mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12264e" />
+      <stop offset="1" stop-color="#060e20" />
+    </linearGradient>
+  </defs>
+  <!-- Circular crest: outer gold ring, inner royal-blue ring, navy disc. -->
+  <circle cx="50" cy="50" r="50" fill="url(#tr-gold-mark)" />
+  <circle cx="50" cy="50" r="45.5" fill="url(#tr-blue-mark)" />
+  <circle cx="50" cy="50" r="41.5" fill="url(#tr-navy-mark)" />
+  <!-- Gold "T" monogram -->
+  <path fill="url(#tr-gold-mark)" d="M24 28h42v10H53v34H42V38H24z" />
+  <!-- Blue "R" monogram (drawn over the T, interlocked) -->
+  <g fill="url(#tr-blue-mark)">
+    <rect x="57" y="38" width="9" height="34" />
+    <path d="M56 47a10 10 0 0 1 20 0h-5.5a4.5 4.5 0 0 0-9 0z" />
+    <path d="M63 50h11l5 22h-11z" />
+  </g>
+</svg>

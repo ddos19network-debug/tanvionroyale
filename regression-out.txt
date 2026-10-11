@@ -1,0 +1,591 @@
+﻿node.exe : PASS test/partner-routing.spec.ts (36.443 s)
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (PASS test/partn...c.ts (36.443 s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[32m[Nest] 11284  - [39m10/09/2026, 3:16:29 PM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email delivery simulated for test@example.com[39m
+PASS test/partner-webhook.spec.ts (37.701 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/partner/partner.controller.ts:28:1)
+      at Object.<anonymous> (test/partner-webhook.spec.ts:3:1)
+
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:30 PM [33m   WARN[39m [38;5;3m[PartnerController] [39m[33mPartner webhook rejected (bad_signature)[39m
+PASS test/winhouse-money.spec.ts
+FAIL test/auth.spec.ts (38.823 s)
+  ΓùÅ AuthService (unit) ΓÇ║ blocks suspended accounts from signing in
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected constructor: ForbiddenException
+    Received constructor: Error
+
+    Received message: "Memory allocation error"
+
+    [0m [90m 165 |[39m     fake[33m.[39mprisma[33m.[39msecurityEvent[33m.[39mcount [33m=[39m 
+jest[33m.[39mfn([36masync[39m () [33m=>[39m [35m0[39m) [36mas[39m any[33m;[39m
+     [90m 166 |[39m
+    [31m[1m>[22m[39m[90m 167 |[39m     [36mawait[39m expect(svc[33m.[39mlogin({ identifier[33m:[39m 
+[32m'a@b.c'[39m[33m,[39m password[33m:[39m [32m'RightPassword1'[39m 
+}))[33m.[39mrejects[33m.[39mtoThrow(
+     [90m     |[39m                                                                                          
+[31m[1m^[22m[39m
+     [90m 168 |[39m       [33mForbiddenException[39m[33m,[39m
+     [90m 169 |[39m     )[33m;[39m
+     [90m 170 |[39m   })[33m;[39m[0m
+
+      at Object.toThrow (../../node_modules/.pnpm/expect@29.7.0/node_modules/expect/build/index.js:218:22)
+      at Object.<anonymous> (test/auth.spec.ts:167:90)
+
+  ΓùÅ AuthService (unit) ΓÇ║ successful login creates a session, tokens and a LOGIN_SUCCESS event
+
+    Memory allocation error
+
+
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+
+
+#
+# Fatal process out of memory: Zone
+#
+----- Native stack trace -----
+
+ 1: 00007FF766314BB7 
+ 2: 00007FF7661E53FF 
+ 3: 00007FF7674E8576 
+ 4: 00007FF766E6F2D1 
+ 5: 00007FF766950B9B 
+ 6: 00007FF7678F6D97 
+ 7: 00007FF767641AC9 
+ 8: 00007FF767646854 
+ 9: 00007FF767924438 
+10: 00007FF76760E771 
+11: 00007FF767609269 
+12: 00007FF767602BAA 
+13: 00007FF766DEC524 
+14: 00007FF766DB3022 
+15: 00007FF767075856 
+16: 00007FF7661E81A0 
+17: 00007FF7663745F3 
+18: 00007FF767C00E0B 
+19: 00007FF9B1BDCDF7 
+ 1: 00007FF766314BB7 
+ 2: 00007FF7661E53FF 
+ 3: 00007FF7674E8576 
+ 4: 00007FF766E6F2D1 
+ 5: 00007FF766950B9B 
+ 6: 00007FF76767C21D 
+ 7: 00007FF76767E47B 
+ 8: 00007FF767687EEA 
+ 9: 00007FF767682468 
+10: 00007FF767680285 
+11: 00007FF76767E38F 
+12: 00007FF76760AEF3 
+13: 00007FF767601EFD 
+14: 00007FF767602B85 
+15: 00007FF766DEC524 
+16: 00007FF766DB3022 
+17: 00007FF767075856 
+18: 00007FF7661E81A0 
+19: 00007FF7663745F3 
+20: 00007FF767C00E0B 
+21: 00007FF9B1BDCDF7 
+ 1: 00007FF766314BB7 
+ 2: 00007FF7661E53FF 
+ 3: 00007FF7674E8576 
+ 4: 00007FF766E6F2D1 
+ 5: 00007FF766950B9B 
+ 6: 00007FF767557327 
+ 7: 00007FF76759192A 
+ 8: 00007FF7676802C3 
+ 9: 00007FF76767E38F 
+10: 00007FF7678D447A 
+11: 00007FF767704E9A 
+12: 00007FF767704DE6 
+13: 00007FF767637E5F 
+14: 00007FF76760B343 
+15: 00007FF767601FB5 
+16: 00007FF767602B85 
+17: 00007FF766DEC524 
+18: 00007FF766DB3022 
+19: 00007FF767075856 
+20: 00007FF7661E81A0 
+21: 00007FF7663745F3 
+22: 00007FF767C00E0B 
+23: 00007FF9B1BDCDF7 
+20: 00007FF9B2D5EE4C RtlUserThreadStart+44
+24: 00007FF9B2D5EE4C RtlUserThreadStart+44
+22: 00007FF9B2D5EE4C RtlUserThreadStart+44
+FAIL test/admin-rbac.spec.ts
+  ΓùÅ Test suite failed to run
+
+    Cannot find module '../errors/exceptions/undefined-dependency.exception' from '../../node_modules/.pnpm/@nes
+tjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.4_re_s3zxsgsmsekta3oeycoqsk
+cmia/node_modules/@nestjs/core/injector/injector.js'
+
+    Require stack:
+      D:/tanvionroyale/node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_cl
+ass-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/injector/injector.js
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:31 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY SMS delivery simulated[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:31 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY SMS delivery simulated[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:31 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY SMS delivery simulated[39m
+      D:/tanvionroyale/node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_cl
+ass-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/injector/module-ref.js
+      D:/tanvionroyale/node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_cl
+ass-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/injector/lazy-module-loader/lazy-mo
+dule-loader.js
+      D:/tanvionroyale/node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_cl
+ass-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/inspector/serialized-graph.js
+      D:/tanvionroyale/node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_cl
+ass-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/injector/container.js
+      D:/tanvionroyale/node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_cl
+ass-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/injector/index.js
+      D:/tanvionroyale/node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_cl
+ass-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/index.js
+      src/common/guards/roles.guard.ts
+      test/admin-rbac.spec.ts
+
+    [0m [90m 1 |[39m [36mimport[39m { [33mCanActivate[39m[33m,[39m 
+[33mExecutionContext[39m[33m,[39m [33mForbiddenException[39m[33m,[39m [33mInjectable[39m[33m,[39m 
+[33mUnauthorizedException[39m } [36mfrom[39m [32m'@nestjs/common'[39m[33m;[39m
+    [31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { [33mReflector[39m } [36mfrom[39m 
+[32m'@nestjs/core'[39m[33m;[39m
+     [90m   |[39m [31m[1m^[22m[39m
+     [90m 3 |[39m [36mimport[39m { [33mROLES_KEY[39m } [36mfrom[39m 
+[32m'../decorators/roles.decorator'[39m[33m;[39m
+     [90m 4 |[39m [36mimport[39m { [33mPERMISSIONS_KEY[39m } [36mfrom[39m 
+[32m'../decorators/permissions.decorator'[39m[33m;[39m
+     [90m 5 |[39m [36mimport[39m type { [33mAuthenticatedUser[39m } [36mfrom[39m 
+[32m'../types/authenticated-user'[39m[33m;[39m[0m
+
+      at Resolver._throwModNotFoundError 
+(../../node_modules/.pnpm/jest-resolve@29.7.0/node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.<anonymous> (../../node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transfor
+mer@0.5.1_class-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/injector/injector.js:12
+:42)
+      at Object.<anonymous> (../../node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transfor
+mer@0.5.1_class-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/injector/module-ref.js:
+8:20)
+      at Object.<anonymous> (../../node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transfor
+mer@0.5.1_class-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/injector/lazy-module-lo
+ader/lazy-module-loader.js:5:22)
+      at Object.<anonymous> (../../node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transfor
+mer@0.5.1_class-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/inspector/serialized-gr
+aph.js:8:30)
+      at Object.<anonymous> (../../node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transfor
+mer@0.5.1_class-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/injector/container.js:8
+:28)
+      at Object.<anonymous> (../../node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transfor
+mer@0.5.1_class-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/injector/index.js:4:22)
+      at Object.<anonymous> (../../node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transfor
+mer@0.5.1_class-validator@0.14.4_re_s3zxsgsmsekta3oeycoqskcmia/node_modules/@nestjs/core/index.js:22:22)
+      at Object.<anonymous> (src/common/guards/roles.guard.ts:2:1)
+      at Object.<anonymous> (test/admin-rbac.spec.ts:7:1)
+
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:31 PM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY SMS delivery simulated[39m
+PASS test/casino-money.spec.ts
+FAIL test/phone-auth.spec.ts (41.123 s)
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone signup: creates a PENDING user, a PHONE identity 
+and issues a hashed OTP
+
+    Memory allocation error
+
+
+
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone signup verify: correct OTP activates the account 
+and auto-verifies the phone
+
+    Memory allocation error
+
+
+
+  ΓùÅ Phase 11 ΓÇö phone authentication + OTP (unit) ΓÇ║ phone signup verify: invalid OTP is rejected and the 
+account stays unverified
+
+    Threading failure
+
+
+
+PASS test/session-auth.spec.ts (41.279 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (test/session-auth.spec.ts:8:1)
+
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:33 PM [33m   WARN[39m [38;5;3m[JwtAuthGuard] [39m[33mStripped non-allowlisted SUPER_ADMIN from request authorization (userId=u1)[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:33 PM [33m   WARN[39m [38;5;3m[JwtAuthGuard] [39m[33mStripped non-allowlisted SUPER_ADMIN from request authorization (userId=u1)[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:33 PM [33m   WARN[39m [38;5;3m[JwtAuthGuard] [39m[33mStripped non-allowlisted SUPER_ADMIN from request authorization (userId=u1)[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=not_configured[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=provider_disabled[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=environment_mismatch[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=invalid_base_url[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=credentials_missing[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=unknown_player[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=missing_username[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=wallet_inactive[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_signature[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_signature[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=missing_signature[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_signature[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1 reason=round_close[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=insufficient_funds[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=currency_mismatch[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=unknown_player[39m
+PASS test/bigbang-wallet.spec.ts
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=malformed_body[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=malformed_body[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=malformed_body[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=malformed_body[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=invalid_amount[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=invalid_amount[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=transaction_conflict[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 user=user-1 reason=player_ineligible[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[32m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [32m    LOG[39m [38;5;3m[BigBangWalletService] [39m[32mbigbang.callback outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangWalletService] [39m[33mbigbang.callback outcome=rejected provider=provider-row-1 reason=bad_api_key[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangCallbacksController] [39m[33mbigbang.callback outcome=rejected reason=malformed_body[39m
+[33m[Nest] 11496  - [39m10/09/2026, 3:16:34 PM [33m   WARN[39m [38;5;3m[BigBangCallbacksController] [39m[33mbigbang.callback outcome=rejected reason=malformed_body[39m
+[32m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[32m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[32m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[33m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[33m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+PASS test/crash-wallet-lifecycle.spec.ts
+[32m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[32m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [32m    LOG[39m [38;5;3m[CrashRoundEngine] [39m[32mRound #7 crashed at 2.00├ù[39m
+[33m[Nest] 11284  - [39m01/15/2027, 2:00:00 PM [33m   WARN[39m [38;5;3m[CrashRoundEngine] [39m[33mRound #7 voided safely ΓÇö refunds issued[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=none user=unknown reason=not_configured[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=user-1 reason=nonce_reused[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=user-1 reason=Insufficient available balance[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=unknown reason=player_not_recognized[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=unknown reason=currency_mismatch[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=unknown reason=invalid_amount[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=win outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=win outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=win outcome=duplicate provider=provider-row-1 user=user-1[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=win outcome=rejected provider=provider-row-1 user=unknown reason=player_not_recognized[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=duplicate provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=refund outcome=rejected provider=provider-row-1 user=unknown reason=missing_reference_transaction_id[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=win outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=win outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=rollback outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=refund outcome=applied provider=provider-row-1 user=user-1[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=bet outcome=applied provider=provider-row-1 user=user-1[39m
+PASS test/casino-wallet-callbacks.spec.ts
+PASS test/sports.spec.ts
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/sports/sports.controller.ts:4:1)
+      at Object.<anonymous> (test/sports.spec.ts:6:1)
+
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=rollback outcome=rejected provider=provider-row-1 user=unknown reason=missing_reference_transaction_id[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=unknown reason=amount_above_maximum[39m
+[33m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [33m   WARN[39m [38;5;3m[CasinoWalletService] [39m[33mcasino.callback kind=bet outcome=rejected provider=provider-row-1 user=unknown reason=missing_transaction_id[39m
+[32m[Nest] 18848  - [39m10/09/2026, 3:16:35 PM [32m    LOG[39m [38;5;3m[CasinoWalletService] [39m[32mcasino.callback kind=balance outcome=applied provider=provider-row-1 user=user-1[39m
+PASS test/crash-real-money-gate.spec.ts
+PASS test/wallet.spec.ts
+PASS test/sports-sync.spec.ts
+[33m[Nest] 15616  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[SportsSyncService] [39m[33mSports sync failed (provider=real-partner): Betting provider is not configured[39m
+[33m[Nest] 15616  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[SportsSyncService] [39m[33mSports sync failed (provider=real-partner): upstream 500: provider exploded[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=user-data outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=user-data outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=unknown_player[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=player_ineligible[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=wallet_inactive[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=player_ineligible[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=win outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=win outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=duplicate provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=duplicate provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=win outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=win outcome=duplicate provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=transaction_conflict[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=win outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=transaction_conflict[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=transaction_conflict[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=transaction_conflict[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=duplicate provider=winhouse-provider-row-1 user=user-1[39m
+PASS test/winhouse-wallet.spec.ts
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=insufficient_funds[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=insufficient_funds[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=balance-change outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=balance-change outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=currency_mismatch[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=currency_mismatch[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=currency_mismatch[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=balance-change outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseCallbacksController] [39m[33mwinhouse.callback kind=balance-change outcome=rejected reason=malformed_body[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=action_amount_mismatch[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=win outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=action_amount_mismatch[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 reason=unknown_player[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=session_mismatch[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=duplicate provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=balance-change outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=insufficient_funds[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=bet outcome=rejected provider=winhouse-provider-row-1 user=user-1 reason=currency_mismatch[39m
+[32m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [32m    LOG[39m [38;5;3m[WinHouseWalletService] [39m[32mwinhouse.callback kind=bet outcome=applied provider=winhouse-provider-row-1 user=user-1[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=user-data outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+[33m[Nest] 21996  - [39m10/09/2026, 3:16:36 PM [33m   WARN[39m [38;5;3m[WinHouseWalletService] [39m[33mwinhouse.callback kind=balance-change outcome=rejected provider=winhouse-provider-row-1 reason=bad_token[39m
+PASS test/oauth-cors.http.spec.ts (44.787 s)
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/auth/auth.controller.ts:5:1)
+      at Object.<anonymous> (test/oauth-cors.http.spec.ts:22:1)
+
+PASS test/permission-rbac.spec.ts
+  ΓùÅ Console
+
+    console.warn
+      [master-admins] MASTER_ADMIN_EMAILS is empty or unset ΓÇö no account is a master admin: 
+bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and the master-admin deactivation guard 
+protects nobody. Set it in the deployment environment (comma-separated master admin email addresses).
+
+    [0m [90m 91 |[39m   [36mif[39m (parsed[33m.[39mlength [33m===[39m [35m0[39m) {
+     [90m 92 |[39m     [90m// eslint-disable-next-line no-console[39m
+    [31m[1m>[22m[39m[90m 93 |[39m     console[33m.[39mwarn(
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 94 |[39m       [32m`[master-admins] ${MASTER_ADMIN_ENV_VAR} is empty or unset ΓÇö no account is a 
+master admin: `[39m [33m+[39m
+     [90m 95 |[39m         [32m'bootstrap-master-admin/promote-admin will refuse to grant SUPER_ADMIN and 
+the master-admin '[39m [33m+[39m
+     [90m 96 |[39m         [32m'deactivation guard protects nobody. Set it in the deployment environment 
+'[39m [33m+[39m[0m
+
+      at warnIfMasterAdminsUnconfigured (src/config/master-admins.ts:93:13)
+      at Object.<anonymous> (src/config/master-admins.ts:114:1)
+      at Object.<anonymous> (src/common/guards/jwt-auth.guard.ts:17:1)
+      at Object.<anonymous> (src/modules/support/admin-support.controller.ts:16:1)
+      at Object.<anonymous> (test/permission-rbac.spec.ts:9:1)
+
+PASS test/oauth.spec.ts (9.568 s)
+  ΓùÅ Console
+
+    console.error
+      [Google OAuth] token exchange failed: undefined provider error body
+
+    [0m [90m 379 |[39m       [36mif[39m ([33m![39mtokenRes[33m.[39mok) {
+     [90m 380 |[39m         [36mconst[39m errorBody [33m=[39m [36mawait[39m 
+tokenRes[33m.[39mtext()[33m;[39m
+    [31m[1m>[22m[39m[90m 381 |[39m         console[33m.[39merror([32m'[Google OAuth] token exchange 
+failed:'[39m[33m,[39m tokenRes[33m.[39mstatus[33m,[39m errorBody)[33m;[39m
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 382 |[39m         [36mthrow[39m [36mnew[39m [33mUnauthorizedException[39m([32m'Google 
+authentication failed'[39m)[33m;[39m
+     [90m 383 |[39m       }
+     [90m 384 |[39m       [36mconst[39m token [33m=[39m ([36mawait[39m tokenRes[33m.[39mjson()) 
+[36mas[39m { access_token[33m?[39m[33m:[39m string }[33m;[39m[0m
+
+      at OAuthService.fetchProfile (src/modules/auth/oauth.service.ts:381:17)
+      at OAuthService.handleCallback (src/modules/auth/oauth.service.ts:205:21)
+      at Object.<anonymous> (test/oauth.spec.ts:328:5)
+
+[33m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth state verification failed (GOOGLE): Error: bad state[39m
+[32m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mOAuth exchange succeeded (one-time code consumed, session issued)[39m
+[32m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mFACEBOOK OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[33m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+[32m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mOAuth exchange succeeded (one-time code consumed, session issued)[39m
+[33m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+[33m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+[33m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+[33m[Nest] 20060  - [39m10/09/2026, 3:16:43 PM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+
+Test Suites: 3 failed, 16 passed, 19 total
+Tests:       5 failed, 323 passed, 328 total
+Snapshots:   0 total
+Time:        52.509 s, estimated 56 s
+Ran all test suites matching /wallet|casino-wallet-callbacks|casino-money|sports|sports-sync|partner-routing|par
+tner-webhook|admin-rbac|permission-rbac|auth|session-auth|winhouse-wallet|winhouse-money|bigbang-wallet|crash-re
+al-money-gate/i.

@@ -1,0 +1,89 @@
+
+> @tanvion-royale/api@0.1.0 test D:\tanvionRoyale\apps\api
+> jest
+
+[32m[Nest] 14468  - [39m09/09/2026, 10:49:48 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_RECOVERY sms code for +447911123456: 121760[39m
+[32m[Nest] 1560  - [39m09/09/2026, 10:49:49 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_SIGNUP sms code for +447911123456: 281334[39m
+[32m[Nest] 22180  - [39m09/09/2026, 10:49:49 AM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email to test@example.com — subject: Verify your email address — body: Your one-time link: /verify-email?token=3Cw-H_E6QbKQA5qhLD262o9wGT90ylfEooP-GSZn8io[39m
+[32m[Nest] 14468  - [39m09/09/2026, 10:49:49 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_RECOVERY sms code for +447911123456: 283443[39m
+PASS test/admin-rbac.spec.ts (18.094 s)
+[32m[Nest] 1560  - [39m09/09/2026, 10:49:49 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_SIGNUP sms code for +447911123456: 391708[39m
+[32m[Nest] 1560  - [39m09/09/2026, 10:49:50 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_SIGNUP sms code for +447911123456: 179254[39m
+[32m[Nest] 1560  - [39m09/09/2026, 10:49:50 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY sms code for +447911123456: 370544[39m
+[32m[Nest] 1560  - [39m09/09/2026, 10:49:50 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY sms code for +447911123456: 059922[39m
+[32m[Nest] 1560  - [39m09/09/2026, 10:49:50 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY sms code for +447911123456: 997488[39m
+[32m[Nest] 1560  - [39m09/09/2026, 10:49:50 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY sms code for +447911123456: 877556[39m
+[32m[Nest] 14468  - [39m09/09/2026, 10:49:51 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_RECOVERY sms code for +447911123456: 540773[39m
+[32m[Nest] 14468  - [39m09/09/2026, 10:49:51 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_RECOVERY sms code for +447911123456: 734196[39m
+[32m[Nest] 14468  - [39m09/09/2026, 10:49:51 AM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email to reset@example.com — subject: Reset your password — body: Your one-time link: /reset-password?token=_UiqIy-CAWmu1ZYDyeddzwxkjVcK53ZJvmN_yDKr8G4[39m
+PASS test/sports.spec.ts (19.5 s)
+PASS test/auth.spec.ts (20.916 s)
+PASS test/phone-auth.spec.ts (21.108 s)
+PASS test/admin-management.spec.ts (21.66 s)
+PASS test/oauth-cors.http.spec.ts (22.337 s)
+PASS test/users.spec.ts
+PASS test/partner-webhook.spec.ts
+[33m[Nest] 3980  - [39m09/09/2026, 10:49:55 AM [33m   WARN[39m [38;5;3m[PartnerController] [39m[33mPartner webhook rejected (bad_signature)[39m
+PASS test/session-auth.spec.ts
+PASS test/api.spec.ts
+[32m[Nest] 10752  - [39m09/09/2026, 10:49:55 AM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 10752  - [39m09/09/2026, 10:49:55 AM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 10752  - [39m09/09/2026, 10:49:55 AM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 10752  - [39m09/09/2026, 10:49:55 AM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 10752  - [39m09/09/2026, 10:49:55 AM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mOAuth exchange succeeded (one-time code consumed, session issued)[39m
+[32m[Nest] 10752  - [39m09/09/2026, 10:49:55 AM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 10752  - [39m09/09/2026, 10:49:55 AM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mFACEBOOK OAuth callback validated; redirecting with a one-time exchange code[39m
+[32m[Nest] 10752  - [39m09/09/2026, 10:49:55 AM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mGOOGLE OAuth callback validated; redirecting with a one-time exchange code[39m
+[33m[Nest] 10752  - [39m09/09/2026, 10:49:55 AM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+[32m[Nest] 10752  - [39m09/09/2026, 10:49:55 AM [32m    LOG[39m [38;5;3m[OAuthService] [39m[32mOAuth exchange succeeded (one-time code consumed, session issued)[39m
+[33m[Nest] 10752  - [39m09/09/2026, 10:49:55 AM [33m   WARN[39m [38;5;3m[OAuthService] [39m[33mOAuth exchange rejected: Invalid or expired authorization code[39m
+PASS test/oauth.spec.ts
+  ● Console
+
+    console.error
+      [Google OAuth] token exchange failed: undefined provider error body
+
+    [0m [90m 313 |[39m       [36mif[39m ([33m![39mtokenRes[33m.[39mok) {
+     [90m 314 |[39m         [36mconst[39m errorBody [33m=[39m [36mawait[39m tokenRes[33m.[39mtext()[33m;[39m
+    [31m[1m>[22m[39m[90m 315 |[39m         console[33m.[39merror([32m'[Google OAuth] token exchange failed:'[39m[33m,[39m tokenRes[33m.[39mstatus[33m,[39m errorBody)[33m;[39m
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 316 |[39m         [36mthrow[39m [36mnew[39m [33mUnauthorizedException[39m([32m'Google authentication failed'[39m)[33m;[39m
+     [90m 317 |[39m       }
+     [90m 318 |[39m       [36mconst[39m token [33m=[39m ([36mawait[39m tokenRes[33m.[39mjson()) [36mas[39m { access_token[33m?[39m[33m:[39m string }[33m;[39m[0m
+
+      at OAuthService.fetchProfile (src/modules/auth/oauth.service.ts:315:17)
+      at OAuthService.handleCallback (src/modules/auth/oauth.service.ts:160:21)
+      at Object.<anonymous> (test/oauth.spec.ts:328:5)
+
+PASS test/verification.spec.ts
+[32m[Nest] 1560  - [39m09/09/2026, 10:49:56 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY sms code for +447911123456: 325935[39m
+[32m[Nest] 1560  - [39m09/09/2026, 10:49:56 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_VERIFY sms code for +447911123456: 848209[39m
+[32m[Nest] 1560  - [39m09/09/2026, 10:49:56 AM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email to x@y.z — subject: Verify your email address — body: Your verification link: /verify-email?token=kytwsu6M-5QBqE-IZdO18S0xnP5AkpUWQtAaZL2UHGU[39m
+[32m[Nest] 1560  - [39m09/09/2026, 10:49:56 AM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email to x@y.z — subject: Verify your email address — body: Your verification link: /verify-email?token=Iiq5RZ3WvXe1LPk2giN2PHioLvNIS2dY22yyIxfZDFY[39m
+PASS test/settlement.spec.ts
+PASS test/account-recovery.spec.ts (24.429 s)
+PASS test/betting-bet.spec.ts
+[31m[Nest] 22180  - [39m09/09/2026, 10:49:56 AM [31m  ERROR[39m [38;5;3m[OtpService] [39m[31mOTP delivery failed (channel=email, purpose=EMAIL_VERIFY): SMTP connection refused[39m
+[31m[Nest] 22180  - [39m09/09/2026, 10:49:56 AM [31m  ERROR[39m [38;5;3m[OtpService] [39m[31mOTP delivery failed (channel=sms, purpose=PHONE_VERIFY): Twilio API 500[39m
+PASS test/betting-events.spec.ts
+[31m[Nest] 22180  - [39m09/09/2026, 10:49:56 AM [31m  ERROR[39m [38;5;3m[OtpService] [39m[31mOTP delivery failed (channel=email, purpose=EMAIL_VERIFY): delivery down[39m
+PASS test/email-otp.spec.ts
+PASS test/betting-odds-stake.spec.ts
+PASS test/cors.spec.ts
+PASS test/mock-provider.spec.ts
+PASS test/trading.spec.ts
+[31m[Nest] 21820  - [39m09/09/2026, 10:49:56 AM [31m  ERROR[39m [38;5;3m[OtpService] [39m[31mOTP delivery failed (channel=sms, purpose=PHONE_SIGNUP): SMS gateway timeout[39m
+PASS test/otp-delivery.spec.ts
+[32m[Nest] 21820  - [39m09/09/2026, 10:49:56 AM [32m    LOG[39m [38;5;3m[DevLogSmsCodeSender] [39m[32m[DEV ONLY] PHONE_SIGNUP sms code for +447911123456: 343360[39m
+[32m[Nest] 21820  - [39m09/09/2026, 10:49:56 AM [32m    LOG[39m [38;5;3m[DevLogEmailSender] [39m[32m[DEV ONLY] email to a@b.c — subject: s — body: b[39m
+[33m[Nest] 3980  - [39m09/09/2026, 10:49:56 AM [33m   WARN[39m [38;5;3m[SportsSyncService] [39m[33mSports sync failed (provider=real-partner): Betting provider is not configured[39m
+[33m[Nest] 3980  - [39m09/09/2026, 10:49:56 AM [33m   WARN[39m [38;5;3m[SportsSyncService] [39m[33mSports sync failed (provider=real-partner): upstream 500: provider exploded[39m
+PASS test/sports-sync.spec.ts
+PASS test/wallet.spec.ts
+PASS test/partner-routing.spec.ts
+
+Test Suites: 25 passed, 25 total
+Tests:       304 passed, 304 total
+Snapshots:   0 total
+Time:        27.453 s, estimated 38 s
+Ran all test suites.

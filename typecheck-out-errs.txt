@@ -1,0 +1,1 @@
+@tanvion-royale/web:type-check: app/games/play/[slug]/page.tsx(9,22): error TS2724: '"@/components/games/action-game"' has no exported member named 'getActionGameConfig'. Did you mean 'ActionGameConfig'?

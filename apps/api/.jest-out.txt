@@ -1,0 +1,225 @@
+﻿node.exe : FAIL test/affiliate.spec.ts (8.681 s)
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL test/affiliate.spec.ts (8.681 s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  A. affiliate statistics come from persisted records
+    ΓêÜ A1. derives every counter from the referral tables, not from a client value (8 ms)
+    ΓêÜ A2. conversionRate is NULL (not 0) when there were no clicks (1 ms)
+    ΓêÜ A3. an affiliate with nothing at all reports zeros, not invented numbers (1 ms)
+    ΓêÜ A4. the dashboard link and code come from the EXISTING referral service (3 ms)
+  A5. a referral code alone never makes a user an affiliate
+    ΓêÜ A5.1. with NO profile the dashboard exposes no link, stats, target or content (3 ms)
+    ΓêÜ A5.2. the activation view is INACTIVE but still prefills from the account (1 ms)
+    ΓêÜ A5.3. a DEACTIVATED profile is inactive even though the row still exists (1 ms)
+  B. monthly targets are per-month and honest about absence
+    ΓêÜ B1. reports targetValue NULL when no admin has set one (1 ms)
+    ΓêÜ B2. computes percentage and remaining from the stored target (1 ms)
+    ΓêÜ B3. an explicitly configured target of ZERO is kept distinct from "unset" (1 ms)
+    ΓêÜ B4. a target is written with its month and is AUDITED (1 ms)
+    ΓêÜ B5. target history is readable month by month (1 ms)
+  C. click tracking
+    ΓêÜ C1. resolves the OWNER server-side from the code (1 ms)
+    ΓêÜ C2. an UNKNOWN code records nothing (invalid attribution is never assigned)
+    ΓêÜ C3. the SAME visitor is counted once ΓÇö a refresh is not a new click (2 ms)
+    ΓêÜ C4. stores NO ip, user agent, cookie or raw fingerprint (1 ms)
+    ΓêÜ C5. drops the query string so no personal data is persisted (1 ms)
+    ΓêÜ C6. a plain referral code records NO click ΓÇö analytics are for affiliates (1 ms)
+    ΓêÜ C7. a DEACTIVATED affiliate records no NEW click (1 ms)
+  D. content blocks can never carry executable content
+    ΓêÜ D1. accepts an https URL and a site-relative path
+    ΓêÜ D2. refuses the dangerous URL javascript:alert(1) (1 ms)
+    ΓêÜ D2. refuses the dangerous URL data:text/html;base64,PHNjcmlwdD4=
+    ΓêÜ D2. refuses the dangerous URL vbscript:msgbox(1) (1 ms)
+    ΓêÜ D2. refuses the dangerous URL file:///etc/passwd
+    ΓêÜ D2. refuses the dangerous URL //evil.example.com/x.js
+    ΓêÜ D3. the SERVICE re-validates even if the DTO was bypassed (2 ms)
+    ΓêÜ D4. the content DTO has no field that can hold HTML or a script (8 ms)
+    ΓêÜ D4b. an UNKNOWN property is rejected by validation, so nothing extra is stored (6 ms)
+  E. content add / edit / reorder / delete
+    ΓêÜ E1. creates a block and audits it (1 ms)
+    ΓêÜ E2. a reorder with an UNKNOWN id is refused, never partially applied (1 ms)
+    ΓêÜ E3. a reorder writes an explicit ordered sequence and audits it (1 ms)
+    ΓêÜ E4. an update can disable a block without deleting it (1 ms)
+    ΓêÜ E5. a delete keeps a non-sensitive summary in the audit trail (1 ms)
+  F. referral code validation is unchanged and still server-owned
+    ΓêÜ F1. a generated code has the issued shape (1 ms)
+    ΓêÜ F2. a pasted full link resolves to the bare code (1 ms)
+    ΓêÜ F3. never attributes for the unusable input ""
+    ΓêÜ F3. never attributes for the unusable input "   "
+    ΓêÜ F3. never attributes for the unusable input "NOPE"
+    ΓêÜ F3. never attributes for the unusable input "TANV-"
+    ΓêÜ F3. never attributes for the unusable input "TANVTOOSHORT"
+    ΓêÜ F3. never attributes for the unusable input "../../etc/passwd"
+    ΓêÜ F3. never attributes for the unusable input null
+    ΓêÜ F3. never attributes for the unusable input undefined
+    ΓêÜ F4. the click DTO carries only a code, never a referrer id (1 ms)
+  G. admin overview
+    ΓêÜ G1. reports program counters and never fabricates a conversion rate (1 ms)
+    ΓêÜ G2. counts ACTIVE profiles only ΓÇö a referral user is not an affiliate (2 ms)
+    ├ù G3. a deactivated affiliate leaves the active count and is reported separately (2 ms)
+  H. affiliate membership lifecycle
+    ├ù H1. activation creates exactly ONE profile, ACTIVE, and pays nobody (1 ms)
+    ├ù H2. activation REUSES the existing referral code instead of making a new one (1 ms)
+    ├ù H3. activating twice is IDEMPOTENT ΓÇö no second profile is created
+    ΓêÜ H4. activation requires the agreement (1 ms)
+    ΓêÜ H5. activation refuses a dangerous channel URL even if the DTO is bypassed
+    ΓêÜ H6. a closed program accepts no new members
+    ├ù H7. admin deactivate hides the link and stops new clicks, keeping history (2 ms)
+    ├ù H8. a status change is AUDITED with the admin as the actor (5 ms)
+    ΓêÜ H9. admin reactivate restores the SAME row, code and link (2 ms)
+    ΓêÜ H10. an admin cannot activate a user who never activated (1 ms)
+    ΓêÜ H11. the admin list returns only ACTIVE affiliates (2 ms)
+    ├ù H12. a deactivated affiliate is excluded from the ACTIVE admin list
+    ΓêÜ H13. a user with no profile is never an affiliate in the admin detail (1 ms)
+    ΓêÜ H14. the admin detail carries the activation information for an affiliate (5 ms)
+
+  ΓùÅ G. admin overview ΓÇ║ G3. a deactivated affiliate leaves the active count and is reported separately
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+    [0m [90m 721 |[39m     [36mconst[39m overview [33m=[39m [36mawait[39m 
+h[33m.[39mservice[33m.[39mgetAdminOverview([33mNOW[39m)[33m;[39m
+     [90m 722 |[39m
+    [31m[1m>[22m[39m[90m 723 |[39m     
+expect(overview[33m.[39mtotalAffiliates)[33m.[39mtoBe([35m0[39m)[33m;[39m
+     [90m     |[39m                                      [31m[1m^[22m[39m
+     [90m 724 |[39m     expect(overview[33m.[39minactiveAffiliates)[33m.[39mtoBe([35m1[39m)[33m;[39m
+     [90m 725 |[39m   })[33m;[39m
+     [90m 726 |[39m })[33m;[39m[0m
+
+      at Object.<anonymous> (test/affiliate.spec.ts:723:38)
+
+  ΓùÅ H. affiliate membership lifecycle ΓÇ║ H1. activation creates exactly ONE profile, ACTIVE, and pays nobody
+
+    TypeError: Cannot convert undefined or null to object
+        at Function.assign (<anonymous>)
+
+    [0m [90m 104 |[39m         })[33m;[39m
+     [90m 105 |[39m       }
+    [31m[1m>[22m[39m[90m 106 |[39m       [33mObject[39m[33m.[39massign(profileRow[33m,[39m 
+data)[33m;[39m
+     [90m     |[39m              [31m[1m^[22m[39m
+     [90m 107 |[39m       [36mreturn[39m profileRow[33m;[39m
+     [90m 108 |[39m     })[33m,[39m
+     [90m 109 |[39m     update[33m:[39m jest[33m.[39mfn([36masync[39m ({ where[33m,[39m data 
+}[33m:[39m any) [33m=>[39m {[0m
+
+      at Object.<anonymous> (test/affiliate.spec.ts:106:14)
+      at AffiliateService.activate (src/modules/referral/affiliate.service.ts:384:42)
+      at Object.<anonymous> (test/affiliate.spec.ts:741:18)
+
+  ΓùÅ H. affiliate membership lifecycle ΓÇ║ H2. activation REUSES the existing referral code instead of making 
+a new one
+
+    TypeError: Cannot convert undefined or null to object
+        at Function.assign (<anonymous>)
+
+    [0m [90m 104 |[39m         })[33m;[39m
+     [90m 105 |[39m       }
+    [31m[1m>[22m[39m[90m 106 |[39m       [33mObject[39m[33m.[39massign(profileRow[33m,[39m 
+data)[33m;[39m
+     [90m     |[39m              [31m[1m^[22m[39m
+     [90m 107 |[39m       [36mreturn[39m profileRow[33m;[39m
+     [90m 108 |[39m     })[33m,[39m
+     [90m 109 |[39m     update[33m:[39m jest[33m.[39mfn([36masync[39m ({ where[33m,[39m data 
+}[33m:[39m any) [33m=>[39m {[0m
+
+      at Object.<anonymous> (test/affiliate.spec.ts:106:14)
+      at AffiliateService.activate (src/modules/referral/affiliate.service.ts:384:42)
+      at Object.<anonymous> (test/affiliate.spec.ts:760:5)
+
+  ΓùÅ H. affiliate membership lifecycle ΓÇ║ H3. activating twice is IDEMPOTENT ΓÇö no second profile is created
+
+    TypeError: Cannot convert undefined or null to object
+        at Function.assign (<anonymous>)
+
+    [0m [90m 104 |[39m         })[33m;[39m
+     [90m 105 |[39m       }
+    [31m[1m>[22m[39m[90m 106 |[39m       [33mObject[39m[33m.[39massign(profileRow[33m,[39m 
+data)[33m;[39m
+     [90m     |[39m              [31m[1m^[22m[39m
+     [90m 107 |[39m       [36mreturn[39m profileRow[33m;[39m
+     [90m 108 |[39m     })[33m,[39m
+     [90m 109 |[39m     update[33m:[39m jest[33m.[39mfn([36masync[39m ({ where[33m,[39m data 
+}[33m:[39m any) [33m=>[39m {[0m
+
+      at Object.<anonymous> (test/affiliate.spec.ts:106:14)
+      at AffiliateService.activate (src/modules/referral/affiliate.service.ts:384:42)
+      at Object.<anonymous> (test/affiliate.spec.ts:772:5)
+
+  ΓùÅ H. affiliate membership lifecycle ΓÇ║ H7. admin deactivate hides the link and stops new clicks, keeping 
+history
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: 2026-09-15T10:00:00.000Z
+    Received: "2026-09-15T10:00:00.000Z"
+
+    [0m [90m 817 |[39m
+     [90m 818 |[39m     expect(view[33m.[39mstatus)[33m.[39mtoBe([32m'INACTIVE'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 819 |[39m     
+expect(view[33m.[39mprofile[33m?[39m[33m.[39mdeactivatedAt)[33m.[39mtoEqual([33mNOW[39m)[33m;[39m
+     [90m     |[39m                                         [31m[1m^[22m[39m
+     [90m 820 |[39m     [90m// The affiliate link is gone from the affiliate endpoints...[39m
+     [90m 821 |[39m     [36mconst[39m dash [33m=[39m [36mawait[39m 
+h[33m.[39mservice[33m.[39mgetDashboard([33mAFFILIATE_ID[39m[33m,[39m 
+[32m'https://site.test'[39m[33m,[39m [33mNOW[39m)[33m;[39m
+     [90m 822 |[39m     expect(dash[33m.[39mreferralCode)[33m.[39mtoBeNull()[33m;[39m[0m
+
+      at Object.<anonymous> (test/affiliate.spec.ts:819:41)
+
+  ΓùÅ H. affiliate membership lifecycle ΓÇ║ H8. a status change is AUDITED with the admin as the actor
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+    -   "previousStatus": "ACTIVE",
+    +   "previousStatus": "INACTIVE",
+        "reason": "spam",
+        "status": "INACTIVE",
+      }
+
+    [0m [90m 849 |[39m     expect(audit[33m.[39mactorId)[33m.[39mtoBe([32m'admin-1'[39m)[33m;[39m
+     [90m 850 |[39m     
+expect(audit[33m.[39mentityType)[33m.[39mtoBe([32m'AffiliateProfile'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 851 |[39m     expect(audit[33m.[39mnewValue)[33m.[39mtoMatchObject({
+     [90m     |[39m                            [31m[1m^[22m[39m
+     [90m 852 |[39m       previousStatus[33m:[39m [32m'ACTIVE'[39m[33m,[39m
+     [90m 853 |[39m       status[33m:[39m [32m'INACTIVE'[39m[33m,[39m
+     [90m 854 |[39m       reason[33m:[39m [32m'spam'[39m[33m,[39m[0m
+
+      at Object.<anonymous> (test/affiliate.spec.ts:851:28)
+
+  ΓùÅ H. affiliate membership lifecycle ΓÇ║ H12. a deactivated affiliate is excluded from the ACTIVE admin list
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+    [0m [90m 899 |[39m
+     [90m 900 |[39m     expect(found[33m.[39mitems)[33m.[39mtoHaveLength([35m0[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 901 |[39m     
+expect(found[33m.[39mtotal)[33m.[39mtoBe([35m0[39m)[33m;[39m
+     [90m     |[39m                         [31m[1m^[22m[39m
+     [90m 902 |[39m   })[33m;[39m
+     [90m 903 |[39m
+     [90m 904 |[39m   it([32m'H13. a user with no profile is never an affiliate in the admin 
+detail'[39m[33m,[39m [36masync[39m () [33m=>[39m {[0m
+
+      at Object.<anonymous> (test/affiliate.spec.ts:901:25)
+
+Test Suites: 1 failed, 1 total
+Tests:       7 failed, 54 passed, 61 total
+Snapshots:   0 total
+Time:        9.238 s
+Ran all test suites matching /test\\affiliate.spec.ts/i.

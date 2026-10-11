@@ -1,0 +1,39 @@
+> @tanvion-royale/api@0.1.0 prebuild D:\tanvionRoyale\apps\api
+> pnpm --filter @tanvion-royale/integrations... --filter @tanvion-royale/config --filter @tanvion-royale/validation run build
+Scope: 4 of 8 workspace projects
+../../packages/types build$ tsc -p tsconfig.build.json
+../../packages/config build$ tsc -p tsconfig.build.json
+../../packages/validation build$ tsc -p tsconfig.build.json
+../../packages/types build: Done
+../../packages/config build: Done
+../../packages/validation build: Done
+../../packages/integrations build$ tsc -p tsconfig.build.json
+../../packages/integrations build: Done
+> @tanvion-royale/api@0.1.0 build D:\tanvionRoyale\apps\api
+> nest build
+[96msrc/modules/games/game-engines/coin-flip.engine.ts[0m:[93m87[0m:[93m9[0m - [91merror[0m[90m TS2322: [0mType '"WIN" | "LOSS" | null' is not assignable to type 'FreePlayRoundOutcome'.
+  Type 'null' is not assignable to type 'FreePlayRoundOutcome'.
+[7m87[0m         outcome: finished.outcome,
+[7m  [0m [91m        ~~~~~~~[0m
+[96msrc/modules/games/game-engines/color-prediction.engine.ts[0m:[93m85[0m:[93m9[0m - [91merror[0m[90m TS2322: [0mType '"WIN" | "LOSS" | null' is not assignable to type 'FreePlayRoundOutcome'.
+  Type 'null' is not assignable to type 'FreePlayRoundOutcome'.
+[7m85[0m         outcome: finished.outcome,
+[7m  [0m [91m        ~~~~~~~[0m
+[96msrc/modules/games/game-engines/dice-roll.engine.ts[0m:[93m82[0m:[93m9[0m - [91merror[0m[90m TS2322: [0mType '"WIN" | "LOSS" | null' is not assignable to type 'FreePlayRoundOutcome'.
+  Type 'null' is not assignable to type 'FreePlayRoundOutcome'.
+[7m82[0m         outcome: finished.outcome,
+[7m  [0m [91m        ~~~~~~~[0m
+[96msrc/modules/games/game-engines/higher-lower.engine.ts[0m:[93m88[0m:[93m9[0m - [91merror[0m[90m TS2322: [0mType '"WIN" | "LOSS" | null' is not assignable to type 'FreePlayRoundOutcome'.
+  Type 'null' is not assignable to type 'FreePlayRoundOutcome'.
+[7m88[0m         outcome: finished.outcome,
+[7m  [0m [91m        ~~~~~~~[0m
+[96msrc/modules/games/game-engines/lucky-number.engine.ts[0m:[93m78[0m:[93m9[0m - [91merror[0m[90m TS2322: [0mType '"WIN" | "LOSS" | null' is not assignable to type 'FreePlayRoundOutcome'.
+  Type 'null' is not assignable to type 'FreePlayRoundOutcome'.
+[7m78[0m         outcome: finished.outcome,
+[7m  [0m [91m        ~~~~~~~[0m
+[96msrc/modules/games/game-engines/wheel-spin.engine.ts[0m:[93m77[0m:[93m9[0m - [91merror[0m[90m TS2322: [0mType '"WIN" | "LOSS" | null' is not assignable to type 'FreePlayRoundOutcome'.
+  Type 'null' is not assignable to type 'FreePlayRoundOutcome'.
+[7m77[0m         outcome: finished.outcome,
+[7m  [0m [91m        ~~~~~~~[0m
+Found 6 error(s).
+ ELIFECYCLE  Command failed with exit code 1.

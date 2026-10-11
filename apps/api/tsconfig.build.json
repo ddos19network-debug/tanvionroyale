@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "baseUrl": "./",
+    "tsBuildInfoFile": "./dist/tsconfig.build.tsbuildinfo",
+    "paths": {
+      "@tanvion-royale/types": ["../../packages/types/dist"],
+      "@tanvion-royale/config": ["../../packages/config/dist"],
+      "@tanvion-royale/integrations": ["../../packages/integrations/dist"],
+      "@tanvion-royale/validation": ["../../packages/validation/dist"]
+    }
+  },
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+}

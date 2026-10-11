@@ -1,0 +1,11 @@
+-- Additive migration: new UserStatus value for admin account moderation.
+--
+-- SUSPENDED stays the temporary/reviewable state; BANNED is the permanent/
+-- severe state (ToS violation, fraud). Both are set exclusively by the admin
+-- moderation endpoints (apps/api/src/modules/admin/admin-user-moderation
+-- .controller.ts), are always reason-required + audited, and revoke every
+-- active session for the target user.
+--
+-- No table is created or altered, no existing row is touched: PostgreSQL
+-- enum values are append-only, so historical data is unaffected.
+ALTER TYPE "UserStatus" ADD VALUE IF NOT EXISTS 'BANNED';
