@@ -156,6 +156,10 @@ model User {
   // goes through the ONE wallet ledger; these are game rows only.
   royalePlinkoRounds     RoyalePlinkoRound[]
   royaleMinesRounds      RoyaleMinesRound[]
+  royaleAceRounds        RoyaleAceRound[]
+  royaleAceConfigsCreated RoyaleAceConfigVersion[] @relation("RoyaleAceConfigCreatedBy")
+  royaleAceConfigsActivated RoyaleAceConfigVersion[] @relation("RoyaleAceConfigActivatedBy")
+  royaleAceReportsCreated RoyaleAceSimulationReport[] @relation("RoyaleAceReportCreatedBy")
   royaleSettlements      RoyaleSettlement[]
   // Responsible gambling (Task 2 / audit F3): self-exclusions and play limits.
   // These are PROTECTION records — they never hold money, only constraints that
@@ -3082,6 +3086,166 @@ model RoyaleSettlement {
 //   * lowering a limit OR self-excluding  -> takes effect IMMEDIATELY;
 //   * RAISING a limit OR ending an exclusion -> only after a cooling-off delay
 //     (ROYALE_RG_COOLING_OFF_HOURS, default 24h), stored in PlayLimit.pending*
+
+// ---------------------------------------------------------------------------
+// Royale Ace (royale-ace) — original 5x4 / 1024-ways cascading card slot.
+//
+// The server derives the ENTIRE round up front (initial grid, every cascade
+// step, wild placements, multipliers, scatter trigger, the whole free-spin
+// sequence and the total win) and stores it as JSON in `resultJson`. The client
+// only replays it; nothing is decided on the client.
+//
+// A round is resumable: if the player disconnects, the ACTIVE row keeps the
+// pre-derived `resultJson` and the reconciler (RoyaleAceService#reconcile) can
+// finish it safely — it can only ever apply the exact outcome that was derived
+// before the stake was taken.
+//
+// Free spins are part of the SAME round: the stake is debited once and the
+// total (capped) win is credited once at settlement.
+// ---------------------------------------------------------------------------
+
+/// Lifecycle of a Royale Ace round.
+enum RoyaleAceRoundStatus {
+  /// The round was created but not settled yet (kept only until the settling
+  /// transaction commits; a crash in between is recovered by the reconciler).
+  ACTIVE
+  /// Settled: stake captured, win credited (may be zero), ledger + audit written.
+  SETTLED
+  /// Voided by an admin with a reason: the stake is refunded and nothing is
+  /// ever credited from a voided round.
+  VOIDED
+}
+
+/// One Royale Ace round. Immutable once SETTLED (void is the only admin path).
+model RoyaleAceRound {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  mode   RoyaleGameMode      @default(FREE_PLAY)
+  status RoyaleAceRoundStatus @default(ACTIVE)
+
+  stake    Int
+  currency String
+  /// Total win in minor units (uncapped total is kept in `resultJson`), 0 on a
+  /// loss. NULL while ACTIVE.
+  payout Int?
+  /// Highest cascade multiplier reached anywhere in the round (bp, 10000 = 1x).
+  maxMultiplierBp Int @default(10000)
+  /// TRUE when the round's win was clipped by the configured max-win cap.
+  capped Boolean @default(false)
+
+  /// SHA-256 commitment of the serverSeed, published BEFORE the spin.
+  serverSeedHash String
+  /// AES-256-GCM encrypted serverSeed (encryptSecret) — never exposed.
+  serverSeedEnc String
+  /// Revealed only at settlement (SETTLED/VOIDED); NULL while ACTIVE.
+  serverSeed String?
+  clientSeed String
+  nonce      Int
+
+  /// Config version this round was played with (immutable provenance).
+  configVersion Int
+  /// The full pre-derived outcome (grids, cascades, multipliers, free spins,
+  /// total win) exactly as re-derived by verifyAceSpin().
+  resultJson Json
+
+  /// REAL_MONEY: WalletTransaction holding the captured stake (audit anchor).
+  transactionId  String?
+  idempotencyKey String
+
+  createdAt DateTime  @default(now())
+  settledAt DateTime?
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+/// A versioned Royale Ace configuration. Only ONE row is ACTIVE at a time; a new
+/// DRAFT version must carry a stored simulation report (RoyaleAceSimulationReport)
+/// that passes before an admin may activate it. Every row is immutable once
+/// created — changes always come as a NEW version with a mandatory reason.
+model RoyaleAceConfigVersion {
+  id Int @id @default(1)
+
+  status  RoyaleAceConfigStatus @default(DRAFT)
+  version Int                   @unique
+  /// Human label shown in the admin UI and in the client's info modal.
+  name    String
+  /// The complete typed config (strips, paytable, ladders, caps, bet levels,
+  /// jurisdiction rules).
+  configJson Json
+  /// Validation problems found when the row was created (must be empty).
+  validationErrors Json?
+
+  /// REQUIRED on create and on every activation (who changed what, and why).
+  changeReason String
+  createdById  String
+  createdBy    User   @relation("RoyaleAceConfigCreatedBy", fields: [createdById], references: [id])
+
+  activatedAt DateTime?
+  activatedById String?
+  activatedBy   User?     @relation("RoyaleAceConfigActivatedBy", fields: [activatedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  simulationReports RoyaleAceSimulationReport[]
+
+  @@index([status])
+}
+
+enum RoyaleAceConfigStatus {
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+/// A stored simulation report for a config version. A version with GOLDEN rules
+/// (paytable / strip weights) can only be activated when its newest report has
+/// `passed = true`, which requires RTP inside tolerance and no max-win breach.
+model RoyaleAceSimulationReport {
+  id String @id @default(uuid())
+  configVersion Int
+  configVersionRef RoyaleAceConfigVersion @relation(fields: [configVersion], references: [version])
+
+  /// Rows simulated for this report.
+  spins Int
+  /// Achieved RTP in bp (e.g. 9655 = 96.55%).
+  rtpBp Int
+  /// 99% confidence interval for RTP, in bp.
+  rtpCiLowBp  Int
+  rtpCiHighBp Int
+  /// Target RTP from the config, in bp, and the tolerance used, in bp.
+  targetRtpBp Int
+  toleranceBp Int
+  /// Hit frequency (a round that paid anything) in bp.
+  hitFrequencyBp      Int
+  /// Free-spin trigger rate in bp (rounds that entered the feature).
+  triggerRateBp       Int
+  /// Retrigger rate in bp (free-spin rounds that extended).
+  retriggerRateBp     Int
+  /// RTP split, in bp, exactly as the math design specifies.
+  baseGameRtpBp       Int
+  cascadeRtpBp        Int
+  freeSpinRtpBp       Int
+  /// Standard deviation of the per-round return (bp), i.e. volatility.
+  volatilityBp        Int
+  /// Highest observed win in bp of stake.
+  maxWinObservedBp    Int
+  /// Configured max win in bp.
+  maxWinCapBp         Int
+  /// FALSE when RTP was outside tolerance or the cap was exceeded.
+  passed Boolean
+  notes  String?
+
+  createdById String
+  createdBy   User   @relation("RoyaleAceReportCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([configVersion, createdAt])
+}
+
 //     (raise) or SelfExclusion.revokedAt (scheduled end, future timestamp);
 //   * PERMANENT exclusion -> endsAt is NULL and can NEVER be revoked by the
 //     user (admin override only).

@@ -15,7 +15,9 @@
     "db:generate": "pnpm --filter @tanvion-royale/api prisma:generate",
     "db:migrate": "pnpm --filter @tanvion-royale/api prisma:migrate",
     "db:seed": "pnpm --filter @tanvion-royale/api prisma:seed",
-    "db:bootstrap": "pnpm --filter @tanvion-royale/api prisma:bootstrap"
+    "db:bootstrap": "pnpm --filter @tanvion-royale/api prisma:bootstrap",
+    "sim:royale-ace": "pnpm --filter @tanvion-royale/api sim:royale-ace",
+    "sim:tune:royale-ace": "pnpm --filter @tanvion-royale/api sim:tune:royale-ace"
   },
   "devDependencies": {
     "prettier": "^3.3.3",
