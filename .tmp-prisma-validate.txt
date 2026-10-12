@@ -1,2 +1,0 @@
-﻿Prisma schema loaded from ..\..\database\prisma\schema.prisma
-The schema at ..\..\database\prisma\schema.prisma is valid ≡ƒÜÇ
