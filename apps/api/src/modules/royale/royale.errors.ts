@@ -26,7 +26,12 @@ export type RoyaleErrorCode =
   | 'ROYALE_KYC_REQUIRED'
   | 'ROYALE_AGE_RESTRICTED'
   | 'ROYALE_SELF_EXCLUDED'
-  | 'ROYALE_LIMIT_EXCEEDED';
+  | 'ROYALE_LIMIT_EXCEEDED'
+  // Central jurisdiction & currency control + kill switches (PART A). Thrown
+  // before any wallet reservation, always with HTTP 403.
+  | 'ROYALE_MASTER_SWITCH_OFF'
+  | 'ROYALE_GAME_SWITCH_OFF'
+  | 'ROYALE_JURISDICTION_BLOCKED';
 
 export interface RoyaleErrorBody {
   statusCode: number;

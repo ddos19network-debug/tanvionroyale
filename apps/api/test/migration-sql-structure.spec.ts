@@ -262,11 +262,16 @@ describe('migration SQL structure', () => {
       const code = topLevelStatements(sql).map(stripLeadingComments).join(';\n');
       const upper = code.toUpperCase();
       // No existing content may be deleted, dropped, truncated or reassigned to
-      // an arbitrary affiliate.
-      expect(upper).not.toMatch(/\bDELETE\b/);
-      expect(upper).not.toMatch(/\bDROP\b/);
-      expect(upper).not.toMatch(/\bTRUNCATE\b/);
-      expect(upper).not.toMatch(/\bUPDATE\b/);
+      // an arbitrary affiliate. The keywords are matched only at STATEMENT START
+      // (right after `;` or at the top of the batch) so that FK clauses such as
+      // `... REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE` — which
+      // legitimately contain the words DELETE/UPDATE inside an ON-clause — are
+      // NOT flagged. The migration itself is correct; the old regex was a false
+      // positive.
+      expect(upper).not.toMatch(/(?:^|;)\s*DELETE\b/);
+      expect(upper).not.toMatch(/(?:^|;)\s*DROP\b/);
+      expect(upper).not.toMatch(/(?:^|;)\s*TRUNCATE\b/);
+      expect(upper).not.toMatch(/(?:^|;)\s*UPDATE\b/);
       // The tables the requirement says must stay untouched are never named
       // (compared in the original case, since these are quoted identifiers).
       for (const untouched of [

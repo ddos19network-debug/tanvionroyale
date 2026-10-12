@@ -298,8 +298,8 @@ export class InMemoryDb {
           );
           if (clash) p2002();
         }
-        rowsArr[idx] = candidate;
-        return { ...candidate };
+        Object.assign(rowsArr[idx], structuredClone(args.data));
+        return { ...rowsArr[idx] };
       },
       upsert: async (args: {
         where: Record<string, unknown>;
@@ -316,8 +316,8 @@ export class InMemoryDb {
             );
             if (clash) p2002();
           }
-          rowsArr[idx] = candidate;
-          return { ...candidate };
+          Object.assign(rowsArr[idx], structuredClone(args.update));
+          return { ...rowsArr[idx] };
         }
         const row: Row = { ...def.defaults(), ...structuredClone(args.create) };
         assertUniques(row);
@@ -329,7 +329,7 @@ export class InMemoryDb {
         let count = 0;
         for (let i = 0; i < rowsArr.length; i += 1) {
           if (matches(rowsArr[i], args.where)) {
-            rowsArr[i] = { ...rowsArr[i], ...structuredClone(args.data) };
+            Object.assign(rowsArr[i], structuredClone(args.data));
             count += 1;
           }
         }

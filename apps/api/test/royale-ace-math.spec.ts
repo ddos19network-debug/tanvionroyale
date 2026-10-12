@@ -70,9 +70,13 @@ describe('Royale Ace — 1024-ways evaluator', () => {
     const wins = evaluateWays(g, cfg);
     const spade = wins.find((w) => w.symbol === 'SPADE');
     expect(spade).toBeDefined();
+    // SPADE appears on reels 0,1,2 only. Reel 0 has 1 SPADE, reel 1 has 2,
+    // and reel 2 has 1 SPADE PLUS a WILD (which substitutes for every paying
+    // symbol), so the ways product is 1*2*2 = 4 — the WILD on reel 2 is a
+    // legitimate part of the run and must be counted.
     expect(spade?.runLength).toBe(3);
-    expect(spade?.ways).toBe(2);
-    expect(spade?.payBp).toBe(2 * cfg.paytableBp.SPADE[3]);
+    expect(spade?.ways).toBe(4);
+    expect(spade?.payBp).toBe(4 * cfg.paytableBp.SPADE[3]);
   });
 
   it('does NOT pay a symbol that only appears on reel 0 (no 2-of-a-kind)', () => {
@@ -97,7 +101,11 @@ describe('Royale Ace — 1024-ways evaluator', () => {
     ]);
     const wins = evaluateWays(g, cfg);
     const ace = wins.find((w) => w.symbol === 'A');
-    expect(ace?.runLength).toBe(3);
+    expect(ace).toBeDefined();
+    // A appears on reel 0, the WILD on reel 1 substitutes for it, and A is
+    // ALSO present on reels 2, 3 and 4, so the run extends all the way to
+    // reel 4 (runLength 5, ways 1) — the WILD is shared, not a run-terminator.
+    expect(ace?.runLength).toBe(5);
     expect(ace?.ways).toBe(1);
   });
 
@@ -110,7 +118,9 @@ describe('Royale Ace — 1024-ways evaluator', () => {
       [cell('Q'), cell('K'), cell('J'), cell('A')],
     ]);
     expect(countScatters(g)).toBe(1);
-    // WILD + SCATTER on reel 0 does not make a SCATTER "run".
+    // WILD + SCATTER on reel 0 does not make a SCATTER "run": SCATTER is not a
+    // paying symbol, so it can never appear as a ways win and is never part of
+    // any winning cell (WILD never substitutes for SCATTER).
     const wins = evaluateWays(g, cfg);
     expect(wins.every((w) => ACE_PAY_SYMBOLS.includes(w.symbol))).toBe(true);
     expect(winningCells(wins).some((c) => c.reel === 0 && c.row === 0)).toBe(false);

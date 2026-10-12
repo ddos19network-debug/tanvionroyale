@@ -3320,3 +3320,87 @@ model PlayLimit {
   @@unique([userId, kind, period])
   @@index([userId])
 }
+
+// ---------------------------------------------------------------------------
+// PART A — CENTRAL JURISDICTION & CURRENCY CONTROL (Royale REAL_MONEY gate)
+//
+// These three models are the ONLY admin-managed source of truth for "may a
+// real-money stake be accepted from this country, in this currency?". They are
+// ADDITIVE: no existing table, column, enum or row is touched.
+//
+// Posture (fail-closed):
+//   * a country with NO JurisdictionRule row is BLOCKED;
+//   * a rule whose effectiveFrom is in the future is BLOCKED;
+//   * a currency outside `allowedCurrencies` is BLOCKED (no auto-FX);
+//   * an unparseable / non ISO-3166-1 alpha-2 country code is BLOCKED.
+//
+// These tables hold NO balance of any kind.
+// ---------------------------------------------------------------------------
+
+/// Admin decision for ONE country (ISO 3166-1 alpha-2, upper-case).
+enum JurisdictionStatus {
+  ALLOWED
+  BLOCKED
+}
+
+model JurisdictionRule {
+  id String @id @default(uuid())
+  /// ISO 3166-1 alpha-2, upper-case (e.g. "BD"). Exactly one row per country.
+  countryCode String @unique
+  status JurisdictionStatus
+  /// Allowed stake currencies for this country — always a subset of {BDT, USD}.
+  allowedCurrencies String[]
+  /// Licence / regulatory reference the ALLOWED decision rests on (optional).
+  licenceRef String?
+  /// REQUIRED free-text justification for the decision (ALLOWED or BLOCKED).
+  reason String
+  /// The decision only applies from this moment; a future value is BLOCKED.
+  effectiveFrom DateTime @default(now())
+  updatedByAdminId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+/// Append-only history of every jurisdiction change (who, when, country,
+/// old -> new, reason). Rows are ONLY ever inserted — never updated or deleted.
+model JurisdictionAuditLog {
+  id String @id @default(uuid())
+  /// Admin user id that performed the change.
+  actorAdminId String
+  /// CREATE | UPDATE | BULK_BLOCK | SWITCH | SWITCH_BULK
+  action String
+  /// Country the change applied to ("*" for bulk operations).
+  countryCode String
+  oldStatus String?
+  newStatus String?
+  oldCurrencies String[]
+  newCurrencies String[]
+  oldLicenceRef String?
+  newLicenceRef String?
+  /// REQUIRED justification captured with the change.
+  reason String
+  createdAt DateTime @default(now())
+
+  @@index([countryCode, createdAt])
+  @@index([createdAt])
+}
+
+/// Emergency kill switches for real-money play. `key` is one of:
+///   REAL_MONEY_ALL   — master switch for every Royale REAL_MONEY action
+///   GAME:<slug>      — per-game switch (GAME:plinko, GAME:mines, GAME:royale-ace)
+/// ABSENCE of a row means "no kill switch engaged" (the fail-closed posture for
+/// jurisdictions comes from the default-BLOCKED rule above).
+model GlobalGameSwitch {
+  id String @id @default(uuid())
+  key String @unique
+  enabled Boolean @default(true)
+  /// REQUIRED when `enabled` is false — why real money was stopped.
+  reason String?
+  updatedByAdminId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled])
+}

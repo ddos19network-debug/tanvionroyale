@@ -8,6 +8,66 @@ import { royaleError } from './royale.errors';
 import {
   ResponsibleGamblingService,
 } from '../responsible-gambling/responsible-gambling.service';
+import {
+  MASTER_SWITCH_KEY,
+  gameSwitchKey,
+  type JurisdictionService,
+} from '../jurisdiction/jurisdiction.service';
+import {
+  currentTrustedGeoCountry,
+  normalizeCountryCode,
+} from '../../common/geo/trusted-geo';
+
+/** The Royale REAL_MONEY games that carry their own kill switch. */
+export type RoyaleGameSlug = 'plinko' | 'mines' | 'royale-ace';
+
+/**
+ * TANVION ROYALE — REAL_MONEY eligibility gate (Task 1 / audit F1, F2, F4)
+ * + PART A central jurisdiction & currency control.
+ *
+ * A SINGLE shared gate that all three Royale games (Plinko, Mines, Ace) run
+ * BEFORE any wallet reservation, and ONLY when the mode is REAL_MONEY.
+ * FREE_PLAY never calls it (free players are never asked for KYC, age,
+ * limits, jurisdiction or switches).
+ *
+ * The checks run in this exact order and every one of them FAILS CLOSED —
+ * unknown / missing / malformed data is rejected:
+ *   1. master switch          -> config.enabled + GlobalGameSwitch
+ *                                REAL_MONEY_ALL              -> ROYALE_MASTER_SWITCH_OFF
+ *   2. game switch            -> GlobalGameSwitch GAME:<slug> -> ROYALE_GAME_SWITCH_OFF
+ *   3. jurisdiction + currency-> JurisdictionService.resolve  -> ROYALE_JURISDICTION_BLOCKED
+ *      (country comes from SERVER-side sources ONLY: the trusted edge geo
+ *       header and the KYC country; a mismatch or an unknown country blocks)
+ *   4. KYC VERIFIED + date of birth >= minAge -> ROYALE_KYC_REQUIRED /
+ *                                ROYALE_AGE_RESTRICTED (minAge never < 18)
+ *   5. responsible gambling   -> ROYALE_SELF_EXCLUDED / ROYALE_LIMIT_EXCEEDED
+ *   6. account status ACTIVE  -> ROYALE_ACCOUNT_NOT_ACTIVE
+ *
+ * All rejections are HTTP 403 with a stable `code` in the body so clients and
+ * tests can branch on the exact reason. Because this runs before the
+ * reservation transaction is even opened, a rejected request creates NO round,
+ * NO ledger entry and NO wallet reservation.
+ */
+@Injectable()
+export class RoyaleEligibilityService {
+  private readonly config: RoyaleConfig = loadRoyaleConfig();
+  private readonly rg: ResponsibleGamblingService;
+
+  /**
+   * `rg` is optional only so the games can construct a default instance in
+   * unit tests; in production Nest injects the shared ResponsibleGamblingService.
+   * `jurisdiction` is injected by Nest in production and passed explicitly by
+   * the unit tests (the in-memory Prisma double backs it).
+   */
+  constructor(
+    private readonly prisma: PrismaService,
+    rg?: ResponsibleGamblingService,
+    jurisdiction?: JurisdictionService,
+  ) {
+    this.rg = rg ?? new ResponsibleGamblingService(prisma);
+    this.jurisdiction =
+      jurisdiction ?? new (JurisdictionServiceCtor())(prisma as never) as JurisdictionService;
+  }
 
 /**
  * TANVION ROYALE — REAL_MONEY eligibility gate (Task 1 / audit F1, F2, F4).

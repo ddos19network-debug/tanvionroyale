@@ -5,6 +5,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
+import { TrustedGeoMiddleware } from "./common/middleware/trusted-geo.middleware";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { TransformInterceptor } from "./common/interceptors/transform.interceptor";
@@ -31,6 +32,7 @@ import { WinHouseModule } from "./modules/winhouse/winhouse.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { ReferralModule } from "./modules/referral/referral.module";
 import { ResponsibleGamblingModule } from "./modules/responsible-gambling/responsible-gambling.module";
+import { JurisdictionModule } from "./modules/jurisdiction/jurisdiction.module";
 import { isProduction } from "@tanvion-royale/config";
 
 /**
@@ -102,6 +104,10 @@ function resolveJwtSecret(): string {
     // player/admin RG routes are registered, and by RoyaleModule so the
     // REAL_MONEY eligibility gate can assert every stake against it.
     ResponsibleGamblingModule,
+    // Central jurisdiction & currency control (PART A). Imported here so the
+    // admin surface /admin/jurisdictions is registered, and by RoyaleModule so
+    // the REAL_MONEY eligibility gate can enforce the per-country rules.
+    JurisdictionModule,
     SupportModule,
   ],
   controllers: [AppController],
@@ -121,6 +127,6 @@ export class AppModule implements NestModule {
    * the global AllExceptionsFilter (and all logs) can trace the exact request.
    */
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(RequestIdMiddleware).forRoutes('*');
+    consumer.apply(RequestIdMiddleware, TrustedGeoMiddleware).forRoutes('*');
   }
 }

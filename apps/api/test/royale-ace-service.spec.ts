@@ -117,7 +117,7 @@ describe('Royale Ace — FREE_PLAY money flow (never touches the real wallet)', 
     expect(walletOf(db, USER.id, CURRENCY)).toBeUndefined();
     expect(db.rows('walletTransaction')).toHaveLength(0);
     const pts = db.rows('crashFreePlayTransaction');
-    expect(pts.some((t) => t.type === 'BET_STAKE' && t.amount === STAKE)).toBe(true);
+    expect(pts.some((t) => t.type === 'BET_STAKE' && t.amount === -STAKE)).toBe(true);
   });
 });
 

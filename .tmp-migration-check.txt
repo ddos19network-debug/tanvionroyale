@@ -1,0 +1,1 @@
+﻿BOM=False bytes=3485 nonAscii=0

@@ -1057,6 +1057,27 @@ describe('I. global content is unchanged and still shared by everybody', () => {
       ],
     });
 
+    // The candidate set for the GLOBAL reorder is `affiliateUserId = null`,
+    // so an individual id is "unknown" and the whole reorder is refused rather
+    // than partially applied. The global sequence must be untouched.
+    await expect(h.service.reorderContent(['g1', 'a1'], 'admin-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(h.prisma.affiliateContentBlock.update).not.toHaveBeenCalled();
+  });
+
+  it('I4. a row with no stored scope still reads as GLOBAL (pre-migration row)', async () => {
+    // A row fetched before the migration has no `affiliateUserId` key at all.
+    // It must be reported as GLOBAL, never as "individual".
+    const h = activeHarness({ blocks: [{ id: 'legacy', type: 'TEXT', isEnabled: true }] });
+
+    const list = await h.service.listContent();
+
+    expect(list[0].affiliateUserId).toBeNull();
+    expect(list[0].scope).toBe('GLOBAL');
+  });
+});
+
 describe('J. individual content is scoped to exactly one ACTIVE affiliate', () => {
   it('J1. create stamps the SELECTED affiliate id and reports the scope', async () => {
     const h = activeHarness();
@@ -1153,6 +1174,22 @@ describe('J. individual content is scoped to exactly one ACTIVE affiliate', () =
     const updated = await h.service.updateIndividualContent(
       AFFILIATE_ID,
       'a1',
+      { type: 'TEXT', title: 'Renamed', isEnabled: false },
+      'admin-1',
+    );
+
+    expect(updated.title).toBe('Renamed');
+    expect(updated.isEnabled).toBe(false);
+    // The audit records the OWNER (the selected affiliate), not the acting
+    // admin, and the scope is INDIVIDUAL.
+    expect(h.auditLogs.find((a) => a.action === 'AFFILIATE_CONTENT_UPDATED').newValue).toMatchObject(
+      { scope: 'INDIVIDUAL', affiliateUserId: AFFILIATE_ID },
+    );
+    // Only the owner block was touched.
+    expect(h.prisma.affiliateContentBlock.update.mock.calls.map((c: any[]) => c[0].where.id)).toEqual([
+      'a1',
+    ]);
+  });
 
 describe('K. content ownership and scope security', () => {
   it('K1. Affiliate B block CANNOT be edited through Affiliate A route', async () => {
@@ -1426,6 +1463,10 @@ describe('M. deactivation keeps content and targets; reactivation restores them'
   });
 });
 
+// K7/K8 survived the corruption as orphaned fragments at the tail of the file.
+// They are re-homed here under a matching describe so they compile and run.
+describe('K. content ownership and scope security', () => {
+  it('K7. a plain REFERRAL user (no profile) cannot receive individual content', async () => {
     // Owning a referral code must never imply affiliate membership.
     const h = makeHarness({ profile: undefined });
 
@@ -1451,17 +1492,9 @@ describe('M. deactivation keeps content and targets; reactivation restores them'
   });
 });
 
-      { type: 'TEXT', title: 'Renamed', isEnabled: false },
-      'admin-1',
-    );
-
-    expect(updated.title).toBe('Renamed');
-    expect(updated.isEnabled).toBe(false);
-    expect(h.auditLogs.find((a) => a.action === 'AFFILIATE_CONTENT_UPDATED').newValue).toMatchObject(
-      { scope: 'INDIVIDUAL', affiliateUserId: AFFILIATE_ID },
-    );
-  });
-
+// J8/J9 survived the corruption as orphaned fragments at the tail of the file.
+// They are re-homed here under a matching describe so they compile and run.
+describe('J. individual content is scoped to exactly one ACTIVE affiliate', () => {
   it('J8. an individual reorder renumbers ONLY that affiliate', async () => {
     const h = activeHarness({
       blocks: [
@@ -1495,26 +1528,4 @@ describe('M. deactivation keeps content and targets; reactivation restores them'
     const global = await h.service.listContentForAdmin();
     expect(global[0].sortOrder).toBe(10);
   });
-});
-
-
-    await expect(h.service.reorderContent(['g1', 'a1'], 'admin-1')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
-    // No partial application.
-    expect(h.prisma.affiliateContentBlock.update).not.toHaveBeenCalled();
-  });
-
-  it('I4. a row with no stored scope still reads as GLOBAL (pre-migration row)', async () => {
-    // A row fetched before the migration has no `affiliateUserId` key at all.
-    // It must be reported as GLOBAL, never as "individual".
-    const h = activeHarness({ blocks: [{ id: 'legacy', type: 'TEXT', isEnabled: true }] });
-
-    const list = await h.service.listContent();
-
-    expect(list[0].affiliateUserId).toBeNull();
-    expect(list[0].scope).toBe('GLOBAL');
-  });
-});
-
 });

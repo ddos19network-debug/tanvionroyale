@@ -1,0 +1,3322 @@
+// ============================================================================
+// TANVIONROYALE — Prisma schema (foundation phase)
+// Canonical schema lives at database/prisma. The Prisma client is generated
+// into apps/api/src/generated/prisma and compiled with the API.
+//
+// Money is NEVER stored as floats — amounts use integer minor units (e.g.
+// cents). Odds are stored as decimal strings to avoid precision drift.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../apps/api/src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Migrations (prisma migrate deploy) need a session-persistent connection to
+  // take the advisory lock. Neon's pooled "-pooler" endpoint (DATABASE_URL)
+  // can route each statement to a different backend session, so the lock
+  // acquired by migrate deploy is never seen again → P1002 timeout. directUrl
+  // points at Neon's UNPOOLED endpoint (same host, no "-pooler") and is used
+  // by the CLI (migrate/db) only — the running app still uses the pooled
+  // DATABASE_URL for normal queries.
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+// Account lifecycle status.
+//   SUSPENDED  — temporary / reviewable (reversible with admin unsuspend)
+//   BANNED     — permanent / severe (ToS violation, fraud; unban is deliberate)
+//   CLOSED     — self-closed or admin soft-deleted (anonymized, unusable login)
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  BANNED
+  LOCKED
+  CLOSED
+}
+
+// Authentication context that created a Session row.
+//   CUSTOMER — created by a customer flow (email/phone/OAuth login, signup).
+//   STAFF    — created ONLY by POST /auth/admin-login (ADMIN/SUPER_ADMIN).
+// RolesGuard requires STAFF for every @Roles('ADMIN'|'SUPER_ADMIN') route, so
+// a customer session can never authenticate an admin API call even after the
+// account is promoted mid-session (the session kind never changes).
+enum SessionKind {
+  CUSTOMER
+  STAFF
+}
+
+// Account-domain classification of the User row itself (NOT the session).
+//   CUSTOMER — a real customer account: appears in Admin -> Users, customer
+//              search/selectors, wallet/betting statistics; holds the USER
+//              role; can never authenticate at /admin/login.
+//   STAFF    — an admin/staff account: appears ONLY in Admin -> Admins, the
+//              staff login and admin audit surfaces; holds staff roles
+//              (ADMIN/SUPER_ADMIN/...), never the customer USER role.
+// AccountType is the single authority for every customer-vs-staff population
+// filter (listUsers vs listStaffAccounts, statistics, broadcasts); roles alone
+// are NOT used for population filtering because a deactivated staff account
+// keeps this classification after its roles are stripped.
+enum AccountType {
+  CUSTOMER
+  STAFF
+}
+
+enum KycStatus {
+  NOT_STARTED
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+  MANUAL_REVIEW
+}
+
+// Direct staff permission effects; DENY always wins over a role or grant.
+enum UserPermissionEffect {
+  GRANT
+  DENY
+}
+
+// ---------------------------------------------------------------------------
+// Users, Roles & Permissions
+// ---------------------------------------------------------------------------
+
+model User {
+  id                          String      @id @default(uuid())
+  email                       String?     @unique
+  phone                       String?     @unique
+  username                    String      @unique
+  passwordHash                String
+  // Null until the user has a functioning password. OAuth-only accounts are
+  // created with an unusable random secret and only gain a real password when
+  // the user opts in through the authenticated "set password" flow.
+  passwordSetAt               DateTime?
+  firstName                   String?
+  lastName                    String?
+  dateOfBirth                 DateTime?
+  country                     String? // ISO 3166-1 alpha-2
+  timezone                    String      @default("UTC")
+  status                      UserStatus  @default(PENDING)
+  // Account domain: CUSTOMER (default — signup/phone/OAuth always land here)
+  // or STAFF (Admin -> Admins creation + the master-admin scripts only).
+  // Never settable from a request body: RegisterDto/CreateAdminUserDto carry
+  // no such field and the global ValidationPipe rejects unknown properties.
+  accountType                 AccountType @default(CUSTOMER)
+  emailVerified               Boolean     @default(false)
+  phoneVerified               Boolean     @default(false)
+  // Timestamps set automatically when the corresponding identity was verified
+  // through its authoritative channel (phone OTP signup, Google verified email).
+  emailVerifiedAt             DateTime?
+  phoneVerifiedAt             DateTime?
+  // Set ONLY when the phone was verified through the phone-signup OTP flow.
+  // Null for manually verified phones (Verification Center OTP) — this is the
+  // authoritative marker that distinguishes automatic signup verification
+  // from later manual verification.
+  phoneVerifiedDuringSignupAt DateTime?
+  kycStatus                   KycStatus   @default(NOT_STARTED)
+
+  isTwoFactorEnabled Boolean @default(false)
+  twoFactorSecretEnc String? // encrypted at rest
+
+  /// Stable, unique, never-rotated referral code (e.g. "TANVXXXXXXXXXXXX").
+  /// Backfilled for every existing account by the referral migration and created
+  /// for every new registration; the unique index is the only source of truth
+  /// for "is this code taken?".
+  referralCode String? @unique
+
+  lastLoginAt DateTime?
+
+  sessions               Session[]
+  userRoles              UserRole[]
+  directPermissions      UserPermission[]
+  securityEvents         SecurityEvent[]
+  authTokens             AuthToken[]
+  authIdentities         AuthIdentity[]
+  verifications          Verification[]
+  bets                   Bet[]
+  wallets                Wallet[]
+  gameSessions           GameSession[]
+  gameResults            GameResult[]
+  casinoSessions         CasinoSession[]
+  casinoTransactions     CasinoTransaction[]
+  winhouseSessions       WinHouseSession[]
+  winhouseTransactions   WinHouseTransaction[]
+  bigbangTransactions    BigBangTransaction[]
+  tradingAccount         TradingAccount?
+  crashBets              CrashBet[]
+  crashFreePlayWallet    CrashFreePlayWallet?
+  // Royale Play (Plinko + Mines) game records — settlement/money access still
+  // goes through the ONE wallet ledger; these are game rows only.
+  royalePlinkoRounds     RoyalePlinkoRound[]
+  royaleMinesRounds      RoyaleMinesRound[]
+  royaleAceRounds        RoyaleAceRound[]
+  royaleAceConfigsCreated RoyaleAceConfigVersion[] @relation("RoyaleAceConfigCreatedBy")
+  royaleAceConfigsActivated RoyaleAceConfigVersion[] @relation("RoyaleAceConfigActivatedBy")
+  royaleAceReportsCreated RoyaleAceSimulationReport[] @relation("RoyaleAceReportCreatedBy")
+  royaleSettlements      RoyaleSettlement[]
+  // Responsible gambling (Task 2 / audit F3): self-exclusions and play limits.
+  // These are PROTECTION records — they never hold money, only constraints that
+  // the Royale REAL_MONEY eligibility gate enforces before any stake.
+  selfExclusions         SelfExclusion[]
+  playLimits             PlayLimit[]
+  manualDepositRequests  ManualDepositRequest[]
+  withdrawalRequests     WithdrawalRequest[]
+  supportTickets         SupportTicket[]        @relation("SupportTicketUser")
+  assignedSupportTickets SupportTicket[]        @relation("SupportTicketAssignee")
+  supportMessages        SupportMessage[]
+
+  // Referral program. `referralsSent` / `referralsReceived` are the two sides of
+  // the SAME immutable Referral row (one referrer per referred user, forever).
+  referralsSent           Referral[]               @relation("ReferralReferrer")
+  referralsReceived       Referral[]               @relation("ReferralReferred")
+  referralRewardsPaid     ReferralReward[]         @relation("ReferralRewardBeneficiary")
+  /// Affiliate layer (user-facing earning/reporting) on top of the SAME
+  /// referral relationships. Not a second source of truth: every number the
+  /// affiliate page shows is aggregated from the referral tables above.
+  affiliateMonthlyTargets AffiliateMonthlyTarget[]
+  affiliateClicks         AffiliateClick[]
+  /// Affiliate PROGRAM membership (opt-in). Present only after the user
+  /// explicitly activated the program; NULL means "not an affiliate", which is
+  /// a perfectly valid state for a user who still owns a referral code and
+  /// still uses the normal referral system. This is the switch that decides
+  /// whether the affiliate link, dashboard and click analytics apply — it is
+  /// NOT `User.referralCode`, which belongs to the referral program.
+  affiliateProfile        AffiliateProfile?
+  /// Per-affiliate (INDIVIDUAL scope) /affiliate page content. NULL
+  /// `AffiliateContentBlock.affiliateUserId` means GLOBAL scope, so this list
+  /// holds ONLY the blocks scoped to this one user. It is an explicit named
+  /// relation because `User` already carries several other affiliate relations
+  /// and the name keeps the generated client unambiguous.
+  affiliateContentBlocks AffiliateContentBlock[] @relation("AffiliateContentBlockAffiliateUser")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([accountType])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 11 — multi-method authentication identities.
+// One User may have several linked identities (PHONE / GOOGLE / FACEBOOK).
+// The (provider, providerAccountId) pair is globally unique so one external
+// identity can never belong to two accounts.
+// ---------------------------------------------------------------------------
+
+enum AuthIdentityProvider {
+  PHONE
+  GOOGLE
+  FACEBOOK
+}
+
+model AuthIdentity {
+  id                String               @id @default(uuid())
+  provider          AuthIdentityProvider
+  providerAccountId String
+  userId            String
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 11 — one-time codes (phone/email OTP, OAuth exchange codes).
+// Only sha256 hashes of the codes are stored. Codes are single-use,
+// short-lived and attempt-limited at the application layer.
+// ---------------------------------------------------------------------------
+
+enum OtpPurpose {
+  PHONE_SIGNUP
+  PHONE_VERIFY
+  EMAIL_VERIFY
+  OAUTH_EXCHANGE
+  PHONE_RECOVERY
+}
+
+model OtpCode {
+  id         String     @id @default(uuid())
+  identifier String // phone (E.164) or email — never a raw code
+  purpose    OtpPurpose
+  codeHash   String // sha256 of the one-time code
+  attempts   Int        @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  lastSentAt DateTime   @default(now())
+  metadata   Json?
+
+  @@index([identifier, purpose])
+  @@index([expiresAt])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 11 — verification center state (PHONE / EMAIL / FACE).
+// Face verification is independent of social/phone login state and never
+// auto-verifies. No raw biometric data is stored here.
+// ---------------------------------------------------------------------------
+
+enum VerificationType {
+  PHONE
+  EMAIL
+  FACE
+}
+
+enum VerificationStatus {
+  NOT_STARTED
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+model Verification {
+  id          String             @id @default(uuid())
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        VerificationType
+  status      VerificationStatus @default(NOT_STARTED)
+  verifiedAt  DateTime?
+  /// External provider reference (e.g. face-verification case id).
+  /// NEVER raw biometric data.
+  providerRef String?
+  metadata    Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model Session {
+  id                       String      @id @default(uuid())
+  userId                   String
+  user                     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash                String
+  refreshTokenHash         String?     @unique
+  // Hash of the refresh token that was CURRENT immediately before the latest
+  // rotation. It is accepted for exactly one more rotation so concurrent
+  // /auth/refresh calls from multiple tabs of the SAME device converge on the
+  // newest pair instead of 401-ing each other into a full logout. A token that
+  // matches neither slot is a genuine replay and is rejected.
+  previousRefreshTokenHash String?
+  ip                       String?
+  userAgent                String?
+  expiresAt                DateTime
+  revokedAt                DateTime?
+  // Authentication context (see SessionKind): CUSTOMER sessions are refused by
+  // every admin route; STAFF sessions are only ever created by adminLogin().
+  // NOT NULL DEFAULT 'CUSTOMER' — pre-migration sessions fail closed as
+  // customer sessions (staff re-authenticates once through the staff login).
+  kind                     SessionKind @default(CUSTOMER)
+  createdAt                DateTime    @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([previousRefreshTokenHash])
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  description String?
+  permissions RolePermission[]
+  users       UserRole[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  name        String           @unique // e.g. "users.read"
+  description String?
+  roles       RolePermission[]
+  users       UserPermission[]
+
+  createdAt DateTime @default(now())
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+// Direct grants/denies for one staff member, in addition to role permissions.
+model UserPermission {
+  userId       String
+  permissionId String
+  effect       UserPermissionEffect @default(GRANT)
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission           @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, permissionId])
+  @@index([permissionId])
+  @@index([userId, effect])
+}
+
+// ---------------------------------------------------------------------------
+// Security events (login activity, lockouts) — foundation of auditability
+// ---------------------------------------------------------------------------
+
+model SecurityEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // LOGIN_SUCCESS | LOGIN_FAILURE | LOCKOUT | ...
+  ip        String?
+  userAgent String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Auth tokens (email verification, password reset). Only hashes are stored.
+// ---------------------------------------------------------------------------
+
+enum AuthTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+// ---------------------------------------------------------------------------
+// Sports / Games catalog (Phase 4)
+// ---------------------------------------------------------------------------
+
+enum CatalogStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ProviderMappingStatus {
+  ACTIVE
+  INACTIVE
+}
+
+/// HOW TANVION integrates with a PartnerProvider.
+///
+///   SPORTS_API         server-side sports/odds API + server-resolved deep links
+///                      (the pre-existing sports integration; a NULL
+///                      PartnerProvider.integrationType means exactly this).
+///   SPORTS_IFRAME      the provider's own sportsbook is EMBEDDED in BIG SPORT
+///                      through its loader (e.g. WinHouse Model B seamless
+///                      wallet). There is no per-event deep link and no fake
+///                      sports/odds data in TANVION.
+///   CASINO_API         server-side casino catalog/launch API (see the casino
+///                      module and productTypes, which drive that integration).
+///   LIVE_CASINO_API    server-side live-dealer catalog/launch API (same).
+///   CASINO_AGGREGATOR  external B2B casino/game aggregator (e.g. BigBang) with
+///                      server-to-server catalog, launch, and seamless wallet.
+enum PartnerIntegrationType {
+  SPORTS_API
+  SPORTS_IFRAME
+  CASINO_API
+  LIVE_CASINO_API
+  CASINO_AGGREGATOR
+}
+
+model Sport {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  slug         String        @unique
+  description  String?
+  icon         String? // icon/image reference
+  status       CatalogStatus @default(ACTIVE)
+  sortOrder    Int           @default(0)
+  games        Game[]
+  competitions Competition[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+/// A competition/league/tournament within a sport (e.g. IPL, Premier League).
+/// Competitions are the parent grouping for events and are configured by an
+/// admin — never hard-coded in the UI.
+model Competition {
+  id        String        @id @default(uuid())
+  sportId   String
+  sport     Sport         @relation(fields: [sportId], references: [id], onDelete: Cascade)
+  name      String
+  slug      String
+  country   String?
+  status    CatalogStatus @default(ACTIVE)
+  sortOrder Int           @default(0)
+  events    Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sportId, slug])
+  @@index([sportId])
+  @@index([status])
+}
+
+/// An allowlisted partner gambling provider. The base URL is the ONLY
+/// destination the backend may redirect users to for partner events; the
+/// deep-link template is resolved server-side (never client-supplied).
+model PartnerProvider {
+  id                   String                  @id @default(uuid())
+  name                 String                  @unique
+  /// Stable provider discriminator used by capability-based adapters. Nullable
+  /// for legacy rows; CASINO_AGGREGATOR rows use BIGBANG for the BigBang adapter.
+  providerCode         String?
+  baseUrl              String // allowlisted partner origin, e.g. https://partner.example
+  /// Server-resolved sports deep link. NULL-equivalent (empty string) for an
+  /// EMBEDDED sportsbook integration (SPORTS_IFRAME), which has no per-event
+  /// deep link: its content is served by the provider's own book.
+  deepLinkTemplate     String // e.g. /sport/{sportSlug}/event/{externalEventId}
+  status               ProviderMappingStatus   @default(ACTIVE)
+  // --- Phase 16 admin configuration (secrets are encrypted at rest) ---
+  apiKeyEnc            String? // AES-256-GCM encrypted API key (never raw)
+  apiSecretEnc         String? // AES-256-GCM encrypted API secret (never raw)
+  authMode             String? // e.g. "api-key" | "basic" | "none"
+  apiVersion           String?
+  /// Partner environment this credential/destination belongs to.
+  /// "sandbox" | "production" — sandbox and live are NEVER mixed (see the
+  /// casino module's environment gate). Null on legacy sports rows.
+  environment          String?
+  /// Product sections this provider supplies: CASINO | LIVE_CASINO | SPORT.
+  /// Empty for legacy sports rows (treated as SPORT).
+  productTypes         String[]                @default([])
+  /// HOW TANVION integrates with this provider. Null on legacy rows and is
+  /// then treated as SPORTS_API (server API + deep links) — the pre-existing
+  /// sports behaviour is therefore unchanged.
+  integrationType      PartnerIntegrationType?
+  /// --- Embedded sportsbook (SPORTS_IFRAME) configuration ---
+  /// PUBLIC provider embed key (`ifr_` + 40 hex chars). Public by provider
+  /// design (it selects the skin and grants nothing), but it is NOT the wallet
+  /// API key and must never be confused with it. Never a secret at rest.
+  embedKey             String?
+  /// Provider book origin the loader/iframe is served from, e.g.
+  /// https://iframe.winhouse.bet. Validated as an https origin server-side.
+  embedBaseUrl         String?
+  /// AES-256-GCM encrypted WALLET API KEY — the HMAC signing key for the
+  /// provider's seamless-wallet callbacks and launch tokens. SERVER-ONLY:
+  /// never returned by any endpoint, never sent to the browser, never logged.
+  walletApiKeyEnc      String?
+  /// AES-256-GCM encrypted CALLBACK TOKEN — travels in `?token=` on calls
+  /// *from* the provider and authenticates them. SERVER-ONLY (never returned,
+  /// never logged). A different credential from the wallet API key.
+  callbackTokenEnc     String?
+  /// AES-256-GCM encrypted WEBHOOK SECRET — the HMAC-SHA256 key a provider signs
+  /// its server-to-server webhook deliveries with (BigBang `POST
+  /// /bigbang/webhooks`). It is a DIFFERENT credential from BOTH the wallet API
+  /// key and the seamless-callback API key, and it is deliberately NOT used to
+  /// authenticate the seamless-wallet callbacks.
+  /// SERVER-ONLY: returned exactly once, when it is generated/rotated, and never
+  /// displayed again.
+  webhookSecretEnc     String?
+  /// Provider-signed webhook deliveries (BigBang `session.started`,
+  /// `session.ended`, `round.completed`). INFORMATIONAL / RECONCILIATION ONLY —
+  /// it never moves money; the seamless-wallet `balance-change` callback stays
+  /// the only money-moving entry point.
+  webhookEvents        ProviderWebhookEvent[]
+  /// Optional provider configuration/domain metadata (JSON). Never holds
+  /// credentials — those live in the encrypted columns above.
+  config               Json?
+  syncStatus           String? // IDLE | SYNCING | OK | ERROR
+  lastSyncAt           DateTime?
+  lastSyncError        String?
+  events               Event[]
+  casinoCategories     CasinoCategory[]
+  casinoGames          CasinoGame[]
+  casinoSessions       CasinoSession[]
+  casinoTransactions   CasinoTransaction[]
+  winhouseSessions     WinHouseSession[]
+  winhouseTransactions WinHouseTransaction[]
+  bigbangTransactions  BigBangTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([providerCode, environment])
+}
+
+model Game {
+  id          String        @id @default(uuid())
+  sportId     String
+  sport       Sport         @relation(fields: [sportId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String        @unique
+  description String?
+  status      CatalogStatus @default(ACTIVE)
+  sortOrder   Int           @default(0)
+
+  availability    GameAvailability?
+  providerMapping ProviderMapping?
+  events          Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sportId])
+  @@index([status])
+}
+
+/// Gambling availability. Defaults to non-gambling; gambling must be
+/// explicitly enabled by an admin AND backed by an active provider mapping.
+model GameAvailability {
+  id              String  @id @default(uuid())
+  gameId          String  @unique
+  game            Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gamblingEnabled Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([gamblingEnabled])
+}
+
+/// Maps a TANVIONROYALE game to a provider game/event identifier through the
+/// existing operator-integration abstraction (packages/integrations).
+model ProviderMapping {
+  id             String                @id @default(uuid())
+  gameId         String                @unique
+  game           Game                  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  providerName   String // e.g. "mock-operator" (see OperatorProviderInterface.name)
+  externalGameId String
+  status         ProviderMappingStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerName, externalGameId])
+  @@index([status])
+}
+
+model AuthToken {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      AuthTokenType
+  tokenHash String        @unique // sha256 of the opaque token
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime      @default(now())
+
+  @@index([userId, type])
+  @@index([expiresAt])
+}
+
+// ---------------------------------------------------------------------------
+// Betting domain (Phase 5)
+//
+// The TANVIONROYALE betting domain mirrors the provider domain (see
+// packages/integrations) but is the source of truth the PRODUCTION code reads
+// and writes. Odds prices are stored as decimal STRINGS (e.g. "1.85") to avoid
+// any floating-point drift — this is the documented odds representation:
+//
+//   price := /^\d+(\.\d{1,2})?$/  (a decimal odds value, up to 2 dp)
+//
+// Money (stake / potentialPayout) is stored as integer MINOR UNITS (e.g. pence
+// for GBP). Bets carry an immutable odds snapshot per selection so settlement
+// never depends on later odds changes.
+// ---------------------------------------------------------------------------
+
+enum EventStatus {
+  SCHEDULED
+  LIVE
+  SUSPENDED
+  FINISHED
+  CANCELLED
+}
+
+/// Authoritative routing mode for an event. NATIVE events are handled by the
+/// TANVIONROYALE local betting engine; PARTNER events are handled by an external
+/// licensed gambling partner (deep-linked server-side).
+enum BettingMode {
+  NATIVE
+  PARTNER
+}
+
+enum MarketStatus {
+  OPEN
+  SUSPENDED
+  CLOSED
+}
+
+enum SelectionStatus {
+  ACTIVE
+  INACTIVE
+}
+
+/// Whether a selection (and thus a SINGLE bet) settled as won/lost/void.
+enum SelectionResult {
+  WIN
+  LOSS
+  VOID
+  PUSH
+}
+
+enum BetType {
+  SINGLE
+  MULTIPLE
+}
+
+/// Bet lifecycle. Only the documented transitions are allowed (see
+/// docs / betting.idempotency + lifecycle notes in the BettingService).
+enum BetStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  SETTLED
+  VOID
+}
+
+/// A sporting contest / match within a TANVIONROYALE game.
+model Event {
+  id              String      @id @default(uuid())
+  gameId          String
+  game            Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  providerEventId String // maps to MockProvider ProviderEvent.externalId
+  name            String
+  startTime       DateTime
+  status          EventStatus @default(SCHEDULED)
+
+  /// Competition/league/tournament this event belongs to (e.g. IPL).
+  competitionId     String?
+  competition       Competition?     @relation(fields: [competitionId], references: [id])
+  /// Team names (denormalized from the provider feed for display).
+  homeName          String?
+  awayName          String?
+  /// Provider-supplied live flag (authoritative from the backend/provider).
+  live              Boolean          @default(false)
+  /// Authoritative server-side routing: NATIVE events use the TANVIONROYALE bet
+  /// slip; PARTNER events redirect to the configured partner provider.
+  bettingMode       BettingMode      @default(NATIVE)
+  /// Partner's external event id used to build the approved deep link.
+  externalEventId   String?
+  /// Active partner provider used ONLY when bettingMode = PARTNER.
+  partnerProviderId String?
+  partnerProvider   PartnerProvider? @relation(fields: [partnerProviderId], references: [id])
+
+  markets Market[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, providerEventId])
+  @@index([status])
+  @@index([gameId])
+  @@index([competitionId])
+  @@index([bettingMode])
+  @@index([partnerProviderId])
+}
+
+/// A bettable market within an event (e.g. "Match Winner", "Total Goals").
+model Market {
+  id      String       @id @default(uuid())
+  eventId String
+  event   Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name    String
+  status  MarketStatus @default(OPEN)
+
+  selections Selection[]
+
+  @@unique([eventId, name])
+  @@index([status])
+}
+
+/// A bettable selection inside a market (e.g. "Home" / "Draw" / "Away").
+model Selection {
+  id                  String          @id @default(uuid())
+  marketId            String
+  market              Market          @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  name                String
+  providerSelectionId String // maps to MockProvider ProviderOdd.selection.externalId
+  status              SelectionStatus @default(ACTIVE)
+
+  odds          Odds?
+  betSelections BetSelection[]
+
+  @@unique([marketId, providerSelectionId])
+  @@index([status])
+}
+
+/// The CURRENT price for a selection. Odds are the only mutable input; once a
+/// bet is placed the price is frozen in the BetSelection snapshot.
+model Odds {
+  id          String    @id @default(uuid())
+  selectionId String    @unique
+  selection   Selection @relation(fields: [selectionId], references: [id], onDelete: Cascade)
+  price       String // decimal string, e.g. "1.85"
+  oddsVersion Int       @default(1)
+  updatedAt   DateTime  @updatedAt
+
+  @@index([price])
+}
+
+/// A placed bet. Provider reference only when the provider accepted it.
+/// Idempotency: at most one active bet per (userId, idempotencyKey).
+model Bet {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              BetType   @default(SINGLE)
+  status            BetStatus @default(PENDING)
+  stake             Int // minor units
+  potentialPayout   Int // minor units
+  currency          String    @default("GBP") // ISO 4217
+  providerReference String?
+  idempotencyKey    String
+
+  /// Settlement outcome (WIN | LOSS | VOID | PUSH) once the bet is settled.
+  result    SelectionResult?
+  /// When the bet was settled (null until SETTLED).
+  settledAt DateTime?
+  /// Payout/refund actually credited to the wallet in minor units (payout for
+  /// WIN, stake refund for VOID/PUSH, 0 for LOSS). Null until settled.
+  payout    Int?
+
+  selections BetSelection[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId])
+  @@index([status])
+  @@index([result])
+  @@index([createdAt])
+}
+
+/// Normalized bet/selection link holding the immutable odds snapshot taken at
+/// placement. Names + price are frozen values (never recomputed from live data).
+model BetSelection {
+  id          String    @id @default(uuid())
+  betId       String
+  bet         Bet       @relation(fields: [betId], references: [id], onDelete: Cascade)
+  selectionId String
+  selection   Selection @relation(fields: [selectionId], references: [id], onDelete: Cascade)
+
+  eventName        String
+  marketName       String
+  selectionName    String
+  priceAtPlacement String // decimal string snapshot, e.g. "1.85"
+  oddsVersion      Int
+
+  // Settlement outcome for THIS selection snapshot (null until settled).
+  result    SelectionResult?
+  settledAt DateTime?
+
+  @@unique([betId, selectionId])
+  @@index([selectionId])
+}
+
+// ---------------------------------------------------------------------------
+// Audit log — immutable record of sensitive actions (no deletes in app code).
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String? // user or admin id; null for system actions
+  actorType  String   @default("USER") // USER | ADMIN | SYSTEM
+  action     String // e.g. AUTH_REGISTER, AUTH_PASSWORD_RESET
+  entityType String?
+  entityId   String?
+  oldValue   Json?
+  newValue   Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Wallet / Transactions (Phase 6) � additive, double-entry foundation.
+// All balances and amounts are integer MINOR UNITS (e.g. pence for GBP).
+// No card numbers, CVVs, bank or payment credentials are ever stored.
+// ---------------------------------------------------------------------------
+
+enum WalletStatus {
+  ACTIVE
+  FROZEN
+  CLOSED
+}
+
+enum WalletTransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  BET_STAKE
+  BET_PAYOUT
+  BET_REFUND
+  ADJUSTMENT
+  /// A referral reward credited to a beneficiary. It moves through the SAME
+  /// WalletService ledger engine as every other amount (wallet row lock + this
+  /// transaction + a LedgerEntry), so a referral bonus is real, auditable money
+  /// and never a silent `balance +=` edit.
+  REFERRAL_BONUS
+}
+
+enum WalletTransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REVERSED
+}
+
+enum LedgerDirection {
+  CREDIT
+  DEBIT
+}
+
+/// One wallet per (user, currency). Balances in minor units; the application
+/// only ever mutates them inside WalletService.applyMutation under a row lock,
+/// together with a LedgerEntry. availableBalance is never allowed to go
+/// negative. There is deliberately no raw "setBalance" path.
+model Wallet {
+  id               String       @id @default(uuid())
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency         String       @default("BDT") // ISO 4217
+  availableBalance Int          @default(0) // minor units, >= 0
+  lockedBalance    Int          @default(0) // minor units, >= 0
+  status           WalletStatus @default(ACTIVE)
+
+  transactions  WalletTransaction[]
+  ledgerEntries LedgerEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, currency])
+  @@index([userId])
+  @@index([status])
+}
+
+/// One financial mutation request. Idempotency: at most one transaction per
+/// (userId, idempotencyKey) � duplicates return the original row.
+model WalletTransaction {
+  id             String                  @id @default(uuid())
+  walletId       String
+  wallet         Wallet                  @relation(fields: [walletId], references: [id])
+  userId         String // denormalized for ownership checks + unique idempotency
+  type           WalletTransactionType
+  status         WalletTransactionStatus @default(PENDING)
+  /// Signed minor units: positive credits (DEPOSIT, BET_PAYOUT, ...),
+  /// negative debits (WITHDRAWAL, BET_STAKE, ...).
+  amount         Int
+  currency       String
+  /// Provider reference (e.g. mock-tx-...) once the provider accepted it.
+  reference      String?
+  failureReason  String?
+  idempotencyKey String
+
+  ledgerEntries        LedgerEntry[]
+  /// Casino (partner) movements mapped onto this ledger transaction.
+  casinoTransactions   CasinoTransaction[]
+  /// Embedded sportsbook (WinHouse) movements mapped onto this ledger
+  /// transaction. One wallet, one ledger — the provider never owns a balance.
+  winhouseTransactions WinHouseTransaction[]
+  /// BigBang movements mapped onto the same canonical ledger.
+  bigbangTransactions  BigBangTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, idempotencyKey])
+  @@index([walletId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Append-only ledger. Every balance change writes exactly one entry in the
+/// same DB transaction as the balance update, recording previous/resulting
+/// available+locked balances. Entries are NEVER updated or deleted.
+model LedgerEntry {
+  id              String            @id @default(uuid())
+  walletId        String
+  wallet          Wallet            @relation(fields: [walletId], references: [id])
+  transactionId   String
+  transaction     WalletTransaction @relation(fields: [transactionId], references: [id])
+  direction       LedgerDirection
+  amount          Int // positive minor units
+  availableBefore Int
+  availableAfter  Int
+  lockedBefore    Int
+  lockedAfter     Int
+  /// Human-readable reason, e.g. "DEPOSIT_COMPLETED", "WITHDRAWAL_LOCK".
+  reason          String
+
+  createdAt DateTime @default(now())
+
+  @@index([walletId, createdAt])
+  @@index([transactionId])
+}
+
+// ---------------------------------------------------------------------------
+// Manual payment methods + manual deposit requests (BDT/USD).
+//
+// Admin-configured manual channels (bKash, Nagad, Bank Transfer, Card...).
+// The user pays externally and submits a PENDING request with the provider
+// transaction reference (and optional payment proof). The wallet is credited
+// ONLY after an admin approval, exactly once, through the WalletTransaction
+// ledger (unique idempotencyKey `manual-dep:{requestId}`).
+// Amounts are integer minor units, currency explicit per request.
+// ---------------------------------------------------------------------------
+
+enum PaymentMethodType {
+  MANUAL
+  GATEWAY
+}
+
+enum PaymentMethodStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum PaymentGatewayStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum ManualDepositStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model PaymentMethod {
+  id                  String              @id @default(uuid())
+  code                String              @unique // bkash | nagad | bank | card | ...
+  displayName         String
+  type                PaymentMethodType   @default(MANUAL)
+  status              PaymentMethodStatus @default(ACTIVE)
+  /// ISO 4217 codes this method accepts, e.g. ["BDT", "USD"].
+  supportedCurrencies String[]            @default([])
+  depositEnabled      Boolean             @default(true)
+  withdrawalEnabled   Boolean             @default(false)
+
+  // Manual payment instructions (shown only while ACTIVE).
+  accountNumber String?
+  accountName   String?
+  bankName      String?
+  branch        String?
+  routingNumber String?
+  instructions  String?
+
+  // Limits in minor units for the currencies configured (0 = unset/no max).
+  minDeposit    Int @default(0)
+  maxDeposit    Int @default(0)
+  minWithdrawal Int @default(0)
+  maxWithdrawal Int @default(0)
+
+  requireTransactionId Boolean @default(true)
+  requireProof         Boolean @default(false)
+  sortOrder            Int     @default(0)
+
+  deposits           ManualDepositRequest[]
+  withdrawalRequests WithdrawalRequest[]
+  gatewayConfigId    String?
+  gatewayConfig      PaymentGatewayConfig?  @relation(fields: [gatewayConfigId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, sortOrder])
+  @@index([gatewayConfigId])
+}
+
+/// Database-backed gateway provider configuration (admin-managed).
+///
+/// Secrets are AES-256-GCM encrypted at rest with ENCRYPTION_KEY and are NEVER
+/// returned raw — API responses expose only boolean *Set flags. Environment
+/// variables remain as the bootstrap/fallback provider.
+model PaymentGatewayConfig {
+  id                  String               @id @default(uuid())
+  name                String               @unique
+  code                String               @unique
+  providerType        String               @default("generic-http")
+  baseUrl             String
+  status              PaymentGatewayStatus @default(ACTIVE)
+  apiKeyEnc           String?
+  apiSecretEnc        String?
+  webhookSecretEnc    String?
+  authMode            String?
+  apiVersion          String?
+  timeoutMs           Int                  @default(15000)
+  supportedCurrencies String[]             @default([])
+  depositEnabled      Boolean              @default(true)
+  withdrawalEnabled   Boolean              @default(true)
+
+  methods PaymentMethod[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model ManualDepositRequest {
+  id       String        @id @default(uuid())
+  userId   String
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  methodId String
+  method   PaymentMethod @relation(fields: [methodId], references: [id])
+
+  amount   Int // minor units
+  currency String
+
+  /// Provider transaction/reference ID supplied by the user.
+  referenceId String?
+  /// Private payment proof file path (authorized access only).
+  proofPath   String?
+
+  status          ManualDepositStatus @default(PENDING)
+  rejectionReason String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+
+  /// WalletTransaction credited on approval (exactly once, unique guard).
+  transactionId  String? @unique
+  /// Unique per request — the ledger idempotency key is `manual-dep:{id}`.
+  idempotencyKey String  @unique @default(uuid())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([methodId])
+}
+
+// ---------------------------------------------------------------------------
+// Manual/gateway withdrawals + payment webhook events (wallet phase 6.fix).
+//
+// A WithdrawalRequest is created while the balance is safely RESERVED through
+// WalletService (available -= amount, locked += amount, one ledger entry).
+//   PENDING  -> APPROVED (funds stay locked while the payout runs manually)
+//            -> REJECTED (reservation released: available restored)
+//   APPROVED -> COMPLETED (lock settled: funds leave the wallet) or
+//            -> REJECTED (released, e.g. payout could not be executed)
+//   COMPLETED/REJECTED/CANCELLED are terminal. Every balance change creates
+//   the corresponding LedgerEntry; nothing is ever deducted twice.
+// ---------------------------------------------------------------------------
+
+enum ManualWithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+model WithdrawalRequest {
+  id       String        @id @default(uuid())
+  userId   String
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  methodId String
+  method   PaymentMethod @relation(fields: [methodId], references: [id])
+
+  amount   Int // minor units
+  currency String // ISO 4217 (BDT | USD | EUR)
+
+  /// Destination details required by the selected method. NEVER card CVV/PIN/OTP
+  /// or provider secrets — only the minimum account/destination information.
+  destinationAccount String? // mobile/account number (bKash/Nagad/Rocket/Bank)
+  destinationName    String? // account/payee holder name where required
+  bankName           String? // Bank only
+  branch             String? // Bank only
+  routingNumber      String? // Bank only
+
+  status          ManualWithdrawalStatus @default(PENDING)
+  rejectionReason String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+
+  /// WalletTransaction row created by the balance reservation (PENDING lock)
+  /// and settled on COMPLETED (or released on REJECTED/CANCELLED).
+  walletTransactionId String? @unique
+
+  /// Provider transaction reference once a gateway accepted the payout.
+  providerReference String?
+
+  /// Unique per request - the ledger idempotency key is `manual-wd:{id}`.
+  idempotencyKey String @unique @default(uuid())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([methodId])
+}
+
+/// Idempotency log for gateway callbacks. A (provider, eventId) is processed
+/// at most once - duplicate webhooks are acknowledged and ignored so a deposit
+/// or withdrawal can never be credited/deducted twice.
+model PaymentWebhookEvent {
+  id             String   @id @default(uuid())
+  provider       String
+  eventId        String
+  type           String
+  status         String   @default("RECEIVED")
+  reference      String?
+  amount         Int?
+  currency       String?
+  payload        Json?
+  signatureValid Boolean  @default(true)
+  processedAt    DateTime @default(now())
+
+  @@unique([provider, eventId])
+  @@index([processedAt])
+  @@index([status])
+  @@index([reference])
+}
+
+// ---------------------------------------------------------------------------
+// Paper (virtual) trading — Phase “TANVION ROYALE Trading Platform”.
+//
+// This is a VIRTUAL PAPER-TRADING SIMULATOR ONLY. Balances are virtual
+// starting credits; they are completely separate from the real Wallet above
+// and can never be deposited/withdrawn or exchanged for anything. Prices come
+// from a MarketDataProvider; when no real market-data feed is configured the
+// provider is a clearly-labelled DEMO feed (synthetic, seeded, never “live”).
+//
+// Money/price convention mirrors the rest of the platform: integer MINOR
+// UNITS with an implicit 2 decimal places (e.g. USD cents). Quantity is whole
+// virtual units (shares). All P&L is computed with integer math only.
+// ---------------------------------------------------------------------------
+
+enum TradingInstrumentType {
+  STOCK
+  CRYPTO
+  FOREX
+  COMMODITY
+}
+
+/// Where the current price comes from. DEMO is the default when no real feed
+/// is configured — never silently presented as live data.
+enum TradingDataSource {
+  LIVE
+  DELAYED
+  DEMO
+}
+
+enum TradingOrderSide {
+  BUY
+  SELL
+}
+
+enum TradingOrderStatus {
+  FILLED
+  REJECTED
+  CANCELLED
+}
+
+enum TradingPositionStatus {
+  OPEN
+  CLOSED
+}
+
+enum TradingTransactionType {
+  ACCOUNT_CREDIT
+  BUY
+  SELL
+  CLOSE_PROFIT
+  CLOSE_LOSS
+}
+
+/// One virtual paper-trading account per user. `virtualBalance` is free-play
+/// money only — never the real Wallet, never withdrawable.
+model TradingAccount {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency       String   @default("USD")
+  /// Virtual cash balance in minor units (>= 0 unless open positions lock it).
+  virtualBalance Int      @default(10000000)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  orders       TradingOrder[]
+  positions    TradingPosition[]
+  transactions TradingTransaction[]
+
+  @@index([userId])
+}
+
+/// A virtual tradable instrument (demo catalogs the instruments).
+model TradingInstrument {
+  id         String                @id @default(uuid())
+  symbol     String                @unique // e.g. "AAPL", "BTCUSD", "EURUSD"
+  name       String
+  type       TradingInstrumentType
+  /// Anchor price in minor units used by the demo feed. Never “the real price”.
+  basePrice  Int
+  /// Quoted data source. LIVE/DELAYED only when a real feed is configured.
+  dataSource TradingDataSource     @default(DEMO)
+  isEnabled  Boolean               @default(true)
+  sortOrder  Int                   @default(0)
+
+  orders    TradingOrder[]
+  positions TradingPosition[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([isEnabled])
+}
+
+/// A filled (or rejected/cancelled) virtual market order.
+model TradingOrder {
+  id            String             @id @default(uuid())
+  accountId     String
+  account       TradingAccount     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  instrumentId  String
+  instrument    TradingInstrument  @relation(fields: [instrumentId], references: [id])
+  side          TradingOrderSide
+  status        TradingOrderStatus
+  /// Filled execution price in minor units (null when rejected/cancelled).
+  priceFilled   Int?
+  quantity      Int // virtual units
+  /// Total notional in minor units = quantity * priceFilled (signed per side).
+  notional      Int
+  /// Reason for rejection (e.g. insufficient virtual balance).
+  failureReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountId, createdAt])
+  @@index([instrumentId])
+}
+
+/// An open or closed virtual position.
+model TradingPosition {
+  id            String                @id @default(uuid())
+  accountId     String
+  account       TradingAccount        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  instrumentId  String
+  instrument    TradingInstrument     @relation(fields: [instrumentId], references: [id])
+  side          TradingOrderSide
+  quantity      Int
+  /// Average entry price in minor units.
+  avgEntryPrice Int
+  status        TradingPositionStatus @default(OPEN)
+  /// Realized P&L for CLOSED positions (minor units).
+  realizedPnl   Int                   @default(0)
+  /// Timestamp of the closing fill (null while OPEN).
+  closedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountId, status])
+  @@index([instrumentId])
+}
+
+/// Append-only virtual cash ledger for the paper account. Every balance
+/// mutation writes exactly one entry in the same DB transaction.
+model TradingTransaction {
+  id        String                 @id @default(uuid())
+  accountId String
+  account   TradingAccount         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  type      TradingTransactionType
+  amount    Int // signed minor units
+  /// Human-readable reason, e.g. "ACCOUNT_CREDIT", "BUY AAPL", "CLOSE_PNL".
+  reason    String
+  createdAt DateTime               @default(now())
+
+  @@index([accountId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Free-play games (internally developed, clearly NOT real-money gambling).
+//
+// The catalog tiles on the home/front-end are presentation-only except the
+// internally developed free-play games (Sky Rocket crash, Lightning Dice, and
+// the paper game collection). These FOR FREE-PLAY ONLY sessions store
+// authoritative engine state and the integer score earned. There is NO money,
+// wallet movement or odds attached: `score` is free-play points only.
+// Real-money gambling lives exclusively in the BettingModule behind the
+// licensed-operator gate.
+// ---------------------------------------------------------------------------
+
+enum GameSessionStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+/// One uninterrupted play session of an internally developed free-play game.
+/// `state` holds the authoritative engine state (crash multiplier, dice
+/// target, rolled values) and is only ever mutated server-side.
+model GameSession {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameSlug  String // free-play engine slug, e.g. "sky-rocket" | "lightning-dice"
+  status    GameSessionStatus @default(ACTIVE)
+  state     Json // engine state (serialized, server-authoritative)
+  startedAt DateTime          @default(now())
+  endedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, gameSlug])
+  @@index([userId, status])
+  @@index([gameSlug, status])
+}
+
+/// A finished free-play round. Score is NEVER money — it is free-play points
+/// (e.g. crash cash-out points). Kept separate from sessions so leaderboards
+/// and history can be served without replaying full state.
+model GameResult {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameSlug  String // free-play engine slug
+  score     Int      @default(0) // free-play points, never real money
+  outcome   String // WIN | LOSS | VOID (free-play only)
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, gameSlug])
+  @@index([gameSlug, createdAt])
+}
+
+// ============================================================================
+// TANVION ROYALE — Crash game engine (participant crash rounds).
+//
+// Server-authoritative, provably-fair crash engine powering the Sky Rocket
+// game. EVERY round/bet/settlement is persisted so the engine survives API
+// restarts, and financial movement is always traceable.
+//
+// Mode separation (SAFETY BOUNDARY):
+//   FREE_PLAY  — free-play points ledger (CrashFreePlayWallet). Clearly
+//                separate from the real Wallet; never money.
+//   REAL_MONEY — flows exclusively through the ledger-backed WalletService
+//                (reserve/capture/release/settleBetCredit). REAL_MONEY is
+//                only enabled when the required operator/provider production
+//                configuration is present (see crash.config.ts + the
+//                UnconfiguredOperatorAdapter fail-safe). Otherwise the engine
+//                serves FREE_PLAY only.
+//
+// Provably fair: the crash point is derived deterministically from
+//   HMAC-SHA256(serverSeed, clientSeed:nonce)
+// via the documented algorithm (see apps/api/src/modules/crash/provably-fair.ts).
+// serverSeedHash is committed before betting opens; serverSeed is revealed
+// only after the round crashes, then the round is immutable.
+//
+// Operator-configured sequences: when a CrashSequenceState row exists for the
+// game, each round instead consumes the NEXT multiplier of the persisted
+// admin sequence (ORIGINAL -> REPEAT -> REPEAT_EXTENDED -> NEW_SEQUENCE).
+// Such rounds carry crashSource=CONFIGURED, the assigned sequenceMode /
+// sequenceIndex, and the predetermined crashPointConfigured (server-only —
+// never exposed before the round crashes). The seed commitment/reveal is
+// STILL generated and revealed for round-integrity auditing, but it does NOT
+// determine the outcome: verification endpoints label these rounds honestly
+// as fairnessModel=ADMIN_SEQUENCE. Rounds with crashSource=PROVABLY_FAIR keep
+// the full provable-fairness guarantee untouched.
+// ============================================================================
+
+enum CrashGameMode {
+  FREE_PLAY
+  REAL_MONEY
+}
+
+/// Authoritative round lifecycle. Only the documented transitions are legal:
+/// CREATED -> BETTING_OPEN -> RUNNING -> CRASHED -> SETTLED -> COMPLETED
+/// (see crash round-state machine; no skips, no rewinds).
+enum CrashRoundStatus {
+  CREATED
+  BETTING_OPEN
+  RUNNING
+  CRASHED
+  SETTLED
+  COMPLETED
+}
+
+/// Bet lifecycle. ACTIVE -> CASHED_OUT | LOST | REFUNDED. A bet can only ever
+/// reach ONE terminal state (enforced transactionally + by a unique
+/// settlement row per bet).
+enum CrashBetStatus {
+  ACTIVE
+  CASHED_OUT
+  LOST
+  REFUNDED
+}
+
+enum CrashSettlementResult {
+  CASHED_OUT
+  LOST
+  REFUNDED
+}
+
+/// Where a round's crash multiplier came from.
+///  PROVABLY_FAIR — HMAC-SHA256 commit/reveal derivation (default, unchanged).
+///  CONFIGURED    — consumed from the operator's persisted CrashSequenceState.
+enum CrashPointSource {
+  PROVABLY_FAIR
+  CONFIGURED
+}
+
+/// Sequence phase of the operator-configured crash-point list.
+///  PROVABLY_FAIR    — no sequence configured (random provably-fair rounds).
+///  ORIGINAL         — consuming the admin list P1..Pn in order.
+///  REPEAT           — original list exhausted; deterministic repeat R_k =
+///                     originalPoints[(k-1) mod n] runs (admin extension may
+///                     shorten the current repeat cycle).
+///  REPEAT_EXTENDED  — admin set a repeat extension: repeat continues to the
+///                     extended end WITHOUT resetting the position, after
+///                     which pending new admin points become active.
+///  NEW_SEQUENCE     — consuming the new admin points N1..Nm in order.
+enum CrashSequenceMode {
+  PROVABLY_FAIR
+  ORIGINAL
+  REPEAT
+  REPEAT_EXTENDED
+  NEW_SEQUENCE
+}
+
+/// FREE-PLAY points ledger types (never money).
+/// FREE-PLAY points ledger types (never money).
+enum CrashFreePlayTxType {
+  SIGNUP_CREDIT
+  BET_STAKE
+  BET_PAYOUT
+  BET_REFUND
+  ADJUSTMENT
+}
+
+/// One authoritative crash round. The crash point is predetermined by the
+/// seed commitment BEFORE betting opens and stays immutable once revealed.
+model CrashRound {
+  id          String           @id @default(uuid())
+  gameSlug    String           @default("sky-rocket")
+  mode        CrashGameMode    @default(FREE_PLAY)
+  status      CrashRoundStatus @default(CREATED)
+  roundNumber Int
+
+  // Provably-fair commitment.
+  serverSeedHash    String  @default("") // commitment published before betting opens
+  serverSeed        String? // revealed ONLY after the round crashes
+  /// Encrypted-at-rest copy of the server seed (AES-256-GCM via
+  /// encryptSecret/decryptSecret). Lets a restarted server resume the round's
+  /// pre-determined crash point without ever persisting it in plaintext or
+  /// exposing it to clients before the round crashes.
+  crashPointSeedEnc String?
+  clientSeed        String
+  nonce             Int     @default(1)
+  algorithmVersion  String  @default("v1")
+
+  /// Operator-configured sequence fields (all server-only until the crash).
+  /// crashSource distinguishes seed-derived rounds from sequence rounds;
+  /// crashPointConfigured is the predetermined multiplier consumed from the
+  /// sequence — NEVER exposed through any API view before the round crashes.
+  crashSource          CrashPointSource   @default(PROVABLY_FAIR)
+  sequenceMode         CrashSequenceMode?
+  sequenceIndex        Int?
+  crashPointConfigured Float?
+
+  /// Server-controlled clocks (epoch ms timestamps).
+  startAt        DateTime
+  bettingCloseAt DateTime
+  crashAt        DateTime?
+
+  /// Pre-determined crash multiplier (revealed when the round crashes).
+  crashMultiplier Float?
+  crashedAt       DateTime?
+  settledAt       DateTime?
+  /// When betting was closed (status RUNNING implied). Kept for auditing.
+  bettingClosedAt DateTime?
+  createdAt       DateTime  @default(now())
+
+  bets        CrashBet[]
+  settlements CrashSettlement[]
+
+  @@unique([gameSlug, roundNumber])
+  @@index([status])
+  @@index([mode])
+  @@index([startAt])
+}
+
+/// A player bet on a crash round. Stake is reserved/debited authoritatively:
+///  - FREE_PLAY: points debited from the user's CrashFreePlayWallet.
+///  - REAL_MONEY: WalletService.reserveStake (available -> locked), then the
+///    reservation is captured/refunded on settlement.
+/// A unique (userId, idempotencyKey) makes retries idempotent (one bet only).
+model CrashBet {
+  id                String         @id @default(uuid())
+  roundId           String
+  round             CrashRound     @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mode              CrashGameMode  @default(FREE_PLAY)
+  stake             Int // minor units for REAL_MONEY, free-play points for FREE_PLAY
+  currency          String         @default("FREEPLAY") // ISO 4217 for REAL_MONEY
+  status            CrashBetStatus @default(ACTIVE)
+  cashoutMultiplier Float?
+  payout            Int?
+  transactionId     String? // wallet transaction id (REAL_MONEY) or free-play tx id
+  idempotencyKey    String
+  placedAt          DateTime       @default(now())
+  cashoutAt         DateTime?
+  settledAt         DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  settlement CrashSettlement?
+
+  @@unique([userId, idempotencyKey])
+  @@index([roundId])
+  @@index([roundId, status])
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+/// One settlement per bet (CrashBet.settlement is 1:1 via the unique betId).
+/// A bet can never be CASHED_OUT and LOST — settlement creation races are
+/// serialized by the round row lock + bet row lock + unique betId constraint.
+model CrashSettlement {
+  id                String                @id @default(uuid())
+  roundId           String
+  round             CrashRound            @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  betId             String                @unique
+  bet               CrashBet              @relation(fields: [betId], references: [id], onDelete: Cascade)
+  userId            String
+  result            CrashSettlementResult
+  stake             Int
+  cashoutMultiplier Float?
+  payout            Int
+  transactionId     String?
+  idempotencyKey    String
+  createdAt         DateTime              @default(now())
+
+  @@index([roundId])
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+/// FREE-PLAY bankroll (points only). The single place free-play points
+/// balances live for the crash game — deliberately a SEPARATE wallet from the
+/// real Wallet, so free-play can never be mistaken for money.
+model CrashFreePlayWallet {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance   Int      @default(100000) // free-play points only (never money)
+  currency  String   @default("FREEPLAY")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions CrashFreePlayTransaction[]
+
+  @@unique([userId])
+}
+
+/// Append-only FREE-PLAY points ledger. Mirrors the real Wallet ledger model:
+/// every balance change writes exactly one entry with before/after balances.
+model CrashFreePlayTransaction {
+  id             String              @id @default(uuid())
+  walletId       String
+  wallet         CrashFreePlayWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  userId         String
+  type           CrashFreePlayTxType
+  amount         Int // signed points
+  balanceBefore  Int
+  balanceAfter   Int
+  referenceType  String? // 'CRASH_BET' | 'CRASH_SETTLEMENT' | 'SYSTEM'
+  referenceId    String?
+  idempotencyKey String
+  createdAt      DateTime            @default(now())
+
+  @@unique([userId, idempotencyKey])
+  @@index([walletId])
+  @@index([referenceType, referenceId])
+}
+
+/// Crash engine audit log — immutable (no deletes in application code).
+model GameAuditLog {
+  id        String   @id @default(uuid())
+  gameSlug  String   @default("sky-rocket")
+  roundId   String?
+  betId     String?
+  userId    String?
+  action    String
+  metadata  Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([gameSlug, roundId])
+  @@index([userId])
+  @@index([action])
+}
+
+/// Operator-configured crash-point sequence (singleton per game). THE source
+/// of truth for the ORIGINAL -> REPEAT -> REPEAT_EXTENDED -> NEW_SEQUENCE
+/// state machine. Every position counter is persisted here, so the exact
+/// sequence position survives restarts, deployments and reconnects. The row
+/// is mutated ONLY inside the round-creation transaction (which holds the
+/// scheduler's pg_advisory_xact_lock AND takes a FOR UPDATE row lock), so two
+/// server processes can never consume the same crash point.
+///
+/// SECURITY: future points are visible to AUTHORIZED ADMINS ONLY via the
+/// /admin/crash endpoints (audited). Player-facing APIs expose only the
+/// already-consumed position (mode + index), never upcoming multipliers.
+model CrashSequenceState {
+  id       String @id @default(uuid())
+  gameSlug String @unique @default("sky-rocket")
+
+  /// Current phase of the sequence state machine.
+  mode CrashSequenceMode @default(PROVABLY_FAIR)
+
+  /// Canonical original list P1..Pn — also the deterministic repeat source.
+  /// Plain JSON array of multipliers (2dp floats > 1.00, validated on write).
+  originalPoints Json
+
+  /// Pending NEW admin points N1..Nm that activate after the repeat (incl.
+  /// any extension) finishes. Null when none are queued.
+  nextPoints Json?
+
+  /// How many ORIGINAL points have been consumed (next original is P[n+1]).
+  originalConsumed Int @default(0)
+  /// How many REPEAT points have been consumed (next repeat is R[k+1]).
+  repeatPosition   Int @default(0)
+  /// Effective end of the current repeat phase. Equals len(originalPoints)
+  /// naturally; an admin extension sets it to repeatPosition + extension.
+  repeatEnd        Int @default(0)
+  /// How many NEW_SEQUENCE points have been consumed.
+  newConsumed      Int @default(0)
+
+  /// Monotonic version for optimistic concurrency + audit readability.
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================================
+// TANVION ROYALE - Notifications (in-app + Firebase Cloud Messaging push).
+//
+// PostgreSQL remains the SOURCE OF TRUTH for notification history, read
+// state, recipients and auditability; Firebase Cloud Messaging (FCM) is ONLY
+// the push DELIVERY provider. No secrets are stored here (device tokens are
+// public registration identifiers; the Firebase service-account key lives
+// exclusively in backend environment variables).
+//
+// Idempotency: every automatic (business-event) notification carries a
+// `dedupeKey` reference, e.g. `deposit-approved:{requestId}` or
+// `bet-settlement:{betId}:WIN`. The (dedupeKey, recipientUserId) unique
+// constraint makes a retried event NEVER create a duplicate row or a
+// duplicate push (NULL dedupeKey rows are unaffected, which is what manual
+// admin broadcasts use).
+// ============================================================================
+
+/// Real business events + admin broadcast categories.
+enum NotificationType {
+  // --- Automatic user notifications (real backend operations) ---
+  DEPOSIT_APPROVED
+  DEPOSIT_REJECTED
+  WITHDRAWAL_APPROVED
+  WITHDRAWAL_REJECTED
+  WITHDRAWAL_COMPLETED
+  BET_WON
+  BET_LOST
+  // --- Referral program (real, audited wallet credits) ---
+  /// A user signed up through the recipient's referral code.
+  REFERRAL_JOINED
+  /// A referred user satisfied the admin-configured qualification rule.
+  REFERRAL_QUALIFIED
+  /// A referral reward was credited to the recipient's wallet.
+  REFERRAL_BONUS_CREDITED
+  // --- Automatic admin/operational notifications ---
+  NEW_DEPOSIT_REQUEST
+  NEW_WITHDRAWAL_REQUEST
+  NEW_USER_REGISTRATION
+  SECURITY_ALERT
+  // --- Support / Live Chat ---
+  SUPPORT_MESSAGE // user posted a message in Live Chat (audience: ADMIN)
+  SUPPORT_REPLY // admin replied in Live Chat (audience: USER)
+  // --- Admin manual broadcast types ---
+  SYSTEM_ANNOUNCEMENT
+  PROMOTION
+  GENERAL
+}
+
+/// Whether the notification is a customer notification or an admin-panel one.
+enum NotificationAudience {
+  USER
+  ADMIN
+}
+
+/// One notification for one recipient. Read state is authoritative here.
+model Notification {
+  id              String               @id @default(uuid())
+  /// Owner of the notification (users AND admins are both User rows).
+  recipientUserId String
+  audience        NotificationAudience @default(USER)
+  type            NotificationType
+  title           String
+  message         String
+  /// Server-set payload (amounts, references). NEVER secrets, never raw HTML.
+  data            Json?
+  /// Server-set, ALLOWLISTED in-app route (e.g. /wallet). Never a
+  /// client-supplied or arbitrary external URL.
+  actionUrl       String?
+  /// Idempotency reference, e.g. deposit-approved:{id}. NULL for manual
+  /// broadcasts (unique constraints ignore NULLs).
+  dedupeKey       String?
+  isRead          Boolean              @default(false)
+  readAt          DateTime?
+
+  deliveries NotificationDelivery[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([dedupeKey, recipientUserId])
+  @@index([recipientUserId, isRead])
+  @@index([recipientUserId, audience, createdAt])
+  @@index([type, createdAt])
+}
+
+/// One registered browser/device per user (a user can have several: desktop
+/// Chrome, mobile Chrome, ...). The FCM token is a public registration
+/// identifier - never a secret. Stale/invalid tokens are marked inactive
+/// (never repeatedly sent to) instead of deleted, keeping history intact.
+model NotificationDevice {
+  id         String   @id @default(uuid())
+  userId     String
+  /// Delivery provider. Only "fcm" exists today; the column future-proofs
+  /// the registration against additional providers.
+  provider   String   @default("fcm")
+  token      String
+  platform   String? // web | android | ios
+  browser    String?
+  isActive   Boolean  @default(true)
+  lastSeenAt DateTime @default(now())
+
+  deliveries NotificationDelivery[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, token])
+  @@index([userId, isActive])
+}
+
+/// Per-device push delivery outcome (retry/dead-letter visibility). A push
+/// failure NEVER rolls back the business operation that created the
+/// notification - the row stays FAILED for later retry.
+enum NotificationDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED // push not configured (e.g. dev without Firebase credentials)
+  INVALID_TOKEN // FCM says the registration is stale - device deactivated
+}
+
+model NotificationDelivery {
+  id             String                     @id @default(uuid())
+  notificationId String
+  notification   Notification               @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  deviceId       String
+  device         NotificationDevice         @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  status         NotificationDeliveryStatus @default(PENDING)
+  attempts       Int                        @default(0)
+  lastError      String? // truncated, never credentials or full tokens
+  sentAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([notificationId, deviceId])
+}
+
+// ---------------------------------------------------------------------------
+// Support / Live Chat (REST, one active conversation per user)
+//
+// Live Chat is implemented as support messaging: one OPEN conversation per
+// user, persisted in PostgreSQL, delivered through the existing Notification
+// system. No third-party chat provider, no separate WebSocket/SSE transport —
+// clients poll the same /api/v1 REST surface with their JWT, exactly like
+// every other authenticated feature.
+// ---------------------------------------------------------------------------
+
+/// Conversation lifecycle. Admins move it between states; a new USER message
+/// re-opens WAITING_FOR_USER / RESOLVED conversations (never a CLOSED one —
+/// messaging again starts a fresh conversation).
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_USER
+  RESOLVED
+  CLOSED
+}
+
+/// Where a support conversation came from.
+///   LIVE_CHAT      — the single ongoing Live Chat conversation per user
+///                    (reused until it is CLOSED).
+///   PROBLEM_REPORT — a one-off reported problem submitted from
+///                    /support/report; every submission is its OWN case and is
+///                    never merged into the Live Chat thread.
+enum SupportTicketSource {
+  LIVE_CHAT
+  PROBLEM_REPORT
+}
+
+/// Who wrote a support message. Both users and admins are User rows.
+enum SupportMessageAuthorRole {
+  USER
+  ADMIN
+}
+
+/// One support conversation (the "Live Chat" thread). Server-derived unread
+/// counters drive the badges on both sides — never trusted from the client.
+model SupportTicket {
+  id               String              @id @default(uuid())
+  userId           String
+  /// Conversation owner (always the authenticated user, never a client value).
+  user             User                @relation("SupportTicketUser", fields: [userId], references: [id], onDelete: Cascade)
+  status           SupportTicketStatus @default(OPEN)
+  /// How this case was opened (Live Chat vs a reported problem). Rows created
+  /// before this column existed are Live Chat, hence the default.
+  source           SupportTicketSource @default(LIVE_CHAT)
+  /// Contact details the user typed on the /support/report form. Present only
+  /// for PROBLEM_REPORT cases (null for Live Chat). Displayed to the admin
+  /// alongside the account email/phone — they are NOT used for identity: the
+  /// owner is always the JWT-authenticated user below.
+  contactName      String?
+  contactEmail     String?
+  contactPhone     String?
+  /// Problem category selected on "Report a Problem"
+  /// (Login / Account, Deposit, Withdrawal, Payment, Game, Sports, Betting,
+  /// Live Chat, Technical Issue, Other). Null on Live Chat conversations and
+  /// on reports submitted before categories existed.
+  category         String?
+  /// Admin (User row with an ADMIN/SUPER_ADMIN role) currently handling it.
+  assignedAdminId  String?
+  assignedAdmin    User?               @relation("SupportTicketAssignee", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  /// User messages the admin has not seen yet.
+  adminUnreadCount Int                 @default(0)
+  /// Admin messages the user has not seen yet.
+  userUnreadCount  Int                 @default(0)
+  lastMessageAt    DateTime            @default(now())
+
+  messages SupportMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, updatedAt])
+  @@index([userId, source])
+  @@index([status, lastMessageAt])
+  @@index([assignedAdminId])
+}
+
+/// One chat message inside a support conversation. Plain text only — rendered
+/// as text (never HTML) on every client.
+model SupportMessage {
+  id                String                   @id @default(uuid())
+  ticketId          String
+  ticket            SupportTicket            @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  /// Author (User row) — always the AUTHENTICATED identity from the JWT.
+  authorUserId      String
+  author            User                     @relation(fields: [authorUserId], references: [id])
+  authorRole        SupportMessageAuthorRole
+  body              String
+  /// Optional screenshot attached to the message, stored as a base64 image
+  /// data URL — the SAME rule as ManualDepositRequest.proofPath /
+  /// WithdrawalRequest proof uploads: `data:image/(jpeg|jpg|png|webp|gif);base64,…`
+  /// and at most MAX_ATTACHMENT_DATA_URL_LENGTH characters (validated in the
+  /// service; the column itself is plain TEXT). Null on ordinary chat messages.
+  attachmentDataUrl String?
+  /// Client idempotency key for safe send retries: a retry with the same
+  /// (ticketId, clientRef) returns the original message instead of a duplicate.
+  clientRef         String?
+  createdAt         DateTime                 @default(now())
+
+  /// -------------------------------------------------------------------------
+  /// DEPLOYMENT NOTE — Problem Reports (2026-09-15)
+  ///
+  /// SupportTicketSource + SupportTicket.source/contactName/contactEmail/
+  /// contactPhone + SupportMessage.attachmentDataUrl ship in migration
+  /// 20260915000001_add_support_problem_reports. Like the chat migration above
+  /// it is ADDITIVE ONLY: one new enum + nullable/defaulted columns + one
+  /// index — no existing column is altered or dropped and no row is deleted.
+  /// `SupportTicket.source` is NOT NULL DEFAULT 'LIVE_CHAT', so every existing
+  /// conversation keeps working unchanged.
+  ///
+  /// Apply/verify exactly like the chat migration (see the note below):
+  ///   pnpm --filter @tanvion-royale/api prisma:migrate:deploy:strict
+  /// and inspect read-only first when `prisma migrate status` disagrees:
+  ///   node scripts/check-migration-state.cjs
+  /// -------------------------------------------------------------------------
+  /// -------------------------------------------------------------------------
+  /// DEPLOYMENT NOTE — Live Chat / Support
+  ///
+  /// SupportTicket + SupportMessage + SupportTicketStatus +
+  /// SupportMessageAuthorRole + NotificationType.SUPPORT_MESSAGE /
+  /// SUPPORT_REPLY all ship in migration 20260914010000_add_support_chat.
+  /// The migration is ADDITIVE ONLY: it creates new tables/enums and adds two
+  /// enum values — it never alters or drops existing columns and never deletes
+  /// rows.
+  ///
+  /// It is applied by the Render build chain, in order:
+  ///   prisma:generate -> prisma:migrate:deploy:strict (deploy + verify)
+  ///                   -> scripts/verify-migrations.cjs -> nest build
+  /// so a build can only go live when the database genuinely matches this
+  /// schema. /health additionally probes both tables (schema-drift sentinel),
+  /// so a half-deployed chat schema is loud instead of a 500 on the endpoint.
+  ///
+  /// If `prisma migrate status` ever reports this migration as pending, first
+  /// inspect the REAL database state read-only:
+  ///   node scripts/check-migration-state.cjs
+  /// and use the verdict it prints (CASE A/B/C/D). NEVER run
+  /// `prisma migrate reset`, never drop tables, never hand-INSERT
+  /// _prisma_migrations rows: history is only reconciled after the live schema
+  /// has been proven to match the migration.
+  /// -------------------------------------------------------------------------
+
+  @@unique([ticketId, clientRef])
+  @@index([ticketId, createdAt])
+  @@index([authorUserId])
+}
+
+// ============================================================================
+// TANVION ROYALE — PARTNER CASINO DOMAIN (BIG CASINO + BIG LIVE CASINO)
+//
+// Separation from the existing sports tables is intentional and required:
+//
+//   Sport/Game/GameAvailability/ProviderMapping are SPORTS objects — `Game`
+//   requires a Sport relation (sportId NOT NULL) and drives the event/market/
+//   selection betting tree. A partner casino title (a slot or a live roulette
+//   table) has no sport, no competition and no betting markets, so it cannot be
+//   represented by those rows without inventing fake sports. These casino
+//   tables are therefore a NEW, additive domain — nothing existing is replaced.
+//
+//   ProductType split (never mixed):
+//     CASINO       -> BIG CASINO      (partner casino inventory)
+//     LIVE_CASINO  -> BIG LIVE CASINO (partner live-dealer inventory)
+//   ROYALE PLAY is NOT here: internally developed games keep using
+//   GameSession/GameResult (source = INTERNAL) — no duplicate game engine.
+//
+// Money: every amount is integer MINOR UNITS and moves exclusively through the
+// ONE ledger-backed TANVION wallet (WalletTransaction/LedgerEntry). The partner
+// never owns a balance — it only tells us to debit/credit ours.
+//
+// Idempotency: (providerId, externalTransactionId, kind) is unique, so a
+// replayed BET/WIN/REFUND/ROLLBACK can never move money twice. `nonce` is
+// unique per provider to reject replayed signed requests.
+// ============================================================================
+
+enum CasinoProductType {
+  CASINO
+  LIVE_CASINO
+}
+
+enum CasinoGameStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CasinoSessionStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum CasinoTransactionKind {
+  BET
+  WIN
+  REFUND
+  ROLLBACK
+}
+
+enum CasinoTransactionStatus {
+  APPLIED
+  REVERSED
+}
+
+/// A partner catalog category (e.g. Slots, Live Roulette). Synced from the
+/// provider — never hand-invented by the frontend.
+model CasinoCategory {
+  id          String            @id @default(uuid())
+  providerId  String
+  provider    PartnerProvider   @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  externalId  String
+  name        String
+  slug        String
+  productType CasinoProductType @default(CASINO)
+  gameCount   Int               @default(0)
+  status      CatalogStatus     @default(ACTIVE)
+  sortOrder   Int               @default(0)
+
+  games        CasinoGame[]
+  lastSyncedAt DateTime     @default(now())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([providerId, externalId])
+  @@index([providerId, productType])
+  @@index([status])
+}
+
+/// A normalized partner casino game. Populated ONLY by a provider catalog sync
+/// (or an explicit admin sync) — never seeded with fake titles.
+model CasinoGame {
+  id              String            @id @default(uuid())
+  providerId      String
+  provider        PartnerProvider   @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  externalId      String
+  name            String
+  slug            String
+  thumbnail       String?
+  banner          String?
+  categoryId      String?
+  category        CasinoCategory?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  /// Denormalized category name so a category can be removed without losing it.
+  categoryName    String?
+  tags            String[]          @default([])
+  productType     CasinoProductType @default(CASINO)
+  status          CasinoGameStatus  @default(ACTIVE)
+  isFeatured      Boolean           @default(false)
+  launchAvailable Boolean           @default(true)
+  demoAvailable   Boolean           @default(false)
+  sortOrder       Int               @default(0)
+  /// Raw provider payload (diagnostics/reconciliation). Never sent to clients.
+  raw             Json?
+  lastSyncedAt    DateTime          @default(now())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  sessions CasinoSession[]
+
+  @@unique([providerId, externalId])
+  @@index([providerId, productType, status])
+  @@index([slug])
+  @@index([productType, isFeatured])
+}
+
+/// Partner player/session/round mapping for ONE game launch.
+/// The TANVION user id is mapped to a stable, non-identifying provider player
+/// id (see casino-player-identity.ts) — no partner account is created per
+/// launch, the deterministic id is reused.
+model CasinoSession {
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerId        String
+  provider          PartnerProvider     @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  casinoGameId      String
+  game              CasinoGame          @relation(fields: [casinoGameId], references: [id], onDelete: Cascade)
+  externalGameId    String
+  providerPlayerId  String
+  providerSessionId String?
+  providerRoundId   String?
+  currency          String
+  environment       String
+  demo              Boolean             @default(false)
+  status            CasinoSessionStatus @default(ACTIVE)
+
+  transactions        CasinoTransaction[]
+  bigbangTransactions BigBangTransaction[]
+  launchedAt          DateTime             @default(now())
+  closedAt            DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([userId, casinoGameId])
+  @@index([userId, status])
+  @@index([providerId, providerPlayerId])
+  @@index([providerId, providerSessionId])
+}
+
+/// Maps a provider wallet movement onto the TANVION ledger so callbacks are
+/// exactly-once and fully reconcilable. `walletTransactionId` points at the
+/// single authoritative ledger movement (one wallet, no partner balance).
+model CasinoTransaction {
+  id                     String                  @id @default(uuid())
+  providerId             String
+  provider               PartnerProvider         @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  userId                 String
+  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId              String?
+  session                CasinoSession?          @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  externalTransactionId  String
+  kind                   CasinoTransactionKind
+  status                 CasinoTransactionStatus @default(APPLIED)
+  /// Signed minor units: BET/ROLLBACK negative, WIN/REFUND positive.
+  amount                 Int
+  currency               String
+  externalRoundId        String?
+  /// Provider request nonce (replay protection). Unique per provider.
+  nonce                  String?
+  walletTransactionId    String?
+  walletTransaction      WalletTransaction?      @relation(fields: [walletTransactionId], references: [id], onDelete: SetNull)
+  /// Provider transaction this refund/rollback refers to.
+  referenceTransactionId String?
+  reason                 String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+
+  @@unique([providerId, externalTransactionId, kind])
+  @@unique([providerId, nonce])
+  @@index([userId, createdAt])
+  @@index([sessionId])
+  @@index([kind, status])
+}
+
+/// One BigBang seamless-wallet movement mapped onto the canonical TANVION
+/// ledger. This is provider reconciliation metadata, never a second balance.
+/// `transactionId` is BigBang's idempotency identity and is unique per row.
+model BigBangTransaction {
+  id                  String             @id @default(uuid())
+  providerId          String
+  provider            PartnerProvider    @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId           String?
+  session             CasinoSession?     @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  transactionId       String
+  /// Signed minor units: negative = bet/debit, positive = win/credit.
+  amountMinor         Int
+  /// Exact amount literal received from BigBang, retained for HMAC forensics.
+  amountWire          String
+  currency            String
+  game                String
+  gameCategory        String
+  /// Informational BigBang game id from the callback (not used as idempotency).
+  gameId              String?
+  /// Informational provider slug from the callback (not the PartnerProvider row id).
+  providerExternalId  String?
+  roundId             String?
+  roundType           String?
+  roundEnd            Boolean?
+  payloadHash         String
+  balanceBefore       Int
+  balanceAfter        Int
+  walletTransactionId String?
+  walletTransaction   WalletTransaction? @relation(fields: [walletTransactionId], references: [id], onDelete: SetNull)
+  environment         String?
+  /// True only for the provider's documented synthetic sandbox callback traffic.
+  sandbox             Boolean            @default(false)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@unique([providerId, transactionId])
+  @@index([userId, createdAt])
+  @@index([sessionId])
+  @@index([roundId])
+}
+
+// ---------------------------------------------------------------------------
+// EMBEDDED SPORTSBOOK (SPORTS_IFRAME) — WinHouse Model B seamless wallet
+//
+// The provider hosts the sportsbook; TANVION owns identity AND money. The two
+// tables below are the ONLY provider-specific state:
+//
+//   WinHouseSession      — one launch (page load) of the embedded book for a
+//                          TANVION user. It is also the reverse mapping the
+//                          wallet callbacks resolve `username` (= the
+//                          provider player id) back to a TANVION user with,
+//                          exactly like CasinoSession does for BIG CASINO.
+//   WinHouseTransaction  — one provider wallet movement mapped onto the ONE
+//                          TANVION wallet ledger. `transactionId` is the
+//                          provider's idempotency key; the unique index is what
+//                          makes a retried stake/win a no-op instead of a
+//                          double movement.
+//
+// NO provider-side balance is ever stored: every stake/payout is applied to
+// Wallet + WalletTransaction + LedgerEntry through WalletService.
+// ---------------------------------------------------------------------------
+
+enum WinHouseSessionStatus {
+  ACTIVE
+  CLOSED
+}
+
+/// One embedded-book launch for a TANVION user.
+///
+/// `providerPlayerId` is the STABLE, non-identifying id derived from the
+/// TANVION user id (see winhouse-player-identity.ts). It is what the provider
+/// quotes back as `username` on every wallet call, so it is the join key back
+/// to the TANVION user — a new provider account is never created per page load
+/// because the id is deterministic.
+model WinHouseSession {
+  id                String                @id @default(uuid())
+  providerId        String
+  provider          PartnerProvider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Stable provider-side player id (never PII, never reversible).
+  providerPlayerId  String
+  /// TANVION session id (`?session=` in the launch token) this launch was
+  /// minted for. Recorded so a movement can be traced to the login that
+  /// created it.
+  platformSessionId String?
+  /// Wallet currency at launch — the ONE currency the book plays in. A
+  /// callback in another currency is refused, never converted.
+  currency          String
+  /// sandbox | production — recorded so sandbox and live can never be mixed
+  /// when reconciling.
+  environment       String?
+  status            WinHouseSessionStatus @default(ACTIVE)
+
+  transactions WinHouseTransaction[]
+
+  /// Provider launch-token expiry (epoch ms) this session was minted with.
+  launchExpiresAt DateTime?
+  launchedAt      DateTime  @default(now())
+  closedAt        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([providerId, providerPlayerId])
+  @@index([providerId, platformSessionId])
+}
+
+enum WinHouseTransactionStatus {
+  APPLIED
+  REVERSED
+}
+
+/// One provider wallet movement mapped onto the TANVION ledger.
+///
+/// `transactionId` (provider) is unique per provider: a retried callback with
+/// the SAME payload returns the original result unchanged, and the same
+/// transaction id with a DIFFERENT payload is refused (409) — never applied.
+model WinHouseTransaction {
+  id                  String                    @id @default(uuid())
+  providerId          String
+  provider            PartnerProvider           @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Provider idempotency key — unique per provider (see the composite index).
+  transactionId       String
+  /// Provider action EXACTLY as sent on the wire ("bet" | "win").
+  action              String
+  /// Provider ticket id (may be empty).
+  ticketId            String?
+  /// Provider session id quoted back from the launch token.
+  sessionId           String?
+  winhouseSessionId   String?
+  winhouseSession     WinHouseSession?          @relation(fields: [winhouseSessionId], references: [id], onDelete: SetNull)
+  /// Signed minor units: negative = stake (bet), positive = payout (win).
+  amountMinor         Int
+  /// The amount EXACTLY as it arrived on the wire ("-25", "-25.00", ...).
+  /// Kept for signature/settlement forensics — the signature is built from it.
+  amountWire          String
+  currency            String
+  /// Wallet available balance immediately before/after the movement (minor
+  /// units) — taken from the immutable LedgerEntry that was written with it.
+  balanceBefore       Int
+  balanceAfter        Int
+  status              WinHouseTransactionStatus @default(APPLIED)
+  /// SHA-256 over the parsed movement fields: the same transaction id with a
+  /// different payload is detected with it (409) without storing the payload.
+  payloadHash         String
+  /// The authoritative TANVION ledger movement carrying the money.
+  walletTransactionId String?
+  walletTransaction   WalletTransaction?        @relation(fields: [walletTransactionId], references: [id], onDelete: SetNull)
+  environment         String?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  @@unique([providerId, transactionId])
+  @@index([userId, createdAt])
+  @@index([winhouseSessionId])
+  @@index([action, status])
+}
+
+// ============================================================================
+// TANVION ROYALE — USER REFERRAL PROGRAM
+//
+// Additive, self-contained domain. It reuses the EXISTING User, Wallet,
+// WalletTransaction, LedgerEntry, AuditLog and Notification structures — no
+// duplicate account, wallet, ledger or notification system is introduced.
+//
+//   User.referralCode   the unique, stable, never-rotated code a user shares.
+//                       The unique index is the only collision authority; the
+//                       service additionally retries on conflict.
+//
+//   Referral            ONE immutable attribution row per referred user.
+//                       `referredUserId` is UNIQUE, so a user has exactly one
+//                       referrer FOREVER — the relationship is written once at
+//                       registration and never updated. There is deliberately no
+//                       "change my referrer" path anywhere in the codebase.
+//
+//   ReferralEvent       append-only log of every qualifying signal counted.
+//                       `eventKey` is unique, so the SAME wallet transaction can
+//                       never be counted (or paid) twice.
+//
+//   ReferralReward      one auditable money movement per beneficiary.
+//                       `eventKey` is unique => exactly-once payout. The row is
+//                       NEVER deleted; a withdrawn/rejected reward is a status
+//                       change, not a removal. Real money is written by
+//                       WalletService through the normal WalletTransaction +
+//                       LedgerEntry ledger, never by mutating a balance.
+//
+//   ReferralProgramSettings  singleton (id = 1) admin configuration. NOTHING
+//                       about the reward is hard-coded: amounts, reward type,
+
+/// A click on an affiliate link, recorded BEFORE signup so the funnel
+/// (click -> signup -> qualified referral -> reward) is measurable.
+///
+/// PRIVACY: an affiliate code is a public, non-secret identifier. This table
+/// deliberately stores NO IP address, NO user agent, NO cookie and NO
+/// fingerprint — only the owner's referral code, a coarse landing path and a
+/// timestamp. `dedupeKey` is a UNIQUE server-side hash so a page refresh or a
+/// double click can never inflate the number, and none of the raw inputs that
+/// built it are stored.
+model AffiliateClick {
+  id String @id @default(uuid())
+
+  affiliateUserId String
+  affiliate       User   @relation(fields: [affiliateUserId], references: [id], onDelete: Cascade)
+
+  /// Owner's referral code at click time (public identifier, not a credential).
+  referralCode String
+
+  /// Coarse landing path only ("/signup", "/referral/<code>") — never a query
+  /// string, which could carry unrelated personal data.
+  landingPath String?
+
+  /// SHA-256 over a coarse visitor fingerprint (day bucket + user-agent family
+  /// + IP prefix). UNIQUE => one counted click per visitor per day, so a
+  /// refresh is never a new click. The raw inputs are NOT stored.
+  dedupeKey String
+
+  createdAt DateTime @default(now())
+
+  @@unique([dedupeKey])
+  @@index([affiliateUserId, createdAt])
+  @@index([createdAt])
+}
+
+//                       qualification rule, caps and expiry are admin-controlled.
+//
+// Money is ALWAYS integer minor units, exactly like every other amount here.
+// ============================================================================
+
+/// Lifecycle of one referral relationship.
+enum ReferralStatus {
+  PENDING // registered, qualification not met yet
+  QUALIFIED // qualification rule satisfied, rewards issued
+  REJECTED // explicitly rejected by an admin (never silently dropped)
+  CANCELLED // referral relationship revoked by an admin (audited, kept)
+}
+
+/// Who a reward row pays.
+enum ReferralRewardRecipient {
+  REFERRER // the user who shared the code
+  REFERRED // the new user who signed up through it
+}
+
+/// Reward calculation strategy. PERCENTAGE is always bounded by the admin caps
+/// so it can never mint unbounded money.
+enum ReferralBonusType {
+  FIXED_AMOUNT
+  PERCENTAGE
+}
+
+/// When a referral becomes payable. Chosen by an admin, never by a user.
+enum ReferralQualificationRule {
+  REGISTRATION // signing up is enough
+  VERIFIED_ACCOUNT // a verified email or phone is required too
+  MIN_DEPOSIT // a completed deposit of at least `minDepositAmount`
+  MIN_WAGER // completed wagers of at least `minWagerAmount`
+  DEPOSIT_AND_WAGER // both of the above
+}
+
+/// State of one referral reward. Terminal states are never overwritten except
+/// through an audited admin adjustment.
+enum ReferralRewardStatus {
+  PENDING
+  QUALIFIED
+  PAID
+  REJECTED
+  CANCELLED
+}
+
+/// The immutable "user B was referred by user A through code X" record.
+model Referral {
+  id                     String         @id @default(uuid())
+  referrerUserId         String
+  referrer               User           @relation("ReferralReferrer", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  /// UNIQUE => one referrer per referred user, permanently. This is what makes
+  /// the relationship immutable: there is physically no second row that could
+  /// point at a different referrer, and no update path exists.
+  referredUserId         String         @unique
+  referred               User           @relation("ReferralReferred", fields: [referredUserId], references: [id], onDelete: Cascade)
+  /// The code exactly as submitted at registration (traceability / audit).
+  referralCode           String
+  status                 ReferralStatus @default(PENDING)
+  /// Admin-visible reason when the referral is rejected or cancelled.
+  statusReason           String?
+  /// Snapshot of the rule in force when it qualified, so history stays
+  /// meaningful after the settings change.
+  qualifiedAt            DateTime?
+  /// Snapshot of the deposit/wager totals that satisfied the rule (minor units).
+  qualifiedDepositAmount Int            @default(0)
+  qualifiedWagerAmount   Int            @default(0)
+
+  rewards ReferralReward[]
+  events  ReferralEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([referrerUserId, createdAt])
+  @@index([status, createdAt])
+  @@index([referralCode])
+}
+
+/// Append-only qualifying-signal log. `eventKey` is unique, so replaying a
+/// webhook or re-running a settlement can never count the same money twice.
+model ReferralEvent {
+  id         String   @id @default(uuid())
+  referralId String
+  referral   Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  /// REGISTRATION | DEPOSIT | WAGER
+  kind       String
+  /// e.g. "deposit:<walletTransactionId>". UNIQUE => exactly-once counting.
+  eventKey   String   @unique
+  /// Minor units attributed to this event.
+  amount     Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([referralId, kind])
+}
+
+/// One auditable reward. `eventKey` unique => a duplicate webhook or a repeated
+/// qualification can never pay twice. The beneficiary's real money is moved by
+/// WalletService (WalletTransaction + LedgerEntry) in the SAME database
+/// transaction that flips this row to PAID.
+model ReferralReward {
+  id                  String                  @id @default(uuid())
+  referralId          String
+  referral            Referral                @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User                    @relation("ReferralRewardBeneficiary", fields: [userId], references: [id], onDelete: Cascade)
+  recipient           ReferralRewardRecipient
+  status              ReferralRewardStatus    @default(PENDING)
+  /// Minor units actually granted (0 while PENDING — never a promise in money).
+  amount              Int                     @default(0)
+  currency            String                  @default("BDT")
+  /// e.g. "referral_reward:<referralId>:REFERRER". UNIQUE => exactly-once.
+  eventKey            String                  @unique
+  /// Settings snapshot that produced this reward (audit of "why this amount?").
+  basis               Json?
+  /// Ledger transaction created for this reward (NULL until paid).
+  walletTransactionId String?
+  statusReason        String?
+  /// Set when an admin adjusts the reward; never used to hide an amount.
+  adjustedByUserId    String?
+  adjustedAt          DateTime?
+  adjustmentReason    String?
+  beforeBalance       Int?
+  afterBalance        Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status, createdAt])
+  @@index([referralId])
+}
+
+/// Singleton admin configuration of the referral program (row id = 1).
+/// Nothing here is hard-coded in application logic: the service reads these
+/// values and the admin panel writes them.
+model ReferralProgramSettings {
+  id Int @id @default(1)
+
+  isEnabled  Boolean @default(false)
+  currency   String  @default("BDT")
+  /// The public path a referral code is appended to (e.g. "/register?ref=").
+  signupPath String  @default("/register")
+
+  referrerBonusType    ReferralBonusType @default(FIXED_AMOUNT)
+  /// Minor units when referrerBonusType = FIXED_AMOUNT.
+  referrerBonusAmount  Int               @default(0)
+  /// Percent (1-100) when referrerBonusType = PERCENTAGE, applied to the
+  /// referred user's qualified deposit total.
+  referrerBonusPercent Int               @default(0)
+
+  referredBonusType    ReferralBonusType @default(FIXED_AMOUNT)
+  /// Minor units when referredBonusType = FIXED_AMOUNT.
+  referredBonusAmount  Int               @default(0)
+  referredBonusPercent Int               @default(0)
+
+  qualificationRule ReferralQualificationRule @default(REGISTRATION)
+  minDepositAmount  Int                       @default(0)
+  minWagerAmount    Int                       @default(0)
+
+  /// Cap for ONE referral reward, in minor units. 0 = uncapped.
+  maxRewardPerReferral       Int     @default(0)
+  /// Cap for ALL referral rewards one user may ever receive, in minor units.
+  /// NULL = uncapped.
+  maxTotalRewardPerUser      Int?
+  /// Days after registration a referral may still qualify. NULL = never expires.
+  qualificationExpiresInDays Int?
+  /// Also require a verified email/phone, whatever the rule says.
+  requireVerifiedAccount     Boolean @default(false)
+
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@index([isEnabled])
+}
+
+// ============================================================================
+// PROVIDER WEBHOOK EVENTS
+//
+// ONE shared event log for every provider-signed server-to-server webhook.
+// BigBang is the first adopter (`POST /api/v1/bigbang/webhooks`), but a new
+// provider only adds its own thin controller/service and reuses this table and
+// the shared WebhookSecurityService — there is no per-provider event table.
+//
+// WALLET SAFETY: this table is an AUDIT/RECONCILIATION record only. A webhook
+// NEVER debits or credits a wallet. Money moves exclusively through the
+// provider's seamless-wallet callback (`balance-change`), which is the single
+// money-moving entry point and carries its own idempotency index.
+//
+// NEVER STORED HERE: the webhook secret, the API key, an Authorization header
+// or any other credential. `payload` holds a REDACTED, bounded copy of the
+// provider document for reconciliation; `payloadHash` is the SHA-256 of the
+// EXACT signed raw body, which is what ties an audit row to the bytes that
+// were actually verified.
+// ============================================================================
+
+model ProviderWebhookEvent {
+  id String @id @default(uuid())
+
+  /// Stable provider discriminator (BIGBANG, …) — the second half of the
+  /// idempotency key, so two providers may legitimately reuse an event id.
+  provider String
+
+  /// Resolved PartnerProvider row (NULL when the row was removed later).
+  /// ON DELETE SET NULL: the audit record must survive provider deletion.
+  providerId  String?
+  providerRow PartnerProvider? @relation(fields: [providerId], references: [id], onDelete: SetNull)
+
+  /// The provider's event id when it supplies one, otherwise a key derived from
+  /// the documented immutable event fields. UNIQUE with `provider` => a retried
+  /// delivery is recognised and never processed twice.
+  eventId   String
+  eventType String
+
+  /// RECEIVED | PROCESSED | DUPLICATE | REJECTED
+  status String @default("RECEIVED")
+
+  /// Correlation id from RequestIdMiddleware (also echoed as X-Request-Id).
+  requestId String?
+
+  /// SHA-256 of the EXACT raw body the signature was verified over.
+  payloadHash String
+
+  /// Safe, redacted, bounded snapshot for reconciliation. Never credentials.
+  payload Json?
+
+  /// Machine-readable failure reason (e.g. INVALID_SIGNATURE, STALE_TIMESTAMP).
+  errorCode String?
+
+  /// Human-readable, NON-SENSITIVE note. Never contains a secret, a signature
+  /// or an Authorization header.
+  errorMessage String?
+
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([provider, eventId])
+  @@index([provider, status, receivedAt])
+  @@index([providerId, receivedAt])
+  @@index([eventType, receivedAt])
+}
+
+// ============================================================================
+// AFFILIATE — the user-facing earning/reporting layer ON TOP OF the existing
+// referral system.
+//
+// NOT a second source of truth: an affiliate IS the owner of `User.referralCode`.
+// Referred users, qualification, reward amounts and their PENDING/PAID status
+// all live in `Referral` / `ReferralReward` and are never duplicated here. Only
+// the three things the referral domain does not model are added below:
+// per-month targets, configurable page content, and click attribution.
+// ============================================================================
+
+/// Metrics an admin may set a monthly target against. Only types the platform
+/// can actually MEASURE are listed — a target type that cannot be counted is
+/// never offered, so no fake progress can ever be shown.
+enum AffiliateTargetType {
+  QUALIFIED_REFERRALS // referrals that reached Referral.status = QUALIFIED
+  SIGNUPS // referred users that registered at all
+}
+
+/// Whether a user currently participates in the AFFILIATE PROGRAM.
+///
+/// This is deliberately NOT derived from `User.referralCode`: owning a referral
+/// code is part of the normal referral program and never implies affiliate
+/// membership. `ACTIVE` is the ONLY state in which the affiliate link, the
+/// affiliate dashboard and affiliate click attribution apply.
+enum AffiliateStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model AffiliateMonthlyTarget {
+  id String @id @default(uuid())
+
+  /// The affiliate whose target this is. Cascade only removes the target.
+  affiliateUserId String
+  affiliate       User   @relation(fields: [affiliateUserId], references: [id], onDelete: Cascade)
+
+  /// Calendar month the target applies to (not a date range, so history is
+  /// addressable one month at a time and can never be silently overwritten).
+  year  Int
+  month Int
+
+  targetType  AffiliateTargetType
+  /// Whole units of `targetType` (100 = "100 qualified referrals"). 0 is a real,
+  /// explicitly-configured value, which is why "no target" is NULL and not 0.
+  targetValue Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@unique([affiliateUserId, year, month, targetType])
+  @@index([affiliateUserId, year, month])
+  @@index([year, month])
+}
+
+/// One configurable, ADMIN-EDITABLE section of the /affiliate page.
+///
+/// SCOPE (GLOBAL vs INDIVIDUAL)
+///   This is ONE model with two scopes, never two models. The scope is the
+///   nullable `affiliateUserId`:
+///     affiliateUserId = NULL  -> GLOBAL. Shows on EVERY active affiliate's
+///                                 /affiliate page. Every row that existed
+///                                 before individual scope existed is NULL and
+///                                 therefore stays global forever.
+///     affiliateUserId = <id>  -> INDIVIDUAL. Shows ONLY on that one ACTIVE
+///                                 affiliate's /affiliate page and on nobody
+///                                 else's. The API derives and verifies this
+///                                 value server-side; a browser can never
+///                                 choose it.
+///   The key is the stable `User.id` (= `AffiliateProfile.userId`), never the
+///   referral code: a referral code belongs to the REFERRAL program and is not
+///   an identity.
+///
+/// ORDERING
+///   `sortOrder` is independent PER SCOPE. Reordering Affiliate A's blocks can
+///   therefore never renumber global content or Affiliate B's content, because
+///   the two composite indexes below are both prefixed by `affiliateUserId`.
+///
+/// SECURITY: a block stores DATA, never code. `type` is a closed enum the API
+/// validates; `body` is plain text rendered as text; `imageUrl` is validated
+/// server-side against an https-only allow-list. There is no field that can
+/// hold JavaScript, an event handler, a style block or raw HTML, so nothing
+/// stored here can execute — and the admin scope rule is the same for a
+/// GLOBAL block and an INDIVIDUAL one.
+model AffiliateContentBlock {
+  id String @id @default(uuid())
+
+  /// Scope discriminator. NULL = GLOBAL (every active affiliate), a user id =
+  /// INDIVIDUAL (that one active affiliate only). The API only ever sets it
+  /// from the URL param after verifying an ACTIVE `AffiliateProfile`.
+  affiliateUserId String?
+  affiliateUser   User?   @relation("AffiliateContentBlockAffiliateUser", fields: [affiliateUserId], references: [id], onDelete: Cascade)
+
+  /// Stable key used for ordering/debugging; not unique (an admin may re-create).
+  key String
+
+  /// Closed set of renderable block types. The frontend maps each one to a
+  /// pre-built, safe component; an unknown value is refused by the API.
+  type String
+
+  title    String?
+  subtitle String?
+  /// Plain text (paragraphs split on blank line). Rendered as text, never HTML.
+  body     String?
+  /// Item list for FAQ / HOW_IT_WORKS / BENEFITS blocks ("Question|Answer" per
+  /// line for FAQ, one bullet per line otherwise).
+  items    String?
+  /// https-only, allow-listed image reference. Never a data: or javascript: URL.
+  imageUrl String?
+  ctaText  String?
+  /// https-only same-site/allow-listed link target. Empty = no button.
+  ctaUrl   String?
+
+  /// Manual ordering. Admin reordering rewrites sortOrder; there is no
+  /// drag-and-drop dependency and the order is always an integer.
+  sortOrder Int     @default(0)
+  isEnabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  /// Existing GLOBAL read path (scope + enabled + order), unchanged.
+  @@index([isEnabled, sortOrder])
+  /// Per-affiliate render path: one affiliate's enabled blocks in order. Both
+  /// indexes are prefixed by `affiliateUserId` so an individual read/reorder is
+  /// a tight range scan and can never interleave with another scope's order.
+  @@index([affiliateUserId, isEnabled, sortOrder])
+  @@index([affiliateUserId, sortOrder])
+}
+
+/// Membership in the AFFILIATE PROGRAM, as opposed to the referral program.
+///
+/// WHY A SEPARATE MODEL
+///   Every registered user already owns a `User.referralCode` and may use the
+///   normal referral system. That must NOT make them an affiliate. Affiliate
+///   participation is opt-in, so it needs its own row: this model is created
+///   ONLY by an explicit activation, is UNIQUE per user (activation is
+///   idempotent and can never produce a second profile), and an admin can turn
+///   it off and on again without touching a single referral, reward, wallet or
+///   ledger row.
+///
+/// SAFE URL: `promotionUrl` is validated server-side against the same
+/// https-only allow-list the affiliate content blocks use, so a stored channel
+/// link can never carry `javascript:` or `data:`.
+model AffiliateProfile {
+  id String @id @default(uuid())
+
+  /// UNIQUE: one profile per user, ever. This is the idempotency guarantee for
+  /// activation and the reason a deactivated affiliate can be REACTIVATED on
+  /// the same row instead of accumulating profiles.
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// ACTIVE = affiliate link / dashboard / click analytics apply.
+  /// INACTIVE = deactivated (by the user or by an admin); the referral system,
+  /// the referral code and all history are untouched.
+  status AffiliateStatus @default(ACTIVE)
+
+  /// Where the affiliate promotes (closed set enforced by the API DTO).
+  promotionMethod String?
+
+  /// https:// or a site-relative path. Never a data:/javascript: URL.
+  promotionUrl String?
+
+  /// "How will you promote TANVIONROYALE?" — free text, no HTML.
+  description String?
+
+  /// When the affiliate agreement was accepted. Required for activation, so it
+  /// is never null on an existing row.
+  termsAcceptedAt DateTime
+
+  /// First activation, then preserved across deactivate/reactivate cycles.
+  activatedAt   DateTime  @default(now())
+  deactivatedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([status, activatedAt])
+}
+
+// ============================================================================
+// SMS DELIVERY PROVIDER SELECTION (admin-controlled, singleton row id = 1)
+//
+// WHAT THIS STORES
+//   ONLY which SMS provider delivers the one-time codes (Twilio, Vonage, or an
+//   automatic primary -> fallback chain). It is the same "singleton settings
+//   row the admin panel reads and writes" mechanism the referral program uses.
+//
+// WHAT THIS NEVER STORES
+//   NO credential of any kind. There is no API key, no API secret, no Account
+//   SID, no Auth Token and no sender number column here, and none is ever added
+//   implicitly. Provider credentials stay in the server/Render environment
+//   variables, so this table can never leak a secret through the admin API, a
+//   backup, a replica or a log line.
+//
+//   The admin API therefore exposes `twilio.configured` / `vonage.configured`
+//   booleans only - the frontend never receives a provider credential.
+// ============================================================================
+
+/// The concrete SMS providers the platform can deliver OTPs through.
+enum SmsProviderName {
+  TWILIO
+  VONAGE
+}
+
+/// The admin-facing selection: one provider, or an automatic failover chain.
+enum SmsProviderMode {
+  /// TWILIO — the historical provider, unchanged.
+  TWILIO
+  /// VONAGE — the second provider.
+  VONAGE
+  /// AUTO — try `primarySmsProvider`, then `fallbackSmsProvider` exactly once.
+  AUTO
+}
+
+/// Singleton admin configuration of the SMS/OTP delivery provider (row id = 1).
+model SmsProviderSettings {
+  id Int @id @default(1)
+
+  /// Which provider delivers the codes. AUTO = primary, then fallback once.
+  smsProvider SmsProviderMode @default(TWILIO)
+
+  /// Tried FIRST in AUTO mode. Ignored in single-provider mode.
+  primarySmsProvider SmsProviderName @default(TWILIO)
+
+  /// Tried ONCE after the primary fails in AUTO mode. Never equal to the
+  /// primary (the service repairs that combination, so a failure is never
+  /// retried against the provider that just failed).
+  fallbackSmsProvider SmsProviderName @default(VONAGE)
+
+  /// Admin audit trail for this setting. Holds the admin user id, never a
+  /// credential: the value stored is the provider SELECTION only.
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@index([smsProvider])
+}
+
+// ============================================================================
+// ROYALE PLAY — Plinko + Mines (server-authoritative, wallet-backed).
+//
+// Internally developed TANVIONROYALE games. Outcomes are generated server-side
+// with Node.js CSPRNG (crypto.randomBytes) plus a documented HMAC-SHA256
+// commit/reveal scheme (apps/api/src/modules/royale/royale-fair.ts). Stakes
+// move ONLY through the ONE existing wallet ledger (WalletService) in
+// REAL_MONEY, or the existing free-play points ledger (CrashFreePlayWallet)
+// in FREE_PLAY. These tables are GAME RECORDS only — no second wallet,
+// ledger, or settlement engine. Money is integer minor units; multipliers are
+// integer basis points (10000 = 1.00x):
+//   payout = floor(stake * multiplierBp / 10000).
+// ============================================================================
+
+/// Wallet domain a Royale round settles in (mirrors CrashGameMode).
+enum RoyaleGameMode {
+  FREE_PLAY
+  REAL_MONEY
+}
+
+/// Mines round lifecycle. Plinko rounds settle instantly at creation.
+enum RoyaleMinesStatus {
+  ACTIVE
+  CASHED_OUT
+  BUSTED
+  VOIDED
+}
+
+/// Terminal settlement outcomes (audit/reconciliation).
+enum RoyaleSettlementResult {
+  PLINKO_PAYOUT
+  MINES_CASHOUT
+  MINES_BUST
+  VOIDED
+  /// Royale Ace: one settled spin (base game + any free spins as ONE round).
+  ACE_SPIN
+}
+
+/// One Plinko drop. Rounds settle INSTANTLY at creation: the path is derived
+/// server-side from committed seed material and the revealed server seed is
+/// stored on the row so anyone can re-derive the exact path.
+model RoyalePlinkoRound {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  mode     RoyaleGameMode @default(FREE_PLAY)
+  rows     Int
+  risk     String
+  stake    Int
+  currency String
+
+  /// SHA-256 commitment of serverSeed (verifiable after reveal — immediate).
+  serverSeedHash String
+  /// Revealed: the round settles atomically at creation.
+  serverSeed String
+  clientSeed String
+  nonce      Int
+
+  /// Server-derived left(0)/right(1) decisions, one per row.
+  path Int[]
+  /// Final bin (count of right moves) and its payout multiplier (basis points).
+  binIndex     Int
+  multiplierBp Int
+  payout       Int
+
+  /// REAL_MONEY: WalletTransaction holding the captured stake (audit anchor).
+  transactionId  String?
+  idempotencyKey String
+
+  createdAt DateTime @default(now())
+  settledAt DateTime @default(now())
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+/// One Mines round. Mine positions are derived server-side from the committed
+/// seed and stored ONLY as AES-256-GCM ciphertext (serverSeedEnc). The
+/// plaintext seed and the mine positions are NEVER exposed while ACTIVE — they
+/// are published together at settlement (cash-out, bust, or void).
+model RoyaleMinesRound {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  mode       RoyaleGameMode    @default(FREE_PLAY)
+  status     RoyaleMinesStatus @default(ACTIVE)
+  gridSize   Int               @default(25)
+  minesCount Int
+  stake      Int
+  currency   String
+
+  /// SHA-256 commitment of serverSeed (published before the first reveal).
+  serverSeedHash String
+  /// AES-256-GCM encrypted serverSeed (encryptSecret). NEVER exposed.
+  serverSeedEnc String
+  /// NULL until the round settles — never while ACTIVE.
+  serverSeed String?
+  clientSeed String
+  nonce      Int
+
+  /// Published AT settlement (cash-out/bust); stays EMPTY for ACTIVE/VOIDED
+  /// rounds (a void can never recover the seed, so it reveals nothing).
+  /// Verifiers can also re-derive positions from the revealed seed.
+  minesRevealed Int[] @default([])
+  /// Safe tiles the player has revealed (indexes). Never contains a mine.
+  revealed Int[] @default([])
+
+  /// Current multiplier for the revealed safe count (basis points, 10000 = 1x).
+  currentMultiplierBp Int @default(10000)
+  /// Gross payout once settled (floor(stake * bp / 10000)); NULL while ACTIVE.
+  payout Int?
+
+  /// REAL_MONEY: WalletTransaction holding the reservation (audit anchor).
+  transactionId  String?
+  idempotencyKey String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  settledAt DateTime?
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, createdAt])
+}
+
+/// Terminal money record for a settled Royale round. Exactly one row per
+/// settled round; the wallet movement it references is the reconciliation
+/// anchor (idempotency keys are namespaced "royale:*").
+model RoyaleSettlement {
+  id      String          @id @default(uuid())
+  gameSlug String
+  /// RoyalePlinkoRound.id or RoyaleMinesRound.id (see gameSlug).
+  roundId String
+  userId  String
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  result       RoyaleSettlementResult
+  stake        Int
+  payout       Int
+  multiplierBp Int?
+  /// WalletTransaction that resolved the stake (REAL_MONEY). Null in FREE_PLAY.
+  transactionId  String?
+  idempotencyKey String
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, idempotencyKey])
+  @@index([gameSlug, createdAt])
+  @@index([userId, createdAt])
+  @@index([roundId])
+}
+
+
+
+// ---------------------------------------------------------------------------
+// Responsible gambling (Task 2 / audit F3).
+//
+// PROTECTION records only — they never hold money. They constrain REAL_MONEY
+// play: the Royale eligibility gate calls ResponsibleGamblingService before any
+// wallet reservation, and every change is written to the AuditLog.
+//
+// Rules enforced by ResponsibleGamblingService (see responsible-gambling.service.ts):
+//   * lowering a limit OR self-excluding  -> takes effect IMMEDIATELY;
+//   * RAISING a limit OR ending an exclusion -> only after a cooling-off delay
+//     (ROYALE_RG_COOLING_OFF_HOURS, default 24h), stored in PlayLimit.pending*
+
+// ---------------------------------------------------------------------------
+// Royale Ace (royale-ace) — original 5x4 / 1024-ways cascading card slot.
+//
+// The server derives the ENTIRE round up front (initial grid, every cascade
+// step, wild placements, multipliers, scatter trigger, the whole free-spin
+// sequence and the total win) and stores it as JSON in `resultJson`. The client
+// only replays it; nothing is decided on the client.
+//
+// A round is resumable: if the player disconnects, the ACTIVE row keeps the
+// pre-derived `resultJson` and the reconciler (RoyaleAceService#reconcile) can
+// finish it safely — it can only ever apply the exact outcome that was derived
+// before the stake was taken.
+//
+// Free spins are part of the SAME round: the stake is debited once and the
+// total (capped) win is credited once at settlement.
+// ---------------------------------------------------------------------------
+
+/// Lifecycle of a Royale Ace round.
+enum RoyaleAceRoundStatus {
+  /// The round was created but not settled yet (kept only until the settling
+  /// transaction commits; a crash in between is recovered by the reconciler).
+  ACTIVE
+  /// Settled: stake captured, win credited (may be zero), ledger + audit written.
+  SETTLED
+  /// Voided by an admin with a reason: the stake is refunded and nothing is
+  /// ever credited from a voided round.
+  VOIDED
+}
+
+/// One Royale Ace round. Immutable once SETTLED (void is the only admin path).
+model RoyaleAceRound {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  mode   RoyaleGameMode      @default(FREE_PLAY)
+  status RoyaleAceRoundStatus @default(ACTIVE)
+
+  stake    Int
+  currency String
+  /// Total win in minor units (uncapped total is kept in `resultJson`), 0 on a
+  /// loss. NULL while ACTIVE.
+  payout Int?
+  /// Highest cascade multiplier reached anywhere in the round (bp, 10000 = 1x).
+  maxMultiplierBp Int @default(10000)
+  /// TRUE when the round's win was clipped by the configured max-win cap.
+  capped Boolean @default(false)
+
+  /// SHA-256 commitment of the serverSeed, published BEFORE the spin.
+  serverSeedHash String
+  /// AES-256-GCM encrypted serverSeed (encryptSecret) — never exposed.
+  serverSeedEnc String
+  /// Revealed only at settlement (SETTLED/VOIDED); NULL while ACTIVE.
+  serverSeed String?
+  clientSeed String
+  nonce      Int
+
+  /// Config version this round was played with (immutable provenance).
+  configVersion Int
+  /// The full pre-derived outcome (grids, cascades, multipliers, free spins,
+  /// total win) exactly as re-derived by verifyAceSpin().
+  resultJson Json
+
+  /// REAL_MONEY: WalletTransaction holding the captured stake (audit anchor).
+  transactionId  String?
+  idempotencyKey String
+
+  createdAt DateTime  @default(now())
+  settledAt DateTime?
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+/// A versioned Royale Ace configuration. Only ONE row is ACTIVE at a time; a new
+/// DRAFT version must carry a stored simulation report (RoyaleAceSimulationReport)
+/// that passes before an admin may activate it. Every row is immutable once
+/// created — changes always come as a NEW version with a mandatory reason.
+model RoyaleAceConfigVersion {
+  id Int @id @default(1)
+
+  status  RoyaleAceConfigStatus @default(DRAFT)
+  version Int                   @unique
+  /// Human label shown in the admin UI and in the client's info modal.
+  name    String
+  /// The complete typed config (strips, paytable, ladders, caps, bet levels,
+  /// jurisdiction rules).
+  configJson Json
+  /// Validation problems found when the row was created (must be empty).
+  validationErrors Json?
+
+  /// REQUIRED on create and on every activation (who changed what, and why).
+  changeReason String
+  createdById  String
+  createdBy    User   @relation("RoyaleAceConfigCreatedBy", fields: [createdById], references: [id])
+
+  activatedAt DateTime?
+  activatedById String?
+  activatedBy   User?     @relation("RoyaleAceConfigActivatedBy", fields: [activatedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  simulationReports RoyaleAceSimulationReport[]
+
+  @@index([status])
+}
+
+enum RoyaleAceConfigStatus {
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+/// A stored simulation report for a config version. A version with GOLDEN rules
+/// (paytable / strip weights) can only be activated when its newest report has
+/// `passed = true`, which requires RTP inside tolerance and no max-win breach.
+model RoyaleAceSimulationReport {
+  id String @id @default(uuid())
+  configVersion Int
+  configVersionRef RoyaleAceConfigVersion @relation(fields: [configVersion], references: [version])
+
+  /// Rows simulated for this report.
+  spins Int
+  /// Achieved RTP in bp (e.g. 9655 = 96.55%).
+  rtpBp Int
+  /// 99% confidence interval for RTP, in bp.
+  rtpCiLowBp  Int
+  rtpCiHighBp Int
+  /// Target RTP from the config, in bp, and the tolerance used, in bp.
+  targetRtpBp Int
+  toleranceBp Int
+  /// Hit frequency (a round that paid anything) in bp.
+  hitFrequencyBp      Int
+  /// Free-spin trigger rate in bp (rounds that entered the feature).
+  triggerRateBp       Int
+  /// Retrigger rate in bp (free-spin rounds that extended).
+  retriggerRateBp     Int
+  /// RTP split, in bp, exactly as the math design specifies.
+  baseGameRtpBp       Int
+  cascadeRtpBp        Int
+  freeSpinRtpBp       Int
+  /// Standard deviation of the per-round return (bp), i.e. volatility.
+  volatilityBp        Int
+  /// Highest observed win in bp of stake.
+  maxWinObservedBp    Int
+  /// Configured max win in bp.
+  maxWinCapBp         Int
+  /// FALSE when RTP was outside tolerance or the cap was exceeded.
+  passed Boolean
+  notes  String?
+
+  createdById String
+  createdBy   User   @relation("RoyaleAceReportCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([configVersion, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Responsible gambling (self-exclusion + play limits)
+// ---------------------------------------------------------------------------
+// These protection records are asserted by the Royale REAL_MONEY eligibility
+// gate on every stake:
+//   * COOLING_OFF / TEMPORARY exclusion -> endsAt is set and can be extended
+//     (raise) or SelfExclusion.revokedAt (scheduled end, future timestamp);
+//   * PERMANENT exclusion -> endsAt is NULL and can NEVER be revoked by the
+//     user (admin override only).
+// ---------------------------------------------------------------------------
+
+enum SelfExclusionType {
+  COOLING_OFF
+  TEMPORARY
+  PERMANENT
+}
+
+enum PlayLimitKind {
+  DEPOSIT
+  LOSS
+  STAKE_PER_BET
+}
+
+enum PlayLimitPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+/// One self-exclusion / cooling-off window for a user. A row is ACTIVE while
+/// startsAt <= now AND (endsAt IS NULL OR endsAt > now) AND
+/// (revokedAt IS NULL OR revokedAt > now) — a FUTURE revokedAt means the user
+/// ASKED to end it but the cooling-off delay has not elapsed yet.
+model SelfExclusion {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      SelfExclusionType
+  startsAt  DateTime          @default(now())
+  /// NULL for PERMANENT (and for open-ended cooling-off) — never expires on its own.
+  endsAt    DateTime?
+  reason    String?
+  /// Requested end time. A FUTURE value honours the cooling-off delay; admin
+  /// override sets it to now() so the exclusion lifts immediately.
+  revokedAt DateTime?
+  createdAt DateTime          @default(now())
+
+  @@index([userId])
+  @@index([userId, revokedAt])
+}
+
+/// One limit line per (user, kind, period). `amount` is the CURRENT effective
+/// cap in minor units. A RAISE is parked in pendingAmount/pendingEffectiveAt and
+/// only becomes effective once now >= pendingEffectiveAt (cooling-off honoured
+/// at read time). A LOWER clears the pending fields and applies immediately.
+model PlayLimit {
+  id                 String           @id @default(uuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind               PlayLimitKind
+  period             PlayLimitPeriod
+  amount             Int
+  currency           String
+  effectiveFrom      DateTime         @default(now())
+  pendingAmount      Int?
+  pendingEffectiveAt DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@unique([userId, kind, period])
+  @@index([userId])
+}
