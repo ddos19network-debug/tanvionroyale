@@ -117,6 +117,14 @@ const AFFILIATE_MIGRATION = '20260927000000_add_affiliate_and_bigbang_webhook';
  */
 const INDIVIDUAL_CONTENT_MIGRATION = '20260929000000_add_affiliate_individual_content';
 
+/**
+ * Royale Ace settles through the shared RoyaleSettlement record with its own
+ * result value. `ADD VALUE IF NOT EXISTS` is additive and idempotent: a no-op
+ * when the value already exists, and the only safe way to extend a Postgres
+ * enum in a migration that may have partially applied.
+ */
+const ACE_SPIN_SETTLEMENT_MIGRATION = '20261012020000_add_ace_spin_settlement_result';
+
 describe('migration SQL structure', () => {
   it('finds the migration history (guards against a silently empty glob)', () => {
     expect(migrationDirs().length).toBeGreaterThan(0);
@@ -283,6 +291,33 @@ describe('migration SQL structure', () => {
       ]) {
         expect(code).not.toContain(untouched);
       }
+    });
+  });
+
+  describe('ACE_SPIN settlement result migration', () => {
+    const file = path.join(MIGRATIONS_ROOT, ACE_SPIN_SETTLEMENT_MIGRATION, 'migration.sql');
+
+    it('exists', () => {
+      expect(fs.existsSync(file)).toBe(true);
+    });
+
+    it('contains exactly one statement: the idempotent ADD VALUE', () => {
+      const sql = fs.readFileSync(file, 'utf8');
+      const stmts = topLevelStatements(sql).map(stripLeadingComments).filter(Boolean);
+      expect(stmts).toHaveLength(1);
+      expect(stmts[0]).toBe(`ALTER TYPE "RoyaleSettlementResult" ADD VALUE IF NOT EXISTS 'ACE_SPIN'`);
+    });
+
+    it('is ADDITIVE ONLY - it drops, deletes, updates and truncates nothing', () => {
+      const sql = fs.readFileSync(file, 'utf8');
+      const code = topLevelStatements(sql).map(stripLeadingComments).join(';\n');
+      const upper = code.toUpperCase();
+      // Keywords are matched only at STATEMENT START (after `;` or at the top
+      // of the batch), consistent with the affiliate-content guard above.
+      expect(upper).not.toMatch(/(?:^|;)\s*DELETE\b/);
+      expect(upper).not.toMatch(/(?:^|;)\s*DROP\b/);
+      expect(upper).not.toMatch(/(?:^|;)\s*TRUNCATE\b/);
+      expect(upper).not.toMatch(/(?:^|;)\s*UPDATE\b/);
     });
   });
 });

@@ -54,3 +54,4 @@ typecheck-*.txt
 bootstrap-*.txt
 e2e-*.txt
 *.tmp.*
+drift.sql
