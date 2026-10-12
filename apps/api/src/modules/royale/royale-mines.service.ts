@@ -173,7 +173,12 @@ export class RoyaleMinesService {
     // becomes self-excluded mid-round can still finish and cash out — we never
     // trap money that is already in play.
     if (isReal) {
-      await this.eligibilityService.assertEligibleForRealMoney(user.id, dto.stake, currency);
+      await this.eligibilityService.assertEligibleForRealMoney(
+        user.id,
+        dto.stake,
+        currency,
+        'mines',
+      );
     }
 
     let conflict: RoyaleMinesRound | null = null;

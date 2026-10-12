@@ -229,7 +229,12 @@ export class RoyaleAceService {
         royaleError('INVALID_STAKE', error instanceof Error ? error.message : 'Invalid stake');
       }
       // 4 + 5. Account status, KYC, 18+, self-exclusion, play limits.
-      await this.eligibilityService.assertEligibleForRealMoney(user.id, dto.stake, currency);
+      await this.eligibilityService.assertEligibleForRealMoney(
+        user.id,
+        dto.stake,
+        currency,
+        ACE_GAME_SLUG,
+      );
     } else {
       // FREE_PLAY bounds (points).
       const fp = cfg.freePlayBetLevels;

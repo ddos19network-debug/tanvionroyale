@@ -175,6 +175,48 @@ const DEFS: Record<string, TableDef> = {
     uniques: [['id']],
     defaults: () => ({ id: randomUUID(), passed: false, notes: null, createdAt: now() }),
   },
+  // PART A — central jurisdiction & currency control. The eligibility gate
+  // reads these; the double must model them so the checks run against real
+  // rows instead of being skipped.
+  jurisdictionRule: {
+    uniques: [['id'], ['countryCode']],
+    defaults: () => ({
+      id: randomUUID(),
+      allowedCurrencies: [],
+      licenceRef: null,
+      effectiveFrom: now(),
+      updatedByAdminId: null,
+      createdAt: now(),
+      updatedAt: now(),
+    }),
+  },
+  // Append-only: the double only ever `create`s rows here (never update/delete).
+  jurisdictionAuditLog: {
+    uniques: [['id']],
+    defaults: () => ({
+      id: randomUUID(),
+      oldStatus: null,
+      newStatus: null,
+      oldCurrencies: [],
+      newCurrencies: [],
+      oldLicenceRef: null,
+      newLicenceRef: null,
+      createdAt: now(),
+    }),
+  },
+  // Real-money kill switches (REAL_MONEY_ALL / GAME:<slug>). No row == no kill
+  // switch engaged, exactly like the service.
+  globalGameSwitch: {
+    uniques: [['id'], ['key']],
+    defaults: () => ({
+      id: randomUUID(),
+      enabled: true,
+      reason: null,
+      updatedByAdminId: null,
+      createdAt: now(),
+      updatedAt: now(),
+    }),
+  },
 };
 
 function scalarEqual(a: unknown, b: unknown): boolean {
@@ -392,9 +434,30 @@ const PROXY_HANDLER: ProxyHandler<InMemoryDb> = {
  * and friends resolve to model delegates, while methods (`$transaction`,
  * `$queryRaw`, `rows`) still work. Cast to the services' expected Prisma types
  * at the call site — this is a test double, not a real database.
+ *
+ * BASELINE FIXTURE: the fresh double ships with ONE jurisdiction rule —
+ * `BD` ALLOWED for `BDT`/`USD` — so REAL_MONEY settlement tests exercise money
+ * behaviour instead of tripping the (otherwise default-BLOCKED) jurisdiction
+ * gate. Jurisdiction tests that need the default posture simply delete this
+ * row (`db.rows('jurisdictionRule').length = 0`) or override `countryCode`.
+ * It is a FIXTURE, never a bypass: no other country is allowed, and every
+ * other gate (switches, KYC, age, RG, account status) still runs.
  */
 export function createInMemoryDb(): InMemoryDb {
-  return new Proxy(new InMemoryDb(), PROXY_HANDLER);
+  const db = new InMemoryDb();
+  db.rows('jurisdictionRule').push({
+    id: randomUUID(),
+    countryCode: 'BD',
+    status: 'ALLOWED',
+    allowedCurrencies: ['BDT', 'USD'],
+    licenceRef: 'TEST-FIXTURE',
+    reason: 'Baseline fixture: BD allowed for BDT/USD',
+    effectiveFrom: new Date(Date.now() - 86_400_000),
+    updatedByAdminId: 'fixture',
+    createdAt: now(),
+    updatedAt: now(),
+  });
+  return new Proxy(db, PROXY_HANDLER);
 }
 
 /**
@@ -403,9 +466,10 @@ export function createInMemoryDb(): InMemoryDb {
  * seeded here too to prove the guard refuses new staff wallets.
  *
  * The seeded user is FULLY REAL_MONEY-eligible by default (ACTIVE status,
- * VERIFIED KYC, an adult date of birth, no exclusion, no limits) so existing
- * settlement/ledger tests keep exercising money behaviour. Tests that target a
- * specific eligibility rejection pass `overrides` to make the user ineligible.
+ * VERIFIED KYC, an adult date of birth, `country: 'BD'` matching the baseline
+ * jurisdiction fixture, no exclusion, no limits) so existing settlement/ledger
+ * tests keep exercising money behaviour. Tests that target a specific
+ * eligibility rejection pass `overrides` to make the user ineligible.
  */
 export function seedUser(
   db: InMemoryDb,
@@ -419,6 +483,9 @@ export function seedUser(
     status: 'ACTIVE',
     kycStatus: 'VERIFIED',
     dateOfBirth: new Date('1990-01-01T00:00:00.000Z'),
+    // KYC country (server-stored) — the jurisdiction gate cross-checks it
+    // against the trusted edge geo header.
+    country: 'BD',
     ...overrides,
   });
 }

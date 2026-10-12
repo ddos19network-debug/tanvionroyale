@@ -228,7 +228,12 @@ export class RoyalePlinkoService {
     // transaction opens. A rejection therefore creates NO round, NO ledger row
     // and NO wallet reservation. FREE_PLAY never runs this gate.
     if (isReal) {
-      await this.eligibilityService.assertEligibleForRealMoney(user.id, dto.stake, currency);
+      await this.eligibilityService.assertEligibleForRealMoney(
+        user.id,
+        dto.stake,
+        currency,
+        'plinko',
+      );
     }
 
     try {

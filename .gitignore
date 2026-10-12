@@ -47,3 +47,10 @@ infra/docker/data/
 .secrets/
 keys/
 *.pem
+# Local scratch / tooling output (test-fix session)
+_backup/
+.tmp-helpers/
+typecheck-*.txt
+bootstrap-*.txt
+e2e-*.txt
+*.tmp.*

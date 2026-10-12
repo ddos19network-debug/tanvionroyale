@@ -24,6 +24,7 @@ import {
   RemoveIdentifierDto,
 } from '../src/modules/verification/dto/verification-management.dto';
 import { makePrismaFake, makeUser, otpHash } from './helpers-phase11';
+import { PHONE_MESSAGE_BD, PHONE_MESSAGE_GENERIC } from '../src/common/utils/phone';
 
 const PASSWORD = 'Str0ngPassw0rd!';
 
@@ -286,7 +287,9 @@ describe('Settings — phone change / OTP / removal (Parts 8–11)', () => {
     state.users.push(makeUser({ phone: null, phoneVerified: false }));
 
     await expect(verification.sendPhoneVerification('u1', '0712345678')).rejects.toThrow(
-      'phone must be a valid E.164 number',
+      // Canonical normalizer copy: a `0…`-shaped miss gets the BD-specific message
+      // (the old class-validator "phone must be a valid E.164 number" is gone).
+      PHONE_MESSAGE_BD,
     );
   });
   it('prevents removing the LAST login/recovery path (phone-only account) (Part 29.18)', async () => {
@@ -382,7 +385,7 @@ describe('Settings — profile phone edit hardening (Part 10)', () => {
 
     await expect(
       users.updateProfile(auth, { phone: 'not-a-number' } as UpdateProfileDto),
-    ).rejects.toThrow('phone must be a valid E.164 number');
+    ).rejects.toThrow(PHONE_MESSAGE_GENERIC);
   });
 
   it('an unchanged phone keeps its verified state (no false reset)', async () => {

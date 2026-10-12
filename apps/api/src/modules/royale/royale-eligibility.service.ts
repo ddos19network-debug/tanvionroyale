@@ -10,8 +10,8 @@ import {
 } from '../responsible-gambling/responsible-gambling.service';
 import {
   MASTER_SWITCH_KEY,
+  JurisdictionService,
   gameSwitchKey,
-  type JurisdictionService,
 } from '../jurisdiction/jurisdiction.service';
 import {
   currentTrustedGeoCountry,
@@ -52,12 +52,13 @@ export type RoyaleGameSlug = 'plinko' | 'mines' | 'royale-ace';
 export class RoyaleEligibilityService {
   private readonly config: RoyaleConfig = loadRoyaleConfig();
   private readonly rg: ResponsibleGamblingService;
+  private readonly jurisdiction: JurisdictionService;
 
   /**
    * `rg` is optional only so the games can construct a default instance in
    * unit tests; in production Nest injects the shared ResponsibleGamblingService.
-   * `jurisdiction` is injected by Nest in production and passed explicitly by
-   * the unit tests (the in-memory Prisma double backs it).
+   * `jurisdiction` follows the same pattern: Nest injects it in production and
+   * the unit tests pass one explicitly (the in-memory Prisma double backs it).
    */
   constructor(
     private readonly prisma: PrismaService,
@@ -65,49 +66,14 @@ export class RoyaleEligibilityService {
     jurisdiction?: JurisdictionService,
   ) {
     this.rg = rg ?? new ResponsibleGamblingService(prisma);
-    this.jurisdiction =
-      jurisdiction ?? new (JurisdictionServiceCtor())(prisma as never) as JurisdictionService;
-  }
-
-/**
- * TANVION ROYALE — REAL_MONEY eligibility gate (Task 1 / audit F1, F2, F4).
- *
- * A SINGLE shared gate that both Royale games run BEFORE any wallet
- * reservation, and ONLY when the mode is REAL_MONEY. FREE_PLAY never calls it
- * (free players are never asked for KYC, age or limits).
- *
- * Every check FAILS CLOSED — unknown / missing / malformed data is rejected:
- *   1. account status must be ACTIVE              -> ROYALE_ACCOUNT_NOT_ACTIVE
- *   2. kycStatus must be VERIFIED                -> ROYALE_KYC_REQUIRED
- *   3. dateOfBirth present, valid and >= minAge   -> ROYALE_AGE_RESTRICTED
- *      (minAge defaults to 18 and can never be configured below 18)
- *   4. not self-excluded / cooling-off in force   -> ROYALE_SELF_EXCLUDED
- *   5. within all active play limits              -> ROYALE_LIMIT_EXCEEDED
- * (4 + 5 are delegated to ResponsibleGamblingService.assertCanStake.)
- *
- * All rejections are HTTP 403 with a stable `code` in the body so clients and
- * tests can branch on the exact reason. Because this runs before the
- * reservation transaction is even opened, a rejected request creates NO round,
- * NO ledger entry and NO wallet reservation.
- */
-@Injectable()
-export class RoyaleEligibilityService {
-  private readonly config: RoyaleConfig = loadRoyaleConfig();
-  private readonly rg: ResponsibleGamblingService;
-
-  /**
-   * `rg` is optional only so the games can construct a default instance in
-   * unit tests; in production Nest injects the shared ResponsibleGamblingService.
-   */
-  constructor(
-    private readonly prisma: PrismaService,
-    rg?: ResponsibleGamblingService,
-  ) {
-    this.rg = rg ?? new ResponsibleGamblingService(prisma);
+    this.jurisdiction = jurisdiction ?? new JurisdictionService(prisma);
   }
 
   /**
-   * Assert that `userId` may place a REAL_MONEY stake of `amount` `currency`.
+   * Assert that `userId` may place a REAL_MONEY stake of `amount` `currency`
+   * for `gameSlug`, running the FULL gate in the documented order:
+   *   master switch -> game switch -> jurisdiction + currency -> KYC 18+ ->
+   *   responsible gambling -> account status.
    * Throws a structured 403 on the first failed check. Never returns a boolean
    * the caller could ignore — rejection IS the return path.
    */
@@ -115,14 +81,15 @@ export class RoyaleEligibilityService {
     userId: string,
     amount: number,
     currency: string,
+    gameSlug: RoyaleGameSlug = 'plinko',
   ): Promise<void> {
     const dbUser = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { status: true, kycStatus: true, dateOfBirth: true },
+      select: { status: true, kycStatus: true, dateOfBirth: true, country: true },
     });
 
-    // 1. Account lifecycle — unknown user fails closed.
-    if (!dbUser || dbUser.status !== 'ACTIVE') {
+    // 0. No account row at all: there is nothing to check — fail closed.
+    if (!dbUser) {
       royaleError(
         'ROYALE_ACCOUNT_NOT_ACTIVE',
         'Your account is not active and cannot place real-money bets',
@@ -130,7 +97,26 @@ export class RoyaleEligibilityService {
       );
     }
 
-    // 2. KYC — identity verification is mandatory for real money.
+    // 1. MASTER switch — RoyaleConfig.enabled + GlobalGameSwitch REAL_MONEY_ALL.
+    if (!this.config.enabled) {
+      royaleError('ROYALE_MASTER_SWITCH_OFF', 'Real-money play is temporarily disabled', 403);
+    }
+    const master = await this.jurisdiction.switchState(MASTER_SWITCH_KEY);
+    if (!master.enabled) {
+      royaleError('ROYALE_MASTER_SWITCH_OFF', master.reason, 403, { key: MASTER_SWITCH_KEY });
+    }
+
+    // 2. GAME switch — GlobalGameSwitch GAME:<slug> (plinko/mines/royale-ace).
+    const gameKey = gameSwitchKey(gameSlug);
+    const gameSwitch = await this.jurisdiction.switchState(gameKey);
+    if (!gameSwitch.enabled) {
+      royaleError('ROYALE_GAME_SWITCH_OFF', gameSwitch.reason, 403, { key: gameKey });
+    }
+
+    // 3. Jurisdiction + currency — country from SERVER-side sources ONLY.
+    await this.assertJurisdictionAllowed(dbUser.country, currency);
+
+    // 4a. KYC — identity verification is mandatory for real money.
     if (dbUser.kycStatus !== 'VERIFIED') {
       royaleError(
         'ROYALE_KYC_REQUIRED',
@@ -139,7 +125,7 @@ export class RoyaleEligibilityService {
       );
     }
 
-    // 3. Age — missing / invalid / under-age date of birth fails closed.
+    // 4b. Age — missing / invalid / under-age date of birth fails closed.
     const dob = dbUser.dateOfBirth;
     const age = dob instanceof Date ? this.ageInUtc(dob, new Date()) : Number.NaN;
     if (!Number.isFinite(age)) {
@@ -158,8 +144,64 @@ export class RoyaleEligibilityService {
       );
     }
 
-    // 4 + 5. Self-exclusion + play limits (responsible gambling).
+    // 5. Self-exclusion + play limits (responsible gambling).
     await this.rg.assertCanStake(userId, amount, currency);
+
+    // 6. Account lifecycle status.
+    if (dbUser.status !== 'ACTIVE') {
+      royaleError(
+        'ROYALE_ACCOUNT_NOT_ACTIVE',
+        'Your account is not active and cannot place real-money bets',
+        403,
+      );
+    }
+  }
+
+  /**
+   * Resolve the player's country from SERVER-side sources only, cross-check
+   * them, then apply the central jurisdiction + currency rule.
+   *
+   *   * the trusted edge geo header AND the KYC country are both known and
+   *     DIFFER -> BLOCKED (a spoofed header, travel or a mule account);
+   *   * neither is known -> BLOCKED (unknown country);
+   *   * otherwise the single known value is used.
+   *
+   * The browser can never influence this: the header is captured by
+   * TrustedGeoMiddleware and the KYC country is server-stored.
+   */
+  private async assertJurisdictionAllowed(
+    kycCountry: string | null,
+    currency: string,
+  ): Promise<void> {
+    const geo = currentTrustedGeoCountry();
+    const kyc = normalizeCountryCode(kycCountry);
+
+    if (geo && kyc && geo !== kyc) {
+      royaleError(
+        'ROYALE_JURISDICTION_BLOCKED',
+        'Your verified country does not match the region you are playing from',
+        403,
+        { geoCountry: geo, kycCountry: kyc },
+      );
+    }
+
+    const country = geo ?? kyc;
+    if (!country) {
+      royaleError(
+        'ROYALE_JURISDICTION_BLOCKED',
+        'Your country could not be verified for real-money play',
+        403,
+      );
+    }
+
+    const verdict = await this.jurisdiction.resolve(country, currency);
+    if (!verdict.allowed) {
+      royaleError('ROYALE_JURISDICTION_BLOCKED', verdict.reason, 403, {
+        country: verdict.countryCode,
+        currency: verdict.currency,
+        rule: verdict.code,
+      });
+    }
   }
 
   /**

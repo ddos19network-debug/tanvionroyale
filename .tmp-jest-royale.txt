@@ -1,0 +1,106 @@
+﻿jest.CMD : 
+At line:1 char:41
++ ... e\apps\api; & .\node_modules\.bin\jest.CMD royale-eligibility.spec.ts ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+<--- Last few GCs --->
+
+[15732:0000026B5F44F000]    20897 ms: Scavenge 611.5 (641.2) -> 604.2 (646.4) MB, pooled: 0 MB, 8.47 / 0.00 ms  
+(average mu = 0.991, current mu = 0.992) allocation failure; 
+[15732:0000026B5F44F000]    22635 ms: Scavenge 616.2 (646.4) -> 609.4 (649.9) MB, pooled: 0 MB, 1661.71 / 0.00 
+ms  (average mu = 0.991, current mu = 0.992) allocation failure; 
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Zone Allocation failed - process out of memory
+
+<--- Last few GCs --->
+
+[9268:000001FF574C3000]    21866 ms: Scavenge 601.5 (631.2) -> 595.3 (638.2) MB, pooled: 0 MB, 925.16 / 0.00 ms 
+ (average mu = 0.996, current mu = 0.998) allocation failure; 
+[9268:000001FF574C3000]    22626 ms: Scavenge 607.8 (638.2) -> 599.6 (641.2) MB, pooled: 0 MB, 709.10 / 0.00 ms 
+ (average mu = 0.996, current mu = 0.998) allocation failure; 
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: NewSpace::EnsureCurrentCapacity Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+----- Native stack trace -----
+
+FAIL test/royale-plinko.spec.ts
+  ΓùÅ Test suite failed to run
+
+    A jest worker process (pid=15732) was terminated by another process: signal=SIGTERM, exitCode=null. 
+Operating system logs may contain more information on why this occurred.
+
+      at ChildProcessWorker._onExit (../../node_modules/.pnpm/jest-worker@29.7.0/node_modules/jest-worker/build/
+workers/ChildProcessWorker.js:370:23)
+
+FAIL test/royale-ace-service.spec.ts
+  ΓùÅ Test suite failed to run
+
+    A jest worker process (pid=9268) was terminated by another process: signal=SIGTERM, exitCode=null. 
+Operating system logs may contain more information on why this occurred.
+
+      at ChildProcessWorker._onExit (../../node_modules/.pnpm/jest-worker@29.7.0/node_modules/jest-worker/build/
+workers/ChildProcessWorker.js:370:23)
+
+ts-jest[ts-compiler] (WARN) Got a `.js` file to compile while `allowJs` option is not set to `true` (file: 
+D:\tanvionroyale\apps\api\src\generated\prisma\index.js). To fix this:
+  - if you want TypeScript to process JS files, set `allowJs` to `true` in your TypeScript config (usually 
+tsconfig.json)
+  - if you do not want TypeScript to process your `.js` files, in your Jest config change the `transform` key 
+which value is `ts-jest` so that it does not match `.js` files anymore
+PASS test/royale-eligibility.spec.ts (29.506 s)
+[32m[Nest] 15636  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyalePlinkoService] [39m[32mPlinko drop settled id=fe1ee71c-5595-41d9-8152-013fa5adf252 rows=12 bin=7 mode=REAL_MONEY[39m
+[32m[Nest] 15636  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyalePlinkoService] [39m[32mPlinko drop settled id=40dcfe0e-ce8f-445f-a2cd-020c7b15da0c rows=12 bin=2 mode=FREE_PLAY[39m
+[32m[Nest] 15636  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=17ceda84-acec-40ab-bacf-a5a8876d3bba grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=951dc9b8-0ee8-43a6-a823-23d2553d5f38 grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=bc2f0aff-6c24-499e-a73e-17cec392643c grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=6c6e6684-a7df-4ff5-95f2-06b525f895aa grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=5dc9feba-1722-49c7-a94c-86e0ac9d42b2 grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=bd31612d-328c-4216-abcc-cbaa7f14e23d grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=81e8e096-1e88-4c41-abb7-0b11f3c0ab38 grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=7edc9d98-2550-42e2-bf7e-9f808de49129 grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round busted id=7edc9d98-2550-42e2-bf7e-9f808de49129 via=MINES_BUST[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=9ff5a52a-bf2d-4ea6-918b-128bb9b5f058 grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines cash-out settled id=9ff5a52a-bf2d-4ea6-918b-128bb9b5f058 safe=2 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=3d58d903-6b8f-4eeb-bd90-c39f27d31dfa grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines cash-out settled id=3d58d903-6b8f-4eeb-bd90-c39f27d31dfa safe=0 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=7a53de3e-8f66-41df-99d1-b1ebeff8a348 grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines cash-out settled id=7a53de3e-8f66-41df-99d1-b1ebeff8a348 safe=1 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=f15718fe-0e2c-434b-8b40-3e13453f3406 grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round busted id=f15718fe-0e2c-434b-8b40-3e13453f3406 via=MINES_BUST[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=67d9d2a4-3f5d-41d4-8e15-8524c0acc842 grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round busted id=67d9d2a4-3f5d-41d4-8e15-8524c0acc842 via=MINES_FORFEIT[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=b9f30ada-1819-4a20-acf6-dbf95f75f2cc grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round busted id=b9f30ada-1819-4a20-acf6-dbf95f75f2cc via=MINES_FORFEIT[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=6e969162-c7ba-44c8-a417-32822e65d8ff grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=da8fe879-d849-46fb-9d87-8c69b2cfdb79 grid=25 mines=3 mode=REAL_MONEY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines cash-out settled id=da8fe879-d849-46fb-9d87-8c69b2cfdb79 safe=1 mode=REAL_MONEY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=988c3957-d9c8-42ca-aa7b-29cc71335e97 grid=25 mines=3 mode=REAL_MONEY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round busted id=988c3957-d9c8-42ca-aa7b-29cc71335e97 via=MINES_BUST[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=e281e368-3669-4359-be3e-04443b22d790 grid=25 mines=3 mode=REAL_MONEY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines cash-out settled id=e281e368-3669-4359-be3e-04443b22d790 safe=1 mode=REAL_MONEY[39m
+PASS test/royale-mines.spec.ts (29.623 s)
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=112b20d6-7ac4-4193-84a5-f429dd702427 grid=25 mines=3 mode=FREE_PLAY[39m
+[33m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [33m   WARN[39m [38;5;3m[RoyaleMinesService] [39m[33mMines round voided safely id=112b20d6-7ac4-4193-84a5-f429dd702427 reason=seed_unrecoverable[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=fc302dda-ddf5-4f52-9da6-a74b93367f6f grid=25 mines=3 mode=REAL_MONEY[39m
+[33m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [33m   WARN[39m [38;5;3m[RoyaleMinesService] [39m[33mMines round voided safely id=fc302dda-ddf5-4f52-9da6-a74b93367f6f reason=seed_unrecoverable[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=b8a4d217-d0be-4c2c-b6cb-b26e0b5b1dc9 grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round busted id=b8a4d217-d0be-4c2c-b6cb-b26e0b5b1dc9 via=MINES_FORFEIT[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=1af00e69-fade-4aaa-b82f-83b9427563e0 grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round started id=ddc11f91-6705-495e-8f54-e4dcb9f0d18e grid=25 mines=3 mode=FREE_PLAY[39m
+[32m[Nest] 8512  - [39m10/12/2026, 7:16:27 AM [32m    LOG[39m [38;5;3m[RoyaleMinesService] [39m[32mMines round busted id=ddc11f91-6705-495e-8f54-e4dcb9f0d18e via=MINES_BUST[39m
+
+Test Suites: 2 failed, 2 passed, 4 total
+Tests:       34 passed, 34 total
+Snapshots:   0 total
+Time:        30.921 s
+Ran all test suites matching 
+/royale-eligibility.spec.ts|royale-plinko.spec.ts|royale-mines.spec.ts|royale-ace-service.spec.ts/i.

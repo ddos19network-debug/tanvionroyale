@@ -500,7 +500,7 @@ function csvCell(value: string | null | undefined): string {
   return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
 }
 
-function requireCountryCode(raw: string): string {
+function requireCountryCode(raw: string | undefined): string {
   const code = normalizeCountryCode(raw);
   if (!code) {
     throw new BadRequestException('countryCode must be an ISO-3166-1 alpha-2 code (e.g. BD)');
