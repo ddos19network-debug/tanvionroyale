@@ -572,3 +572,43 @@ describe('RoyaleMines — history + verification', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// PRODUCTION REGRESSION (start returned 500): pg_advisory_xact_lock returns
+// Postgres type `void`, which Prisma $queryRaw CANNOT deserialize ("Failed to
+// deserialize column of type 'void'"). The advisory lock MUST therefore be
+// taken through $executeRaw (the safe form used by crash-round-engine.ts).
+// ---------------------------------------------------------------------------
+describe('RoyaleMines — advisory lock uses $executeRaw (never $queryRaw)', () => {
+  /** Joins a tagged-template call's SQL fragments into one matchable string. */
+  function sqlOfCalls(calls: unknown[][]): string[] {
+    return calls.map((args) => {
+      const [first] = args;
+      return Array.isArray(first)
+        ? Array.from(first as ArrayLike<string>).join(' ')
+        : String(first);
+    });
+  }
+
+  it('start takes the pg_advisory_xact_lock through $executeRaw, not $queryRaw', async () => {
+    const cfg = freeConfig();
+    const db = createInMemoryDb();
+    const { mines } = makeServices(db, cfg);
+    fundFree(db);
+
+    const execSpy = jest.spyOn(db, '$executeRaw');
+    const querySpy = jest.spyOn(db, '$queryRaw');
+
+    await mines.start(USER, { stake: STAKE, gridSize: GRID, minesCount: MINES } as any);
+
+    const executed = sqlOfCalls(execSpy.mock.calls);
+    const queried = sqlOfCalls(querySpy.mock.calls);
+    // The lock statement went through $executeRaw (void-returning, returns a count)…
+    expect(executed.some((sql) => sql.includes('pg_advisory_xact_lock'))).toBe(true);
+    // …and $queryRaw was NEVER used for it (it would 500 on the void column).
+    expect(queried.some((sql) => sql.includes('pg_advisory_xact_lock'))).toBe(false);
+
+    execSpy.mockRestore();
+    querySpy.mockRestore();
+  });
+});

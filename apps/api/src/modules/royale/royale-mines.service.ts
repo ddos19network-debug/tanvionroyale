@@ -187,7 +187,10 @@ export class RoyaleMinesService {
       conflict = await this.prisma.$transaction(async (db) => {
         // Serialize starts for THIS user across instances (Postgres advisory
         // lock): two racing starts can never both pass the ACTIVE check.
-        await db.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`royale-mines:${user.id}`}))`;
+        // pg_advisory_xact_lock returns Postgres `void`, which Prisma
+        // $queryRaw cannot deserialize — $executeRaw is the safe form for
+        // void-returning functions (same pattern as crash-round-engine.ts).
+        await db.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`royale-mines:${user.id}`}))`;
         const active = await db.royaleMinesRound.findFirst({
           where: { userId: user.id, status: 'ACTIVE' },
         });

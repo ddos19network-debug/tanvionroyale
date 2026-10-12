@@ -7,8 +7,10 @@
  *   - conditional updateMany (the wallet's exactly-once status guard);
  *   - $transaction(fn) SNAPSHOT/ROLLBACK semantics (a thrown error restores
  *     every table, matching the real database transaction);
- *   - $queryRaw no-ops for SELECT ... FOR UPDATE / advisory locks (single-
- *     process tests rely on the services' conditional guards instead).
+ *   - $queryRaw no-ops that return a locked row for SELECT ... FOR UPDATE, and
+ *     $executeRaw no-ops returning a row count for void-returning statements
+ *     such as the pg_advisory_xact_lock serialization locks (single-process
+ *     tests rely on the services' conditional guards instead).
  *
  * This is a TEST DOUBLE, not a database: it models only the model APIs these
  * services actually call.

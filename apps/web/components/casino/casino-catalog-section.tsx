@@ -258,7 +258,9 @@ export function CasinoCatalogSection({
               ? 'No games are available for this provider right now.'
               : search
                 ? `No games match “${search}” right now.`
-                : 'No games are available for this section right now. Games appear here only after the provider catalog has been synced.'}
+                : error
+                  ? 'The partner game catalog could not be loaded right now — use Retry above to try again.'
+                  : 'No partner games are available yet. Games appear here only after the provider catalog has been synced.'}
           </p>
         ) : (
           <>

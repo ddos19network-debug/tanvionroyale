@@ -254,3 +254,87 @@ describe('Royale Ace — reconciler completes a stuck ACTIVE round', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// PRODUCTION REGRESSION (spin returned 500): pg_advisory_xact_lock returns
+// Postgres type `void`, which Prisma $queryRaw CANNOT deserialize ("Failed to
+// deserialize column of type 'void'"). The advisory lock MUST therefore be
+// taken through $executeRaw (the safe form used by crash-round-engine.ts).
+// ---------------------------------------------------------------------------
+describe('Royale Ace — advisory lock uses $executeRaw (never $queryRaw)', () => {
+  /** Joins a tagged-template call's SQL fragments into one matchable string. */
+  function sqlOfCalls(calls: unknown[][]): string[] {
+    return calls.map((args) => {
+      const [first] = args;
+      return Array.isArray(first)
+        ? Array.from(first as ArrayLike<string>).join(' ')
+        : String(first);
+    });
+  }
+
+  it('spin takes the pg_advisory_xact_lock through $executeRaw, not $queryRaw', async () => {
+    const db = createInMemoryDb();
+    const { ace } = makeAce(db, freeRoyale(), aceConfig());
+    fundFree(db);
+
+    const execSpy = jest.spyOn(db, '$executeRaw');
+    const querySpy = jest.spyOn(db, '$queryRaw');
+
+    await ace.spin(USER, { stake: STAKE, clientRequestId: 'lock-1' } as any);
+
+    const executed = sqlOfCalls(execSpy.mock.calls);
+    const queried = sqlOfCalls(querySpy.mock.calls);
+    // The lock statement went through $executeRaw (void-returning, returns a count)…
+    expect(executed.some((sql) => sql.includes('pg_advisory_xact_lock'))).toBe(true);
+    // …and $queryRaw was NEVER used for it (it would 500 on the void column).
+    expect(queried.some((sql) => sql.includes('pg_advisory_xact_lock'))).toBe(false);
+
+    execSpy.mockRestore();
+    querySpy.mockRestore();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DIAGNOSABILITY: an unexpected (non-HttpException) spin failure is logged
+// ONCE, server-side, with the error name + message (+ Prisma code when
+// present), then rethrown unchanged so response shapes never change.
+// ---------------------------------------------------------------------------
+describe('Royale Ace — unexpected spin failures are logged once and rethrown unchanged', () => {
+  it('logs a non-HttpException once via logger.error and rethrows the SAME error', async () => {
+    const db = createInMemoryDb();
+    const { ace } = makeAce(db, freeRoyale(), aceConfig());
+    fundFree(db);
+
+    const boom = new Error('advisory lock backend unavailable');
+    jest.spyOn(db, '$executeRaw').mockImplementationOnce(async () => {
+      throw boom;
+    });
+    const errorSpy = jest
+      .spyOn(ace['logger'], 'error')
+      .mockImplementation(() => undefined);
+
+    const err = await ace.spin(USER, { stake: STAKE, clientRequestId: 'diag-1' } as any).catch((e) => e);
+
+    expect(err).toBe(boom); // rethrown UNCHANGED
+    expect(errorSpy).toHaveBeenCalledTimes(1); // logged exactly once
+    const line = String(errorSpy.mock.calls[0]?.[0] ?? '');
+    expect(line).toContain('name=Error');
+    expect(line).toContain('advisory lock backend unavailable');
+    errorSpy.mockRestore();
+  });
+
+  it('does NOT log deliberate HttpException refusals through the unexpected path', async () => {
+    const db = createInMemoryDb();
+    const { ace } = makeAce(db, { ...freeRoyale(), enabled: false }, aceConfig());
+    fundFree(db);
+    const errorSpy = jest
+      .spyOn(ace['logger'], 'error')
+      .mockImplementation(() => undefined);
+
+    const err = await ace.spin(USER, { stake: STAKE, clientRequestId: 'diag-2' } as any).catch((e) => e);
+
+    expect(bodyCode(err).code).toBe('GAME_DISABLED');
+    expect(errorSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+});
+

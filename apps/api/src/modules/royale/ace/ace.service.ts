@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Prisma } from '../../../generated/prisma';
 import type { RoyaleAceRound } from '../../../generated/prisma';
@@ -191,8 +191,41 @@ export class RoyaleAceService {
    * Play one full round. The ENTIRE outcome is derived BEFORE any money moves,
    * then stake + capped win settle in ONE transaction. Idempotent by
    * (userId, clientRequestId) — a retry can never double-spend or double-pay.
+   *
+   * DIAGNOSTICS: an unexpected (non-HttpException) failure is logged ONCE,
+   * server-side, with the error name/message and Prisma code — never with
+   * seeds, keys, tokens or other secrets — and then rethrown unchanged, so
+   * the global exception filter keeps producing the same response shape.
    */
   async spin(user: AuthenticatedUser, dto: AceSpinDto): Promise<AceRoundView> {
+    try {
+      return await this.performSpin(user, dto);
+    } catch (error) {
+      this.logUnexpectedSpinError(error);
+      throw error;
+    }
+  }
+
+  /**
+   * Logs an unexpected spin failure exactly once. Deliberate, client-safe
+   * refusals (HttpException from royaleError/eligibility) are NOT logged
+   * here — the global filter already handles those. Only the error name, its
+   * message and any Prisma error code are logged; never seeds, keys, tokens
+   * or other secrets.
+   */
+  private logUnexpectedSpinError(error: unknown): void {
+    if (error instanceof HttpException) return;
+    const name = error instanceof Error ? error.name : typeof error;
+    const message = error instanceof Error ? error.message : String(error);
+    const prismaCode =
+      error instanceof Prisma.PrismaClientKnownRequestError ? error.code : undefined;
+    this.logger.error(
+      `Ace spin failed unexpectedly name=${name}${prismaCode ? ` prismaCode=${prismaCode}` : ''} message=${message}`,
+    );
+  }
+
+  /** Spin implementation (wrapped by `spin` for one-shot unexpected-error logging). */
+  private async performSpin(user: AuthenticatedUser, dto: AceSpinDto): Promise<AceRoundView> {
     const royale = this.royaleConfig;
     // 1. Master switch.
     if (!royale.enabled) {
@@ -273,7 +306,11 @@ export class RoyaleAceService {
     try {
       await this.prisma.$transaction(async (db) => {
         // Serialize spins for THIS user+currency across instances.
-        await db.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`royale-ace:${user.id}:${currency}`}))`;
+        // pg_advisory_xact_lock returns Postgres `void`, which Prisma
+        // $queryRaw cannot deserialize ("Failed to deserialize column of
+        // type 'void'") — $executeRaw is the safe form for void-returning
+        // functions (same pattern as crash-round-engine.ts).
+        await db.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`royale-ace:${user.id}:${currency}`}))`;
 
         let transactionId: string | null = null;
         if (isReal) {

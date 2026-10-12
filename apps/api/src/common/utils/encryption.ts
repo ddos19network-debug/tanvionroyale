@@ -28,14 +28,17 @@ function deriveKey(): Buffer {
   // encrypt provider credentials or crash server seeds with the source-known
   // development key. main.ts refuses to start without a real ENCRYPTION_KEY;
   // this guard keeps the guarantee local to every call site.
-  if (
-    isProduction() &&
-    (!process.env.ENCRYPTION_KEY ||
-      secret === "dev-only-encryption-key-change-me")
-  ) {
-    throw new Error(
-      "ENCRYPTION_KEY is not configured — refusing to encrypt secrets in production",
-    );
+  if (isProduction()) {
+    if (!process.env.ENCRYPTION_KEY) {
+      throw new Error(
+        "ENCRYPTION_KEY environment variable is not set — cannot encrypt secrets in production. Set ENCRYPTION_KEY to a random 32+ character value.",
+      );
+    }
+    if (secret === "dev-only-encryption-key-change-me") {
+      throw new Error(
+        "ENCRYPTION_KEY environment variable is still the development placeholder — refusing to encrypt secrets in production. Replace ENCRYPTION_KEY with a random 32+ character value.",
+      );
+    }
   }
   return createHash("sha256").update(secret).digest();
 }
