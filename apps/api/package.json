@@ -6,6 +6,7 @@
   "scripts": {
     "prebuild": "node rm-dist.cjs && pnpm --filter @tanvion-royale/integrations... --filter @tanvion-royale/config --filter @tanvion-royale/validation run build",
     "build": "nest build",
+    "dev": "nest start --watch",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "type-check": "tsc --noEmit -p tsconfig.build.json",
@@ -19,6 +20,8 @@
     "prisma:migrate:deploy:strict": "prisma migrate deploy --schema ../../database/prisma/schema.prisma && node ../../scripts/verify-migrations.cjs",
     "prisma:migrate:status": "prisma migrate status --schema ../../database/prisma/schema.prisma",
     "prisma:seed": "ts-node ../../database/scripts/seed.ts",
+    "prisma:seed-freeplay-user": "ts-node ../../database/scripts/seed-freeplay-user.ts",
+    "prisma:seed-local-admin": "ts-node ../../database/scripts/seed-local-admin.ts",
     "prisma:bootstrap": "ts-node ../../database/scripts/bootstrap-catalog.ts",
     "prisma:seed-roles": "ts-node ../../database/scripts/seed-roles.ts",
     "promote-admin": "ts-node ../../database/scripts/promote-admin.ts",

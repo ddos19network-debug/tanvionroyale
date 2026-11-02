@@ -12,8 +12,8 @@
  *      RUNNING frame that must never overwrite a CRASHED round.
  *   2. components/games/crash-rocket.tsx — server-multiplier-driven position
  *      (landmarks stay on the take-off curve and climb monotonically, invalid
- *      multipliers fall back to the pad), the trimmed plane asset at the launch
- *      anchor, and a visible burning plane at the crash impact.
+ *      multipliers fall back to the pad), OUR OWN inline-SVG rocket at the
+ *      launch anchor, and a "flies away" crash (no explosion, no plane).
  *
  * Run: node scripts/test-crash-presentation.cjs   (exit 0 = pass)
  * The real-browser sibling is scripts/test-sky-rocket-browser.cjs.
@@ -40,6 +40,16 @@ require.extensions['.tsx'] = function (mod, filename) {
     },
     fileName: filename,
   }).outputText, filename);
+};
+// Resolve the app's `@/` path alias (tsconfig paths → apps/web root) so the
+// scene's value imports (@/lib/crash-curve) load under plain Node require.
+const Module = require('module');
+const origResolve = Module._resolveFilename;
+Module._resolveFilename = function (request, ...rest) {
+  if (typeof request === 'string' && request.startsWith('@/')) {
+    return origResolve.call(this, path.join(web, request.slice(2)), ...rest);
+  }
+  return origResolve.call(this, request, ...rest);
 };
 
 const pres = require(path.join(web, 'lib/crash-presentation.ts'));
@@ -104,9 +114,13 @@ const rocket = require(path.join(web, 'components/games/crash-rocket.tsx'));
 const bettingHtml = RD.renderToStaticMarkup(React.createElement(rocket.CrashRocketScene, {
   displayMultiplier: 1, crashMultiplier: null, roundId: 'r1', phase: 'BETTING', bettingCloseAtMs: null,
 }));
-assert.ok(bettingHtml.includes('data-flight-position') && bettingHtml.includes('sky-rocket-reference-jet.png'));
+assert.ok(bettingHtml.includes('data-flight-position') && bettingHtml.includes('sr-ship'));
+assert.ok(
+  !/sky-rocket-(reference-jet|plane)/.test(bettingHtml) && !bettingHtml.includes('<img'),
+  'the scene must render OUR OWN inline-SVG rocket, never a third-party sprite',
+);
 assert.ok(bettingHtml.includes('translate3d(16%, 80%, 0)'));
-console.log('PASS: BETTING renders the trimmed plane at the launch anchor (16% / 80%)');
+console.log('PASS: BETTING renders our own SVG rocket at the launch anchor (16% / 80%)');
 
 const runningHtml = RD.renderToStaticMarkup(React.createElement(rocket.CrashRocketScene, {
   displayMultiplier: 2, crashMultiplier: null, roundId: 'r1', phase: 'RUNNING', bettingCloseAtMs: null,
@@ -119,8 +133,14 @@ console.log(`PASS: RUNNING at 2.00× positions the plane at ${lx}% / ${ty}% (ser
 const crashHtml = RD.renderToStaticMarkup(React.createElement(rocket.CrashRocketScene, {
   displayMultiplier: 2.5, crashMultiplier: 2.5, roundId: 'r1', phase: 'CRASHED', bettingCloseAtMs: null,
 }));
-assert.ok(crashHtml.includes('sky-rocket-reference-jet.png') && crashHtml.includes('sr-jet-burning') && crashHtml.includes('sr-jet-fire'));
-console.log('PASS: CRASHED mount keeps the reference jet visible with burning/fire/smoke impact presentation');
+assert.ok(
+  !/sky-rocket-(reference-jet|plane)/.test(crashHtml)
+    && !crashHtml.includes('sr-blast') && !crashHtml.includes('sr-impact-flare')
+    && !crashHtml.includes('sr-jet-fire') && !crashHtml.includes('sr-fly-away')
+    && !crashHtml.includes('data-flight-position'),
+  'an already-crashed mount renders no plane and no explosion (flies-away crash)',
+);
+console.log('PASS: CRASHED mount renders no plane and no explosion (own art, no third-party sprite)');
 let previous = rocket.rocketPosition(1);
 for (let i = 1; i <= 1000; i++) {
   const point = rocket.rocketPosition(Math.exp(i / 100));
@@ -136,8 +156,8 @@ console.log('PASS: invalid multipliers (NaN / Infinity / 0 / −1) fall back to 
 assert.ok(ty > 80 - ((lx - 16) * 68) / 72 + 5, 'path must visibly bow below the straight diagonal');
 assert.ok(!runningHtml.includes('sr-launch '), 'a RUNNING refresh must not replay the take-off smoke');
 assert.ok(
-  crashHtml.includes('sr-aftermath') && !crashHtml.includes('sr-flash ') && crashHtml.includes('sr-jet-fire'),
-  'an already-crashed mount must use frozen aftermath, never replay the transient flash',
+  !crashHtml.includes('sr-flash') && !crashHtml.includes('sr-fly-away') && !crashHtml.includes('sr-fly-streak'),
+  'an already-crashed mount must render no beat at all — never a replayed flash or fly-off',
 );
 assert.ok(runningHtml.includes(' Q '), 'the flight trail uses a quadratic curve');
 console.log('PASS: the take-off path bows below the straight diagonal, uses a Q curve, and never replays take-off effects on reconnect');

@@ -766,6 +766,18 @@ export class AuthService {
   }
 
   /**
+   * Best-effort referral attribution for an OAuth signup. The referral code is
+   * recorded once at account creation and immutable afterwards; an invalid,
+   * disabled or unknown code simply leaves the user unattributed, and a
+   * failure can never break the OAuth flow.
+   */
+  async attributeReferral(userId: string, ref?: string): Promise<void> {
+    await this.referrals
+      ?.attributeRegistration(userId, ref ?? undefined)
+      .catch(() => undefined);
+  }
+
+  /**
    * Phase 11 — issues an application session (JWT + refresh token) for an
    * already-authenticated principal (e.g. a validated OAuth identity).
    * Uses exactly the same session/token machinery as password login.

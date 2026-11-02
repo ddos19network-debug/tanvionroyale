@@ -7,9 +7,11 @@ import { SkyRocketGame } from '@/components/games/crash-game';
 import { LightningDiceGame } from '@/components/games/dice-game';
 import { PlinkoGame } from '@/components/games/plinko-game';
 import { MinesGame } from '@/components/games/mines-game';
-import { AceSlotGame } from '@/components/games/ace-slot-game';
+import { HeaderBalance } from '@/components/layout/header-balance';
 import { ActionGame, getActionGameConfig } from '@/components/games/action-game';
+import RoyaleAceSlot from '@/components/games/ace-slot-game';
 import { getFreePlayGame } from '@/lib/data/games';
+import { useEffect } from 'react';
 
 /**
  * Free-play game launcher.
@@ -55,8 +57,8 @@ export default function FreePlayGamePage() {
 
   if (game.slug === 'royale-ace') {
     return (
-      <main className="min-h-[100dvh] w-full bg-[#070d1f] pb-[env(safe-area-inset-bottom)]">
-        <AceSlotGame />
+      <main className="min-h-[100dvh] w-full bg-[#071522] pb-[env(safe-area-inset-bottom)]">
+        <RoyaleAceSlot />
       </main>
     );
   }
@@ -97,5 +99,39 @@ export default function FreePlayGamePage() {
       </main>
       <AppFooter />
     </>
+  );
+}
+function RoyaleAceShell() {
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    const prevHtmlOverscroll = html.style.overscrollBehavior;
+    const prevBodyOverscroll = body.style.overscrollBehavior;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
+    body.style.overscrollBehavior = 'none';
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
+      html.style.overscrollBehavior = prevHtmlOverscroll;
+      body.style.overscrollBehavior = prevBodyOverscroll;
+    };
+  }, []);
+  return (
+    <div
+      className="fixed inset-0 flex flex-col overflow-hidden bg-royale-royalDeep"
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingRight: 'env(safe-area-inset-right)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft: 'env(safe-area-inset-left)',
+      }}
+    >
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      </div>
+    </div>
   );
 }

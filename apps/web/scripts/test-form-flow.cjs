@@ -722,7 +722,8 @@ test('deposit: the API client refuses an empty submission but sends either proof
     'submitManualDeposit must reject only when both proofs are missing',
   );
   assert(
-    /referenceId:/.test(submit) && /proofDataUrl:/.test(submit),
+    /(?:referenceId:|referenceId\b\s*,)/.test(submit) &&
+      /(?:proofDataUrl:|proofDataUrl\b\s*,)/.test(submit),
     'both proofs must still be forwarded to the API',
   );
   assert(

@@ -10,8 +10,11 @@
  *   together with credentials=true is forbidden by the CORS specification.
  * - If CORS_ORIGIN is missing/blank in production we FAIL SAFE to the
  *   built-in production origin allow-list instead of reflecting every origin.
- * - Local development (non-production) keeps the previous permissive
- *   behaviour (reflect any origin) so `pnpm dev` keeps working unchanged.
+ * - In non-production, the built-in local-development origins
+ *   (DEFAULT_LOCAL_CORS_ORIGINS, incl. http://localhost:3100) are UNIONED
+ *   with any explicitly configured CORS_ORIGIN entries, so a workstation that
+ *   still carries production values in a local env file keeps permitting the
+ *   local frontend. Production never includes local origins automatically.
  */
 
 /**
@@ -30,6 +33,24 @@ export const DEFAULT_PRODUCTION_CORS_ORIGINS: readonly string[] = [
 ];
 
 /**
+ * Built-in local-development origin allow-list (public values, not secrets).
+ *
+ * The local web app runs on http://localhost:3100 (see WEB_PORT/APP_URL in
+ * .env.example). These are unioned into the CORS allow-list in NON-production
+ * environments only, so a developer workstation that still carries production
+ * values in a local env file keeps permitting the local frontend. Production
+ * never includes these automatically.
+ */
+export const DEFAULT_LOCAL_CORS_ORIGINS: readonly string[] = [
+  'http://localhost:3100',
+  'http://127.0.0.1:3100',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+];
+
+/**
  * Resolves the CORS `origin` option: an explicit allow-list (string[]) or
  * `true` to reflect the request origin (development only, see above).
  */
@@ -40,9 +61,21 @@ export function resolveCorsOrigins(env: NodeJS.ProcessEnv = process.env): string
     // A wildcard is never honoured: the API always answers with credentials.
     .filter((o) => o.length > 0 && o.toLowerCase() !== '*');
 
-  if (configured.length > 0) return configured;
+  const isProduction = (env.NODE_ENV ?? '') === 'production';
 
-  if ((env.NODE_ENV ?? '') === 'production') {
+  if (configured.length > 0) {
+    if (isProduction) return configured;
+    // Non-production: union explicit entries with the built-in local origins
+    // so http://localhost:3100 is permitted even when a local env file still
+    // carries production values. Deduplicated, order-preserving.
+    const merged = [...configured];
+    for (const local of DEFAULT_LOCAL_CORS_ORIGINS) {
+      if (!merged.includes(local)) merged.push(local);
+    }
+    return merged;
+  }
+
+  if (isProduction) {
     // Fail SAFE: never expose the authenticated API to every origin.
     return [...DEFAULT_PRODUCTION_CORS_ORIGINS];
   }

@@ -1,10 +1,8 @@
 import {
   BadRequestException,
   ConflictException,
-  HttpException,
   Injectable,
   Logger,
-  Optional,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -12,418 +10,510 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthService } from './auth.service';
 import { OtpService } from './otp.service';
-import { ReferralService } from '../referral/referral.service';
-import { normalizeReferralCode } from '../referral/referral-code';
-import { randomBytes } from 'crypto';
+import { randomToken } from '../../common/utils/crypto';
+import type { PublicUser } from '@tanvion-royale/types';
+import type { TokenPair } from './auth.service';
 
+/** OAuth providers supported by Phase 11. */
 export type OAuthProvider = 'GOOGLE' | 'FACEBOOK';
 
-interface OAuthConfig {
+/** OAuth intent: signing in, or linking a provider to an existing account. */
+export type OAuthIntent = 'login' | 'link';
+
+interface OAuthProviderConfig {
   clientId: string;
   clientSecret: string;
   callbackUrl: string;
+  authorizeUrl: string;
+  tokenUrl: string;
+  profileUrl: string;
+  scope: string;
 }
 
-interface OAuthProfile {
+/** Shape of the signed, single-use state token issued by start(). */
+interface OAuthState {
+  /** Provider that issued the authorization code — bound to prevent CSRF. */
+  p: OAuthProvider;
+  /** login | link — bound to prevent intent confusion. */
+  mode: OAuthIntent;
+  /** Local account id to link to (link intent only). */
+  userId?: string;
+  /** Optional referral code carried from the start() call (signup attribution). */
+  ref?: string;
+}
+
+interface ProviderProfile {
   providerAccountId: string;
   email: string | null;
-  /** True only when the provider's validated response explicitly asserts it. */
   emailVerified: boolean;
-  displayName?: string;
 }
 
-const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
-const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
-const GOOGLE_USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
-const FACEBOOK_AUTH_URL = 'https://www.facebook.com/v21.0/dialog/oauth';
-const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v21.0/oauth/access_token';
-const FACEBOOK_PROFILE_URL = 'https://graph.facebook.com/me';
-
-/**
- * Phase 11 — Google & Facebook OAuth (secure server-side code flow).
- *
- * - The authorization code is exchanged SERVER-SIDE with the client secret;
- *   the client never sees access tokens.
- * - Profiles are fetched from the provider's validated endpoint — no
- *   client-submitted facebookId/email/verified flag is ever trusted.
- * - Only Google's explicit `email_verified: true` OIDC claim marks an email
- *   verified. Facebook does not expose a reliable verified-email flag, so
- *   Facebook emails are NEVER auto-verified.
- * - Auto-linking by email happens only when the email is provider-verified.
- * - Login/registration completes with a short-lived one-time exchange code
- *   (never tokens in the URL).
- */
 @Injectable()
 export class OAuthService {
   private readonly logger = new Logger(OAuthService.name);
 
+  // --------------------------------------------------------------------------
+  // Provider configuration (read from the environment at construction time).
+  // --------------------------------------------------------------------------
+
+  private readonly providers: Record<OAuthProvider, OAuthProviderConfig> = {
+    GOOGLE: {
+      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+      callbackUrl: process.env.GOOGLE_CALLBACK_URL ?? '',
+      authorizeUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+      tokenUrl: 'https://oauth2.googleapis.com/token',
+      profileUrl: 'https://www.googleapis.com/oauth2/v3/userinfo',
+      scope: 'openid email profile',
+    },
+    FACEBOOK: {
+      clientId: process.env.FACEBOOK_CLIENT_ID ?? '',
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET ?? '',
+      callbackUrl: process.env.FACEBOOK_CALLBACK_URL ?? '',
+      authorizeUrl: 'https://www.facebook.com/dialog/oauth',
+      tokenUrl: 'https://graph.facebook.com/v18.0/oauth/access_token',
+      profileUrl: 'https://graph.facebook.com/me',
+      scope: 'email,public_profile',
+    },
+  };
+
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService,
+    private readonly jwt: JwtService,
     private readonly authService: AuthService,
-    private readonly otpService: OtpService,
-    // Optional so a unit test that news this service with four arguments still
-    // compiles; runtime always injects it. A referral failure never fails an
-    // OAuth login, exactly as in AuthService.
-    @Optional() private readonly referrals?: ReferralService,
+    public readonly otpService: OtpService,
   ) {}
 
-  private config(provider: OAuthProvider): OAuthConfig {
-    const prefix = provider === 'GOOGLE' ? 'GOOGLE' : 'FACEBOOK';
-    const clientId = process.env[`${prefix}_CLIENT_ID`];
-    const clientSecret = process.env[`${prefix}_CLIENT_SECRET`];
-    const callbackUrl = process.env[`${prefix}_CALLBACK_URL`];
-    if (!clientId || !clientSecret || !callbackUrl) {
-      throw new ServiceUnavailableException(
-        `${provider.toLowerCase()} sign-in is not configured yet`,
-      );
+  private providerConfig(provider: OAuthProvider): OAuthProviderConfig {
+    const cfg = this.providers[provider];
+    if (!cfg || !cfg.clientId || !cfg.clientSecret || !cfg.callbackUrl) {
+      throw new ServiceUnavailableException(`${provider} OAuth is not configured`);
     }
-    return { clientId, clientSecret, callbackUrl };
+    return cfg;
   }
 
-  /**
-   * Resolves the frontend base URL that receives the one-time OAuth exchange
-   * redirect. ONLY OAUTH_ALLOWED_REDIRECTS (or the APP_URL fallback) is used
-   * here — the provider callback URL (${provider}_CALLBACK_URL) is NEVER
-   * reused as a frontend destination.
-   *
-   * - Entries are validated as http(s) URLs and trailing slashes are
-   *   normalized so the redirect never becomes `https://host//oauth/callback`.
-   * - In production a missing/empty configuration fails safely instead of
-   *   silently redirecting users to a localhost fallback.
-   */
-  private frontendBase(): string {
-    const candidates = (process.env.OAUTH_ALLOWED_REDIRECTS ?? process.env.APP_URL ?? '')
-      .split(',')
-      .map((s) => s.trim())
-      .filter((s) => {
-        try {
-          const u = new URL(s);
-          return u.protocol === 'http:' || u.protocol === 'https:';
-        } catch {
-          return false;
-        }
-      });
-    const base = candidates[0];
-    if (base) return base.replace(/\/+$/, '');
-    if (process.env.NODE_ENV === 'production') {
-      throw new ServiceUnavailableException(
-        'OAuth sign-in is not configured for this environment yet (missing OAUTH_ALLOWED_REDIRECTS)',
-      );
-    }
-    return 'http://localhost:3100';
-  }
+  // --------------------------------------------------------------------------
+  // Phase 11 — OAuth start (authorization request)
+  // --------------------------------------------------------------------------
 
   /**
-   * Builds the provider consent URL with a signed, short-lived state.
-   *
-   * REFERRAL ATTRIBUTION (`ref`)
-   *   A visitor who arrives at `/signup?ref=CODE` and then chooses Google
-   *   would otherwise lose the code entirely: the browser bounces out to the
-   *   provider and back, and only the one-time exchange code survives. The
-   *   code is therefore carried inside the SIGNED state JWT (`ref` claim).
-   *
-   *   Why that is safe:
-   *    - the state is signed with the server's JWT secret, so the client cannot
-   *      forge or alter it;
-   *    - the value is only a referral CODE, never a user id — the owner is
-   *      resolved server-side afterwards, exactly as for every other signup
-   *      path, so a tampered code can at worst attribute to a different real
-   *      code, never to a chosen user;
-   *    - it is NOT put in the OAuth provider's URL, so it never leaks to a
-   *      third party;
-   *    - it is only accepted when it matches the code shape this service
-   *      issues, and `attributeRegistration` still applies every eligibility
-   *      and self-referral guard.
+   * Builds the provider consent URL. The state is a signed JWT binding the
+   * provider, the intent (login/link), an optional account id to link, and an
+   * optional referral code — so neither the provider nor the callback can be
+   * replayed across providers or intents.
    */
   async start(
     provider: OAuthProvider,
-    mode: 'login' | 'link',
+    intent: OAuthIntent,
     userId?: string,
     ref?: string,
   ): Promise<string> {
-    const cfg = this.config(provider);
-    const state = await this.jwtService.signAsync(
-      {
-        p: provider,
-        mode,
-        uid: mode === 'link' ? userId : undefined,
-        // Normalised + shape-validated; anything else is dropped so a junk
-        // query string can never bloat the state JWT.
-        ref: mode === 'login' ? normalizeReferralCode(ref) ?? undefined : undefined,
-        n: randomBytes(12).toString('hex'),
-      },
-      // 15 minutes (not 10): Google's "unverified app" consent interstitial +
-      // account chooser + 2FA can exceed 10 minutes between start() and the
-      // callback, producing a TokenExpiredError -> 401 "Invalid OAuth state".
-      // 15m tolerates slow consent screens while keeping the CSRF window tight.
-      { expiresIn: '15m' },
-    );
-    if (provider === 'GOOGLE') {
-      const url = new URL(GOOGLE_AUTH_URL);
-      url.searchParams.set('client_id', cfg.clientId);
-      url.searchParams.set('redirect_uri', cfg.callbackUrl);
-      url.searchParams.set('response_type', 'code');
-      url.searchParams.set('scope', 'openid email profile');
-      url.searchParams.set('state', state);
-      url.searchParams.set('prompt', 'select_account');
-      return url.toString();
+    if (intent !== 'login' && intent !== 'link') {
+      throw new BadRequestException('Invalid OAuth intent');
     }
-    const url = new URL(FACEBOOK_AUTH_URL);
-    url.searchParams.set('client_id', cfg.clientId);
-    url.searchParams.set('redirect_uri', cfg.callbackUrl);
-    url.searchParams.set('state', state);
-    url.searchParams.set('scope', 'email,public_profile');
-    return url.toString();
+    const cfg = this.providerConfig(provider);
+
+    const state: OAuthState = { p: provider, mode: intent };
+    if (userId) state.userId = userId;
+    if (ref) state.ref = ref;
+
+    const signed = await this.jwt.signAsync(state);
+
+    const params = new URLSearchParams({
+      client_id: cfg.clientId,
+      // The redirect_uri is the API callback URL — never the frontend origin.
+      redirect_uri: cfg.callbackUrl,
+      response_type: 'code',
+      scope: cfg.scope,
+      state: signed,
+      ...(provider === 'GOOGLE' ? { prompt: 'select_account' } : {}),
+    });
+
+    this.logger.log(`${provider} OAuth start (intent=${intent})`);
+    return `${cfg.authorizeUrl}?${params}`;
   }
 
-  /** Handles the provider callback: validates, links/creates, redirects. */
+  // --------------------------------------------------------------------------
+  // Phase 11 — OAuth callback (provider redirects back here)
+  // --------------------------------------------------------------------------
+
+  /**
+   * Validates the signed state, exchanges the provider code for a profile,
+   * resolves/creates/links the local account, and returns a frontend callback
+   * URL carrying ONLY a short-lived, single-use exchange code.
+   */
   async handleCallback(
     provider: OAuthProvider,
     code: string,
     state: string,
-    _ip?: string,
-    _userAgent?: string,
+    ip?: string,
+    userAgent?: string,
   ): Promise<string> {
-    if (!state) throw new UnauthorizedException('Invalid OAuth state');
-    if (!code) throw new BadRequestException('Missing authorization code');
-    let decoded: { p?: string; mode?: string; uid?: string; ref?: string };
+    if (!code || !code.trim()) {
+      throw new BadRequestException('Missing authorization code');
+    }
+    if (!state || !state.trim()) {
+      throw new UnauthorizedException('Missing OAuth state');
+    }
+
+    // Validate the signed state token BEFORE calling the provider: this is the
+    // CSRF/replay check and it also disambiguates login vs link.
+    let decoded: OAuthState;
     try {
-      decoded = await this.jwtService.verifyAsync(state);
-    } catch (err) {
-      // Log ONLY the failure reason (error name/message — e.g.
-      // "TokenExpiredError: jwt expired"). Never log the raw state JWT, the
-      // authorization code, or any token value (no secrets in logs).
-      const reason = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-      this.logger.warn(`OAuth state verification failed (${provider}): ${reason}`);
+      decoded = (await this.jwt.verifyAsync(state)) as OAuthState;
+    } catch {
       throw new UnauthorizedException('Invalid OAuth state');
     }
-    if (decoded.p !== provider || (decoded.mode !== 'login' && decoded.mode !== 'link')) {
-      throw new UnauthorizedException('Invalid OAuth state');
+    if (decoded.p !== provider) {
+      throw new UnauthorizedException('OAuth provider mismatch');
+    }
+    if (decoded.mode !== 'login' && decoded.mode !== 'link') {
+      throw new UnauthorizedException('Invalid OAuth intent');
     }
 
-    const profile = await this.fetchProfile(provider, code);
+    const cfg = this.providerConfig(provider);
 
-    if (decoded.mode === 'link') {
-      if (!decoded.uid) throw new UnauthorizedException('Invalid OAuth state');
-      return this.linkIdentity(provider, decoded.uid, profile);
-    }
-
-    const userId = await this.resolveOrCreateUser(provider, profile);
-
-    // REFERRAL ATTRIBUTION — recorded ONCE, on the same terms as every other
-    // signup path. `attributeRegistration` resolves the CODE to its owner
-    // server-side and applies the self-referral / duplicate / disabled-program
-    // guards, so passing a code here can never assign a chosen referrer.
-    // Best-effort: a referral problem must never fail an OAuth login.
-    if (decoded.ref) {
-      await this.referrals
-        ?.attributeRegistration(userId, decoded.ref)
-        .catch(() => undefined);
-    }
-
-    // The frontend exchanges this short-lived one-time code for its tokens
-    // (the session itself is issued in exchange(), so no orphan sessions).
-    const exchangeCode = await this.otpService.createExchangeCode({ userId });
-    // Safe operational log — never includes the one-time code itself.
-    this.logger.log(
-      `${provider} OAuth callback validated; redirecting with a one-time exchange code`,
-    );
-    return `${this.frontendBase()}/oauth/callback?code=${encodeURIComponent(exchangeCode)}`;
-  }
-
-  /** Exchanges a one-time OAuth exchange code for the application tokens. */
-  async exchange(code: string, ip?: string, userAgent?: string) {
+    // 1. Exchange the authorization code for a provider access token.
+    let tokenRes: Response;
     try {
-      const payload = await this.otpService.consumeExchangeCode<{ userId?: unknown }>(code);
-      const userId = payload && typeof payload === 'object' ? payload.userId : undefined;
-      if (typeof userId !== 'string' || userId.length === 0) {
-        // A consumed code MUST carry the user id it was minted for. A row
-        // without one (corrupt/metadata-less row) is a safe 4xx — never an
-        // unexpected 500 from destructuring a null/partial payload.
-        throw new UnauthorizedException('Invalid or expired authorization code');
-      }
-      const session = await this.authService.issueSession(userId, ip, userAgent);
-      // Safe operational log — never the code, tokens or user identifiers.
-      this.logger.log('OAuth exchange succeeded (one-time code consumed, session issued)');
-      return session;
-    } catch (error) {
-      this.logger.warn(
-        `OAuth exchange rejected: ${
-          error instanceof HttpException ? error.message : 'unexpected error'
-        }`,
-      );
-      throw error;
-    }
-  }
-
-  /** Links a validated provider identity to an existing signed-in user. */
-  private async linkIdentity(
-    provider: OAuthProvider,
-    userId: string,
-    profile: OAuthProfile,
-  ): Promise<string> {
-    const existing = await this.prisma.authIdentity.findUnique({
-      where: {
-        provider_providerAccountId: { provider, providerAccountId: profile.providerAccountId },
-      },
-    });
-    if (existing && existing.userId !== userId) {
-      throw new ConflictException(
-        `This ${provider.toLowerCase()} account is already linked to another user`,
-      );
-    }
-    if (!existing) {
-      await this.prisma.authIdentity.create({
-        data: { provider, providerAccountId: profile.providerAccountId, userId },
-      });
-    }
-    // Google explicitly verified the email — record it once.
-    if (provider === 'GOOGLE' && profile.emailVerified && profile.email) {
-      const user = await this.prisma.user.findUnique({ where: { id: userId } });
-      if (user && user.email === profile.email && !user.emailVerified) {
-        await this.prisma.user.update({
-          where: { id: userId },
-          data: { emailVerified: true, emailVerifiedAt: new Date() },
-        });
-      }
-      // Keep the EMAIL verification record consistent with the user flag.
-      await this.prisma.verification.upsert({
-        where: { userId_type: { userId, type: 'EMAIL' } },
-        update: { status: 'VERIFIED', verifiedAt: new Date() },
-        create: { userId, type: 'EMAIL', status: 'VERIFIED', verifiedAt: new Date() },
-      });
-    }
-    return `${this.frontendBase()}/verification?linked=${provider.toLowerCase()}`;
-  }
-
-  /**
-   * Finds the user for a validated provider profile, or safely creates/links
-   * one. Never merges accounts on unverified emails.
-   */
-  private async resolveOrCreateUser(
-    provider: OAuthProvider,
-    profile: OAuthProfile,
-  ): Promise<string> {
-    const identity = await this.prisma.authIdentity.findUnique({
-      where: {
-        provider_providerAccountId: { provider, providerAccountId: profile.providerAccountId },
-      },
-    });
-    if (identity) return identity.userId;
-
-    if (profile.email) {
-      const byEmail = await this.prisma.user.findUnique({ where: { email: profile.email } });
-      if (byEmail) {
-        // Auto-link only on a provider-VERIFIED email claim (Google).
-        if (profile.emailVerified) {
-          await this.prisma.authIdentity.create({
-            data: { provider, providerAccountId: profile.providerAccountId, userId: byEmail.id },
-          });
-          return byEmail.id;
-        }
-        throw new ConflictException(
-          'An account with this email already exists. Sign in with your existing method and connect this provider from your profile.',
-        );
-      }
-    }
-
-    const username = `user_${randomBytes(5).toString('hex')}`;
-    const userRole = await this.prisma.role.upsert({
-      where: { name: 'USER' },
-      update: {},
-      create: { name: 'USER', description: 'Standard customer account' },
-    });
-    const user = await this.prisma.user.create({
-      data: {
-        email: profile.email,
-        username,
-        // Unusable random secret — OAuth-only accounts have no known password
-        // unless the user explicitly sets one through the secure change flow.
-        passwordHash: randomBytes(32).toString('base64url'),
-        status: 'ACTIVE',
-        // OAuth sign-in ALWAYS creates a customer account — never staff.
-        accountType: 'CUSTOMER',
-        ...(profile.emailVerified ? { emailVerified: true, emailVerifiedAt: new Date() } : {}),
-        userRoles: { create: [{ roleId: userRole.id }] },
-        authIdentities: { create: { provider, providerAccountId: profile.providerAccountId } },
-      },
-    });
-    // Google's explicit `email_verified: true` claim is the only way an OAuth
-    // email becomes a VERIFIED EMAIL verification record. Facebook never does.
-    if (profile.emailVerified && profile.email) {
-      await this.prisma.verification.upsert({
-        where: { userId_type: { userId: user.id, type: 'EMAIL' } },
-        update: { status: 'VERIFIED', verifiedAt: new Date() },
-        create: { userId: user.id, type: 'EMAIL', status: 'VERIFIED', verifiedAt: new Date() },
-      });
-    }
-    return user.id;
-  }
-
-  /** Exchanges the authorization code server-side and fetches the profile. */
-  private async fetchProfile(provider: OAuthProvider, code: string): Promise<OAuthProfile> {
-    const cfg = this.config(provider);
-    if (provider === 'GOOGLE') {
-      const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
+      tokenRes = await fetch(cfg.tokenUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          code,
           client_id: cfg.clientId,
           client_secret: cfg.clientSecret,
+          code,
           redirect_uri: cfg.callbackUrl,
           grant_type: 'authorization_code',
         }),
       });
-      if (!tokenRes.ok) {
-        const errorBody = await tokenRes.text();
-        console.error('[Google OAuth] token exchange failed:', tokenRes.status, errorBody);
-        throw new UnauthorizedException('Google authentication failed');
-      }
-      const token = (await tokenRes.json()) as { access_token?: string };
-      if (!token.access_token) throw new UnauthorizedException('Google authentication failed');
-      const infoRes = await fetch(GOOGLE_USERINFO_URL, {
-        headers: { Authorization: `Bearer ${token.access_token}` },
-      });
-      if (!infoRes.ok) throw new UnauthorizedException('Google authentication failed');
-      const info = (await infoRes.json()) as {
-        sub: string;
-        email?: string;
-        email_verified?: boolean;
-        name?: string;
-      };
-      return {
-        providerAccountId: info.sub,
-        email: info.email?.toLowerCase() ?? null,
-        emailVerified: info.email_verified === true,
-        displayName: info.name,
-      };
+    } catch (error) {
+      this.logger.error(
+        `${provider} OAuth token exchange failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      throw new UnauthorizedException(`${provider} authentication failed`);
     }
 
-    const tokenUrl = new URL(FACEBOOK_TOKEN_URL);
-    tokenUrl.searchParams.set('client_id', cfg.clientId);
-    tokenUrl.searchParams.set('client_secret', cfg.clientSecret);
-    tokenUrl.searchParams.set('redirect_uri', cfg.callbackUrl);
-    tokenUrl.searchParams.set('code', code);
-    const tokenRes = await fetch(tokenUrl.toString());
-    if (!tokenRes.ok) throw new UnauthorizedException('Facebook authentication failed');
-    const token = (await tokenRes.json()) as { access_token?: string };
-    if (!token.access_token) throw new UnauthorizedException('Facebook authentication failed');
+    if (!tokenRes.ok) {
+      // Read the provider's error body for diagnostics, but never surface it
+      // to the client (and never in a redirect URL).
+      let errorBody: string | undefined;
+      try {
+        errorBody = await tokenRes.text();
+      } catch {}
+      this.logger.error(
+        `[${provider} OAuth] token exchange failed: ${tokenRes.status} ${errorBody ?? ''}`,
+      );
+      throw new UnauthorizedException(`${provider} authentication failed`);
+    }
 
-    const profileUrl = new URL(FACEBOOK_PROFILE_URL);
-    profileUrl.searchParams.set('fields', 'id,name,email');
-    profileUrl.searchParams.set('access_token', token.access_token);
-    const profileRes = await fetch(profileUrl.toString());
-    if (!profileRes.ok) throw new UnauthorizedException('Facebook authentication failed');
-    const info = (await profileRes.json()) as { id: string; name?: string; email?: string };
-    // Facebook exposes no reliable "email verified" flag in this response —
-    // the email is stored but NEVER auto-marked verified.
+    let tokenPayload: { access_token?: string };
+    try {
+      tokenPayload = (await tokenRes.json()) as { access_token?: string };
+    } catch {
+      throw new UnauthorizedException(`${provider} authentication failed`);
+    }
+    const accessToken = tokenPayload.access_token;
+    if (!accessToken) {
+      throw new UnauthorizedException(`${provider} authentication failed`);
+    }
+
+    // 2. Fetch and validate the provider profile.
+    const profile = await this.fetchProfile(provider, cfg, accessToken);
+    const { providerAccountId, email, emailVerified } = this.extractProfile(
+      provider,
+      profile,
+    );
+    if (!providerAccountId) {
+      throw new UnauthorizedException(`${provider} authentication failed`);
+    }
+
+    const normalizedEmail = email ? email.toLowerCase() : null;
+
+    // 3. Resolve or create the local account bound to this provider account.
+    const existingIdentity = await this.prisma.authIdentity.findUnique({
+      where: { provider_providerAccountId: { provider, providerAccountId } },
+    });
+
+    let userId: string;
+
+    if (existingIdentity) {
+      // This provider account is already bound to a local account.
+      if (decoded.mode === 'link' && existingIdentity.userId !== decoded.userId) {
+        throw new ConflictException(
+          'This provider account is already linked to a different account.',
+        );
+      }
+      userId = existingIdentity.userId;
+    } else if (decoded.mode === 'link') {
+      // Link the provider account to the signed-in account.
+      if (!decoded.userId) {
+        throw new UnauthorizedException(
+          'OAuth link state is missing the account id',
+        );
+      }
+      await this.linkIdentity(provider, decoded.userId, {
+        providerAccountId,
+        email: normalizedEmail,
+        emailVerified,
+      });
+      userId = decoded.userId;
+    } else {
+      // Login intent: bind by verified provider email, or register a new account.
+      userId = await this.resolveOrCreateLoginUser(
+        provider,
+        normalizedEmail,
+        emailVerified,
+        providerAccountId,
+        decoded.ref,
+      );
+    }
+
+    // 4. Issue a short-lived, single-use exchange code and redirect to the
+    //    frontend callback with NOTHING but that code in the URL — tokens are
+    //    issued exclusively by the authenticated POST /auth/oauth/exchange step.
+    const exchangeCode = await this.otpService.createExchangeCode({ userId });
+    const redirectUrl = this.buildCallbackRedirectUrl(exchangeCode);
+
+    this.logger.log(
+      `${provider} OAuth callback validated (mode=${decoded.mode}); redirecting with a one-time exchange code`,
+    );
+    return redirectUrl;
+  }
+
+  /**
+   * Links a provider account to an existing local account. Refuses to bind a
+   * provider account that already belongs to a different user.
+   */
+  async linkIdentity(
+    provider: OAuthProvider,
+    userId: string,
+    identity: { providerAccountId: string; email: string | null; emailVerified: boolean },
+  ): Promise<void> {
+    const existing = await this.prisma.authIdentity.findUnique({
+      where: {
+        provider_providerAccountId: { provider, providerAccountId: identity.providerAccountId },
+      },
+    });
+    if (existing && existing.userId !== userId) {
+      throw new ConflictException(
+        'This provider account is already linked to a different account.',
+      );
+    }
+    if (!existing) {
+      await this.prisma.authIdentity.create({
+        data: { provider, providerAccountId: identity.providerAccountId, userId },
+      });
+    }
+  }
+
+  private async resolveOrCreateLoginUser(
+    provider: OAuthProvider,
+    email: string | null,
+    emailVerified: boolean,
+    providerAccountId: string,
+    ref?: string,
+  ): Promise<string> {
+    if (email) {
+      const existing = await this.prisma.user.findUnique({ where: { email } });
+      if (existing) {
+        // Auto-link only when the provider vouches for the email (Google's
+        // verified-email claim). Facebook has no reliable verified-email flag,
+        // so a Facebook email never auto-merges into an existing account.
+        if (provider === 'GOOGLE' && emailVerified) {
+          await this.prisma.authIdentity.create({
+            data: { provider, providerAccountId, userId: existing.id },
+          });
+          return existing.id;
+        }
+        throw new ConflictException(
+          'An account with this email already exists. Sign in with that account instead.',
+        );
+      }
+      // No existing account: create one. Google requires a verified email so an
+      // attacker cannot claim an address they do not own.
+      if (provider === 'GOOGLE' && !emailVerified) {
+        throw new ConflictException("This Google account's email is not verified");
+      }
+      return this.createOAuthUser(provider, email, emailVerified, providerAccountId, ref);
+    }
+
+    // Provider returned no email: create an account without one.
+    return this.createOAuthUser(provider, null, false, providerAccountId, ref);
+  }
+
+  private async createOAuthUser(
+    provider: OAuthProvider,
+    email: string | null,
+    emailVerified: boolean,
+    providerAccountId: string,
+    ref?: string,
+  ): Promise<string> {
+    // Google's verified-email claim is authoritative; Facebook's is not.
+    const emailIsVerified = provider === 'GOOGLE' && emailVerified;
+
+    const username = await this.uniqueUsername(
+      this.suggestUsername(email, providerAccountId),
+    );
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        username,
+        // Unusable random secret: OAuth-only accounts gain a real password only
+        // through the authenticated set-password flow.
+        passwordHash: randomToken(32),
+        passwordSetAt: null,
+        status: 'PENDING',
+        accountType: 'CUSTOMER',
+        emailVerified: emailIsVerified,
+        emailVerifiedAt: emailIsVerified ? new Date() : null,
+        timezone: 'UTC',
+        authIdentities: { create: { provider, providerAccountId } },
+      },
+    });
+
+    if (emailIsVerified && email) {
+      await this.prisma.verification.upsert({
+        where: { userId_type: { userId: user.id, type: 'EMAIL' } },
+        update: { status: 'VERIFIED', verifiedAt: new Date() },
+        create: {
+          userId: user.id,
+          type: 'EMAIL',
+          status: 'VERIFIED',
+          verifiedAt: new Date(),
+        },
+      });
+    }
+
+    // Referral attribution for the OAuth signup — best-effort, never fatal.
+    if (ref) {
+      await this.authService.attributeReferral(user.id, ref).catch(() => undefined);
+    }
+
+    return user.id;
+  }
+
+  private suggestUsername(email: string | null, providerAccountId: string): string {
+    const base = email
+      ? email.toLowerCase().split('@')[0].replace(/[^a-z0-9]/g, '')
+      : `user-${providerAccountId}`;
+    return (base || 'user').slice(0, 32);
+  }
+
+  private async uniqueUsername(base: string): Promise<string> {
+    let username = base;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const exists = await this.prisma.user.findUnique({
+        where: { username },
+        select: { id: true },
+      });
+      if (!exists) return username;
+      username = `${base.slice(0, 24)}_${randomToken(8)}`;
+    }
+    throw new ConflictException('Unable to create an available username');
+  }
+
+  // --------------------------------------------------------------------------
+  // Provider token exchange + profile fetch
+  // --------------------------------------------------------------------------
+
+  private async fetchProfile(
+    provider: OAuthProvider,
+    cfg: OAuthProviderConfig,
+    accessToken: string,
+  ): Promise<unknown> {
+    const url =
+      provider === 'GOOGLE'
+        ? cfg.profileUrl
+        : `${cfg.profileUrl}?fields=id,email,name`;
+    let res: Response;
+    try {
+      res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    } catch (error) {
+      this.logger.error(
+        `${provider} OAuth profile fetch failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      throw new UnauthorizedException(`${provider} authentication failed`);
+    }
+    if (!res.ok) {
+      this.logger.error(`${provider} OAuth profile fetch failed: ${res.status}`);
+      throw new UnauthorizedException(`${provider} authentication failed`);
+    }
+    try {
+      return await res.json();
+    } catch {
+      throw new UnauthorizedException(`${provider} authentication failed`);
+    }
+  }
+
+  private extractProfile(
+    provider: OAuthProvider,
+    profile: unknown,
+  ): ProviderProfile {
+    const p = profile as Record<string, unknown> | null;
+    if (!p) {
+      throw new UnauthorizedException(`${provider} authentication failed`);
+    }
+    if (provider === 'GOOGLE') {
+      return {
+        providerAccountId: String(p['sub'] ?? ''),
+        email: typeof p['email'] === 'string' ? p['email'] : null,
+        emailVerified: p['email_verified'] === true,
+      };
+    }
     return {
-      providerAccountId: info.id,
-      email: info.email?.toLowerCase() ?? null,
+      providerAccountId: String(p['id'] ?? ''),
+      email: typeof p['email'] === 'string' ? p['email'] : null,
       emailVerified: false,
-      displayName: info.name,
     };
+  }
+
+  // --------------------------------------------------------------------------
+  // Frontend callback URL — allowlist-validated, code-only query string.
+  // --------------------------------------------------------------------------
+
+  private buildCallbackRedirectUrl(exchangeCode: string): string {
+    const allowed = (process.env.OAUTH_ALLOWED_REDIRECTS ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      // Normalize trailing slashes so the callback path is never doubled.
+      .map((s) => (s.endsWith("/") ? s.slice(0, -1) : s));
+    if (allowed.length === 0) {
+      throw new ServiceUnavailableException(
+        'OAuth callback redirect targets are not configured',
+      );
+    }
+    return `${allowed[0]}/oauth/callback?code=${encodeURIComponent(exchangeCode)}`;
+  }
+
+  // --------------------------------------------------------------------------
+  // Phase 13 — exchange the one-time code for the application session
+  // --------------------------------------------------------------------------
+
+  /**
+   * Consumes a one-time OAuth exchange code and issues the real token pair.
+   * Codes are short-lived, single-use, and carry only the local user id.
+   */
+  async exchange(
+    code: string,
+    ip?: string,
+    userAgent?: string,
+  ): Promise<TokenPair & { user: PublicUser }> {
+    const payload = await this.otpService.consumeExchangeCode<{
+      userId: unknown;
+    }>(code);
+
+    const userId = payload?.userId;
+    if (typeof userId !== 'string' || !userId) {
+      throw new UnauthorizedException('Invalid OAuth exchange code');
+    }
+
+    return this.authService.issueSession(userId, ip, userAgent);
   }
 }

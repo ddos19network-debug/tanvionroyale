@@ -1,0 +1,15 @@
+At line:1 char:200
++ ... : cfg\.callbackUrl,\s*grant_type: 'authorization_code',\s*\)', 'body: ...
++                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unexpected token 'authorization_code',\s*\)'' in expression or statement.
+At line:1 char:226
++ ...  cfg\.callbackUrl,\s*grant_type: 'authorization_code',\s*\)', 'body:  ...
++                                                                 ~
+Missing argument in parameter list.
+At line:1 char:359
++ ... irect_uri: cfg.callbackUrl, grant_type: \\'authorization_code\\' })')
++                                                                         ~
+Unexpected token ')' in expression or statement.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : UnexpectedToken
+ 

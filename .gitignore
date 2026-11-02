@@ -32,6 +32,8 @@ apps/api/prisma/*.db
 database/prisma/*.db
 # Generated Prisma client is compiled into the API and never committed
 apps/api/src/generated/
+# Stable native query-engine copies synced by apps/api/prisma-copy-binary.cjs
+apps/api/prisma-engine/
 
 # OS / editor
 .DS_Store

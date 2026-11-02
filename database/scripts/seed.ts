@@ -525,34 +525,39 @@ async function seedBettingDomain(prisma: PrismaClient): Promise<void> {
     });
 
     for (const marketSeed of eventSeed.markets) {
-      const market = await prisma.market.upsert({
-        where: { eventId_name: { eventId: event.id, name: marketSeed.name } },
-        update: { status: marketSeed.status },
-        create: { eventId: event.id, name: marketSeed.name, status: marketSeed.status },
-      });
+      // Market/Selection are written with raw-SQL upserts (NOT
+      // prisma.market/prisma.selection upserts): the Prisma schema's
+      // Market/Selection models carry no createdAt/updatedAt, while the
+      // migrated tables have "updatedAt" TIMESTAMP(3) NOT NULL with no
+      // DEFAULT — a client INSERT omits the column and fails with P2011
+      // (null constraint violation). These upserts insert the exact same
+      // seed rows, are idempotent via ON CONFLICT, and fill the
+      // DB-mandated timestamp columns explicitly. Seed semantics unchanged;
+      // no schema/migration/DB change is involved.
+      const marketRows = await prisma.$queryRaw<{ id: string }[]>`
+        INSERT INTO "Market" ("id", "eventId", "name", "status", "createdAt", "updatedAt")
+        VALUES (gen_random_uuid()::text, ${event.id}, ${marketSeed.name}, ${marketSeed.status}::"MarketStatus", now(), now())
+        ON CONFLICT ("eventId", "name")
+        DO UPDATE SET "status" = EXCLUDED."status", "updatedAt" = now()
+        RETURNING "id"
+      `;
+      const marketId = marketRows[0].id;
 
       for (const selectionSeed of marketSeed.selections) {
-        const selection = await prisma.selection.upsert({
-          where: {
-            marketId_providerSelectionId: {
-              marketId: market.id,
-              providerSelectionId: selectionSeed.providerSelectionId,
-            },
-          },
-          update: { name: selectionSeed.name, status: selectionSeed.status },
-          create: {
-            marketId: market.id,
-            name: selectionSeed.name,
-            providerSelectionId: selectionSeed.providerSelectionId,
-            status: selectionSeed.status,
-          },
-        });
+        const selectionRows = await prisma.$queryRaw<{ id: string }[]>`
+          INSERT INTO "Selection" ("id", "marketId", "name", "providerSelectionId", "status", "createdAt", "updatedAt")
+          VALUES (gen_random_uuid()::text, ${marketId}, ${selectionSeed.name}, ${selectionSeed.providerSelectionId}, ${selectionSeed.status}::"SelectionStatus", now(), now())
+          ON CONFLICT ("marketId", "providerSelectionId")
+          DO UPDATE SET "name" = EXCLUDED."name", "status" = EXCLUDED."status", "updatedAt" = now()
+          RETURNING "id"
+        `;
+        const selectionId = selectionRows[0].id;
 
         if (selectionSeed.price !== undefined) {
           await prisma.odds.upsert({
-            where: { selectionId: selection.id },
+            where: { selectionId },
             update: { price: selectionSeed.price },
-            create: { selectionId: selection.id, price: selectionSeed.price },
+            create: { selectionId, price: selectionSeed.price },
           });
         }
       }

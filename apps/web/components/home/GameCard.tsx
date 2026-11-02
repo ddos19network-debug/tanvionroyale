@@ -71,7 +71,12 @@ export function GameCard({ game, favorite = false, onToggleFavorite }: GameCardP
 
         {/* Stretched cover link — makes the whole artwork area clickable while
             the heart and play actions stay above it (z-10). */}
-        <Link href={playHref} className="absolute inset-0 z-0">
+        <Link
+            href={playHref}
+            target={isFreePlay && game.slug === 'royale-ace' ? '_blank' : undefined}
+            rel={isFreePlay && game.slug === 'royale-ace' ? 'noopener noreferrer' : undefined}
+            className="absolute inset-0 z-0"
+          >
           <span className="sr-only">{openLabel}</span>
         </Link>
 
@@ -97,6 +102,8 @@ export function GameCard({ game, favorite = false, onToggleFavorite }: GameCardP
         <div className="absolute inset-x-0 bottom-0 z-10 flex translate-y-full items-center justify-center bg-gradient-to-t from-black/80 to-transparent p-3 transition duration-200 group-hover:translate-y-0 focus-within:translate-y-0">
           <Link
             href={playHref}
+            target={isFreePlay && game.slug === 'royale-ace' ? '_blank' : undefined}
+            rel={isFreePlay && game.slug === 'royale-ace' ? 'noopener noreferrer' : undefined}
             className="w-full rounded-lg bg-brand px-3 py-1.5 text-center text-xs font-semibold text-ink-950 transition hover:bg-brand-dark"
             aria-label={openLabel}
           >

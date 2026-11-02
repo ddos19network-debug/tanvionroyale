@@ -48,11 +48,29 @@ describe('CORS origin resolution (production safety)', () => {
     expect(origin).toBe(true);
   });
 
-  it('stays restricted in development when an explicit list is set', () => {
+  it('unions local dev origins with an explicit list in development (local frontend keeps working)', () => {
     const origin = resolveCorsOrigins({
       NODE_ENV: 'development',
       CORS_ORIGIN: 'http://localhost:3100',
     } as unknown as NodeJS.ProcessEnv);
-    expect(origin).toEqual(['http://localhost:3100']);
+    expect(origin).toContain('http://localhost:3100');
+    expect(origin).toContain('http://127.0.0.1:3100');
+    expect(origin).not.toContain(PROD_ORIGIN);
+  });
+
+  it('permits http://localhost:3100 in development even when CORS_ORIGIN only lists production (reported bug)', () => {
+    const origin = resolveCorsOrigins({
+      NODE_ENV: 'development',
+      CORS_ORIGIN: `${CANONICAL_ORIGIN},${PROD_ORIGIN}`,
+    } as unknown as NodeJS.ProcessEnv);
+    expect(origin).toContain('http://localhost:3100');
+    expect(origin).toContain(CANONICAL_ORIGIN);
+    expect(origin).toContain(PROD_ORIGIN);
+  });
+
+  it('never adds local origins in production, even with an explicit list', () => {
+    const origin = resolveCorsOrigins(envWith({ CORS_ORIGIN: PROD_ORIGIN }));
+    expect(origin).toEqual([PROD_ORIGIN]);
+    expect(origin).not.toContain('http://localhost:3100');
   });
 });

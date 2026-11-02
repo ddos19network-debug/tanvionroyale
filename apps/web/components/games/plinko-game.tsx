@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@tanvion-royale/ui';
 import { describeApiError } from '@/lib/api/client';
+import { getFreePlayPoints, type FreePlayPointsView } from '@/lib/api/games';
 import {
   dropPlinko,
   formatBp,
@@ -50,6 +51,19 @@ export function PlinkoGame() {
   const [history, setHistory] = useState<RoyalePlinkoRoundView[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /* Free-play points: server ledger only, refreshed after each settled drop. */
+  const [freePlay, setFreePlay] = useState<FreePlayPointsView | null>(null);
+  const [pointsError, setPointsError] = useState<string | null>(null);
+  const refreshPoints = useCallback(async (): Promise<void> => {
+    try {
+      const view = await getFreePlayPoints();
+      setFreePlay(view);
+      setPointsError(null);
+    } catch (e) {
+      setFreePlay(null);
+      setPointsError(describeApiError(e));
+    }
+  }, []);
 
   // The authoritative last round + its live replay position.
   const [lastRound, setLastRound] = useState<RoyalePlinkoRoundView | null>(null);
@@ -68,6 +82,7 @@ export function PlinkoGame() {
         setStake(cfg.minStake);
         setRows(Math.min(16, Math.max(8, cfg.plinko.maxRows)));
         setHistory(hist);
+        if (cfg.mode !== 'REAL_MONEY') void refreshPoints();
       } catch (e) {
         if (alive) setError(describeApiError(e));
       }
@@ -75,7 +90,7 @@ export function PlinkoGame() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [refreshPoints]);
 
   // Load the validated payout table whenever the board changes.
   useEffect(() => {
@@ -100,10 +115,11 @@ export function PlinkoGame() {
   }, []);
   useEffect(() => clearTimers, [clearTimers]);
 
-  const multipliers = table?.multipliersBp ?? [];
+  const realMoneyEarly = config?.mode === 'REAL_MONEY';
+
   const maxBp = useMemo(
-    () => multipliers.reduce((m, v) => Math.max(m, v), 0),
-    [multipliers],
+    () => (table?.multipliersBp ?? []).reduce((m, v) => Math.max(m, v), 0),
+    [table?.multipliersBp],
   );
 
   /** Replay the SERVER path one step per row (presentation only). */
@@ -144,12 +160,14 @@ export function PlinkoGame() {
       setLastRound(round);
       playAnimation(round);
       setHistory((h) => [round, ...h].slice(0, 15));
+      if (!realMoneyEarly) void refreshPoints();
+      else window.dispatchEvent(new CustomEvent('app:wallet-changed'));
     } catch (e) {
       setError(describeApiError(e));
     } finally {
       setBusy(false);
     }
-  }, [config, busy, stake, rows, risk, playAnimation]);
+  }, [config, busy, stake, rows, risk, playAnimation, realMoneyEarly, refreshPoints]);
 
   /** Ball position (0..1 horizontally) for the CURRENT replay step. */
   const ballX = useMemo(() => {
@@ -161,6 +179,7 @@ export function PlinkoGame() {
   const maxActiveBp = activeBins.reduce((m, v) => Math.max(m, v), 0);
   const landedBin = lastRound && !animating ? lastRound.binIndex : null;
   const realMoney = config?.mode === 'REAL_MONEY';
+  const isFreePlay = !realMoney;
 
   const formatMinor = (n: number) => (realMoney ? (n / 100).toFixed(2) : n.toLocaleString());
   const unit = realMoney ? (config?.currency ?? '') : 'pts';
@@ -188,6 +207,22 @@ export function PlinkoGame() {
         )
       ) : null}
 
+      {config && isFreePlay ? (
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2">
+          <p className="text-xs font-bold uppercase tracking-wide text-emerald-300">
+            Free Play · {freePlay && !pointsError ? `${freePlay.points.toLocaleString()} pts` : pointsError ? 'Unavailable' : '…'}
+          </p>
+          <span className="text-[10px] text-emerald-300/80">practice only — no cash value</span>
+        </div>
+      ) : null}
+      {pointsError && isFreePlay ? (
+        <p
+          role="alert"
+          className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs text-red-300"
+        >
+          Could not load free-play points: {pointsError}
+        </p>
+      ) : null}
       {error ? (
         <p
           className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"

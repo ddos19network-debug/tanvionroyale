@@ -38,6 +38,25 @@ export interface FreePlayResultView {
   createdAt: string;
 }
 
+/**
+ * The signed-in user's FREE-PLAY points balance.
+ *
+ * Read from the ONE existing free-play points ledger (`CrashFreePlayWallet`).
+ * These points are NEVER money: they live in a separate table with their own
+ * `FREEPLAY` currency code and have no deposit or withdrawal path, so they
+ * must never be presented as, or commingled with, a real wallet balance.
+ * The server is the only source of truth — the client never mutates this.
+ */
+export interface FreePlayPointsView {
+  points: number;
+  currency: string;
+  mode: 'FREE_PLAY';
+}
+
+export async function getFreePlayPoints(): Promise<FreePlayPointsView> {
+  return authFetch<FreePlayPointsView>('/games/crash/free-play/points');
+}
+
 export async function getFreePlayGame(
   slug: string,
 ): Promise<PublicFreePlayGame> {

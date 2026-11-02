@@ -1,0 +1,11 @@
+const fs = require('fs');
+const p = 'apps/web/components/games/ace-slot-game.tsx';
+let s = fs.readFileSync(p, 'utf8');
+const start = s.indexOf('    <div className="shrink-0 text-right">');
+const endMarker = '       </section>';
+const end = s.indexOf(endMarker, start) + endMarker.length;
+const before = s.slice(0, start);
+const after = s.slice(end);
+s = before + '       </section>' + after;
+fs.writeFileSync(p, s);
+console.log('done');

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@tanvion-royale/ui';
 import { describeApiError } from '@/lib/api/client';
+import { getFreePlayPoints, type FreePlayPointsView } from '@/lib/api/games';
 import { formatBp } from '@/lib/api/royale';
 import {
   cashoutMines,
@@ -53,6 +54,19 @@ export function MinesGame() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  /* Free-play points: server ledger only, refreshed after each settlement. */
+  const [freePlay, setFreePlay] = useState<FreePlayPointsView | null>(null);
+  const [pointsError, setPointsError] = useState<string | null>(null);
+  const refreshPoints = useCallback(async (): Promise<void> => {
+    try {
+      const view = await getFreePlayPoints();
+      setFreePlay(view);
+      setPointsError(null);
+    } catch (e) {
+      setFreePlay(null);
+      setPointsError(describeApiError(e));
+    }
+  }, []);
 
   // Initial load: config + history + recover any ACTIVE round (reconnect/restart).
   useEffect(() => {
@@ -69,6 +83,7 @@ export function MinesGame() {
         setStake(cfg.minStake);
         setHistory(hist);
         if (active) setRound(active);
+        if (cfg.mode !== 'REAL_MONEY') void refreshPoints();
       } catch (e) {
         if (alive) setError(describeApiError(e));
       }
@@ -76,12 +91,23 @@ export function MinesGame() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [refreshPoints]);
 
   const realMoney = config?.mode === 'REAL_MONEY';
+  const isFreePlay = !realMoney;
   const unit = realMoney ? (config?.currency ?? '') : 'pts';
-  const formatMinor = (n: number) =>
-    realMoney ? (n / 100).toFixed(2) : n.toLocaleString();
+  const formatMinor = useCallback(
+    (n: number) => (realMoney ? (n / 100).toFixed(2) : n.toLocaleString()),
+    [realMoney],
+  );
+  const reconcileAfterSettle = useCallback(
+    (settled: boolean) => {
+      if (!settled) return;
+      if (!realMoney) void refreshPoints();
+      else window.dispatchEvent(new CustomEvent('app:wallet-changed'));
+    },
+    [realMoney, refreshPoints],
+  );
 
   const gridOptions = config?.mines.grids ?? [25];
   const effectiveMaxMines = Math.min(config?.mines.maxMines ?? 24, gridSize - 1);
@@ -112,8 +138,10 @@ export function MinesGame() {
         setRound(result.round);
         if (result.round.status === 'BUSTED') {
           setStatus('Boom — you hit a mine. Round over.');
+          reconcileAfterSettle(true);
         } else if (result.round.status === 'VOIDED') {
           setStatus('This round was voided and your stake was returned.');
+          reconcileAfterSettle(true);
         }
       } catch (e) {
         setError(describeApiError(e));
@@ -121,7 +149,7 @@ export function MinesGame() {
         setBusy(false);
       }
     },
-    [round, busy],
+    [round, busy, reconcileAfterSettle],
   );
 
   const onCashout = useCallback(async () => {
@@ -137,12 +165,13 @@ export function MinesGame() {
         )} ${unit}`,
       );
       setHistory((h) => [result.round, ...h].slice(0, 15));
+      reconcileAfterSettle(true);
     } catch (e) {
       setError(describeApiError(e));
     } finally {
       setBusy(false);
     }
-  }, [round, busy, unit]);
+  }, [round, busy, unit, formatMinor, reconcileAfterSettle]);
 
   const onForfeit = useCallback(async () => {
     if (!round || busy || round.status !== 'ACTIVE') return;
@@ -153,12 +182,13 @@ export function MinesGame() {
       setRound(result.round);
       setStatus('Round forfeited.');
       setHistory((h) => [result.round, ...h].slice(0, 15));
+      reconcileAfterSettle(true);
     } catch (e) {
       setError(describeApiError(e));
     } finally {
       setBusy(false);
     }
-  }, [round, busy]);
+  }, [round, busy, reconcileAfterSettle]);
 
   const active = round?.status === 'ACTIVE';
   const settled = round && !active;
@@ -187,6 +217,22 @@ export function MinesGame() {
         )
       ) : null}
 
+      {config && isFreePlay ? (
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2">
+          <p className="text-xs font-bold uppercase tracking-wide text-emerald-300">
+            Free Play · {freePlay && !pointsError ? `${freePlay.points.toLocaleString()} pts` : pointsError ? 'Unavailable' : '…'}
+          </p>
+          <span className="text-[10px] text-emerald-300/80">practice only — no cash value</span>
+        </div>
+      ) : null}
+      {pointsError && isFreePlay ? (
+        <p
+          role="alert"
+          className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs text-red-300"
+        >
+          Could not load free-play points: {pointsError}
+        </p>
+      ) : null}
       {error ? (
         <p
           className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"

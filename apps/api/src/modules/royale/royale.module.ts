@@ -13,6 +13,7 @@ import { RoyaleAceAdminController } from './ace-admin.controller';
 import { RoyaleAceService } from './ace/ace.service';
 import { RoyaleAceAdminService } from './ace/ace-admin.service';
 import { AceConfigStore } from './ace/ace-config-store';
+import { RoyaleAceController as SimpleAceController } from './ace/ace.controller';
 
 /**
  * Royale Play module — original server-authoritative Plinko, Mines and
@@ -36,7 +37,7 @@ import { AceConfigStore } from './ace/ace-config-store';
  */
 @Module({
   imports: [WalletModule, CrashModule, ResponsibleGamblingModule, JurisdictionModule],
-  controllers: [RoyaleController, RoyaleAdminController, RoyaleAceController, RoyaleAceAdminController],
+  controllers: [RoyaleController, RoyaleAdminController, RoyaleAceController, RoyaleAceAdminController, SimpleAceController],
   providers: [
     RoyalePlinkoService,
     RoyaleMinesService,

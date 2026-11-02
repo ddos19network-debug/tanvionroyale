@@ -2,6 +2,19 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import type { CrashHistoryEntry } from '@/lib/api/crash';
+import {
+  scenePoint,
+  curveTangentAt,
+  flightPath,
+  rocketProgress,
+  rocketPosition,
+  type ScenePoint,
+} from '@/lib/crash-curve';
+
+// Re-export the pure curve helpers so the scene's tests (and any consumer) can
+// keep importing them from the scene module — the SINGLE source of truth now
+// lives in lib/crash-curve.ts.
+export { rocketProgress, rocketPosition };
 
 /**
  * Sky Rocket — animated CARTOON AIRPLANE scene.
@@ -16,17 +29,15 @@ import type { CrashHistoryEntry } from '@/lib/api/crash';
  * The only client-side timers here are:
  *   1. the BETTING_OPEN countdown LABEL (display only — the round state comes
  *      from the server and is never changed by it), and
- *   2. the crash-sequence stage timer, which only decides how long the explosion
- *      layers stay on screen before settling into the frozen crash aftermath
+ *   2. the crash-sequence stage timer, which only decides how long the fly-off
+ *      beat plays before the plane is removed from a crashed scene
  *      (presentation only).
  * Neither can influence the round, the multiplier, settlement or the wallet.
  *
- * VEHICLE: a cartoon side-view AIRPLANE rendered from the trimmed transparent
- * PNG asset `/sky-rocket-plane-trim.png`. It is derived from the original
- * `public/sky-rocket-plane.png` (733×418) by cropping the alpha bounding box
- * — source rect (124, 92, 494×180) — so the element box hugs the artwork and the
- * rotation pivot IS the visual centre. The airplane is drawn nose-RIGHT at rest
- * and is pitched by a clamped 6–14° along the curve.
+ * VEHICLE: OUR OWN inline-SVG cartoon rocket (`./sky-rocket-ship.tsx`) — our own
+ * shape and colours, no third-party sprite. It is drawn nose-RIGHT at rest,
+ * pitched by a clamped 6–14° along the curve, with a spinning propeller and a
+ * tail flame driven by `--sr-ship-thrust`.
  *
  * SCENE (Phase 2 — why it reads as "flying" instead of "static"):
  *   - the multiplier→position mapping follows a deterministic quadratic Bézier
@@ -49,18 +60,14 @@ import type { CrashHistoryEntry } from '@/lib/api/crash';
  *   - the scene box is responsive viewport-height based
  *     (`h-[calc(100svh-11rem)]`, clamped) instead of the old `min(62vh,600px)`.
  *
- * CRASH VISUAL: the moment the backend reports CRASHED the plane is REMOVED —
- * no plane and no wreckage is rendered in ANY crashed render, the first one
- * included (so a refresh / reconnect / React remount can never flash one). The
- * layered fireball with three shockwave rings, ~18 fire particles, fire
- * fragments, lingering smoke and generic debris plays for a crash this mount
- * actually watched fly (shortened to 600ms for a reduced-motion user); a mount
- * that arrives already crashed (refresh / reconnect / route change) goes
- * straight to the FROZEN aftermath (smouldering glow,
- * static smoke plumes, generic debris, NO plane) so the explosion is never
- * replayed. The multiplier freezes at the server's crash value throughout. A NEW
- * round id resets the visual crash state, so the plane reappears at the launch
- * pad on the next round.
+ * CRASH VISUAL — "FLIES AWAY" (no explosion): the moment the backend reports
+ * CRASHED a plane this mount watched fly escapes to the upper right over 600ms
+ * (`sr-fly-away`; instant removal under reduced motion), the curve and HUD
+ * FREEZE at the server's crash value, and the HUD shows "FLEW AWAY!" in red. A
+ * mount that arrives already crashed (refresh / reconnect / route change) never
+ * plays the beat — no plane, no streaks — so a remount can never fake a crash.
+ * A NEW round id resets the visual crash state, so the plane reappears at the
+ * launch pad on the next round.
  *
  * Performance: transforms/opacity only (GPU composited, see the `sr-` keyframes
  * in app/globals.css), no per-frame React work of its own, deterministic
@@ -90,118 +97,13 @@ export interface CrashRocketSceneProps {
 }
 
 // ---------------------------------------------------------------------------
-// Flight geometry — percentages of the SCENE BOX
 // ---------------------------------------------------------------------------
-
-/** Launch pad anchor: x% from the left, y% of the height measured from the
-    BOTTOM. y=20 keeps the now reference-sized plane (96–260px wide, 35–95px
-    tall) fully above the runway strip even on squat desktop flight areas
-    (1366×768 → 590px scene) while still reading as "rolling on the runway". */
-const PAD = { x: 16, y: 20 };
-/** End of the climb — the plane's high-multiplier parking spot, upper right. */
-const APEX = { x: 88, y: 88 };
-/** Bézier control point. It pulls the path into a shallow take-off roll that
-    steepens into a climb: tangent at the pad ≈ 10°, tangent at the apex ≈ 72°. */
-const CTRL = { x: 62, y: 22 };
-
-/** Quadratic Bézier component value at t. */
-function bezier(t: number, p0: number, p1: number, p2: number): number {
-  const u = 1 - t;
-  return u * u * p0 + 2 * u * t * p1 + t * t * p2;
-}
-
-/**
- * Arc-length table over the take-off curve (deterministic, module-level, SSR-safe).
- * 96 uniform-t samples are plenty for a <path>-matching position lookup and cost
- * nothing: every lookup is a binary search over a precomputed array.
- */
-const ARC_SAMPLES = 96;
-const ARC = (() => {
-  const pts: { t: number; len: number }[] = [{ t: 0, len: 0 }];
-  let prevX = PAD.x;
-  let prevY = PAD.y;
-  let total = 0;
-  for (let i = 1; i <= ARC_SAMPLES; i++) {
-    const t = i / ARC_SAMPLES;
-    const x = bezier(t, PAD.x, CTRL.x, APEX.x);
-    const y = bezier(t, PAD.y, CTRL.y, APEX.y);
-    total += Math.hypot(x - prevX, y - prevY);
-    pts.push({ t, len: total });
-    prevX = x;
-    prevY = y;
-  }
-  return { pts, total };
-})();
-
-/** Point (scene %) at arc-length fraction `s` of the flight curve. */
-function curveParameter(s: number): number {
-  const clamped = Math.min(1, Math.max(0, s));
-  const target = clamped * ARC.total;
-  let lo = 0;
-  let hi = ARC.pts.length - 1;
-  while (lo < hi) {
-    const mid = (lo + hi) >> 1;
-    if (ARC.pts[mid].len < target) lo = mid + 1;
-    else hi = mid;
-  }
-  const after = ARC.pts[lo];
-  const before = ARC.pts[Math.max(0, lo - 1)];
-  const span = after.len - before.len || 1;
-  const frac = Math.min(1, Math.max(0, (target - before.len) / span));
-  return before.t + (after.t - before.t) * frac;
-}
-
-function curvePointAt(s: number): { left: number; top: number } {
-  const t = curveParameter(s);
-  return {
-    left: bezier(t, PAD.x, CTRL.x, APEX.x),
-    top: 100 - bezier(t, PAD.y, CTRL.y, APEX.y),
-  };
-}
-
-/** De Casteljau subdivision makes the stroke end exactly at the rendered plane. */
-function flightPath(progress: number, endPoint?: { left: number; top: number }): string {
-  const t = curveParameter(progress);
-  const end = endPoint ?? curvePointAt(progress);
-  const cx = PAD.x + (CTRL.x - PAD.x) * t;
-  const cy = 100 - (PAD.y + (CTRL.y - PAD.y) * t);
-  return `M ${PAD.x} ${100 - PAD.y} Q ${cx} ${cy} ${end.left} ${end.top}`;
-}
-
-/** Tangent (scene %, top-based) at arc-length fraction `s` — finite difference. */
-function curveTangentAt(s: number): { dx: number; dy: number } {
-  const eps = 0.008;
-  const a = curvePointAt(Math.max(0, s - eps));
-  const b = curvePointAt(Math.min(1, s + eps));
-  return { dx: b.left - a.left, dy: b.top - a.top };
-}
-
-/**
- * Multiplier → flight progress (0 at 1.00×, →1 at the end of the curve).
- *
- * Returns an ARC-LENGTH fraction, so plane speed is constant along the curve and
- * the SVG trail (pathLength=1 + dasharray=progress) always ends exactly at the
- * plane. `1 - 1/m` is monotonic in the SERVER multiplier and keeps common short
- * rounds (1×–2×, ~2 s) visibly travelling — a purely logarithmic mapping left
- * them parked. A small logarithmic term keeps very high multipliers creeping
- * towards the apex instead of freezing there (2× ≈ 0.46, 3× ≈ 0.63, 10× ≈ 0.93).
- */
-export function rocketProgress(multiplier: number): number {
-  // Smooth launch acceleration, then bounded upper-atmosphere travel. No clock:
-  // 1.2x ≈ .07, 3x ≈ .60, 10x ≈ .92. Invalid values cannot create NaN transforms.
-  const safe = Number.isFinite(multiplier) ? Math.max(1, multiplier) : 1;
-  return Math.min(1, Math.max(0, 1 - Math.exp(-0.8 * Math.pow(Math.log(safe), 1.4))));
-}
-
-/** Scene point (percent) on the curve for a given flight progress. */
-function scenePoint(progress: number): { left: number; top: number } {
-  return curvePointAt(progress);
-}
-
-/** Convenience for tests/debug: multiplier → scene point in one step. */
-export function rocketPosition(multiplier: number): { left: number; top: number } {
-  return scenePoint(rocketProgress(multiplier));
-}
+// Flight geometry now lives in the single source of truth @/lib/crash-curve
+// (PAD / APEX / arc-length re-parametrisation / rocketProgress / scenePoint /
+// flightPath / curveTangentAt / multiplierToScenePoint). The scene imports
+// those helpers above; only the SCENE-LOCAL containment guard (planeWidthPx +
+// containAnchor) is defined below, because it needs the measured pixel box.
+// ---------------------------------------------------------------------------
 
 /**
  * Rendered airplane width in CSS pixels — mirrors the `.sr-plane` rule
@@ -292,58 +194,6 @@ const FLIGHT_TRAIL = [
   { back: 0.4, size: 46, o: 0.1, d: 1080, hot: false },
 ];
 
-/** Fire particles thrown outward from the crash point (~18, per the brief). */
-const FIRE_PARTICLES = [
-  { tx: -46, ty: 18, d: 0, s: 3 }, { tx: 40, ty: 26, d: 40, s: 2 },
-  { tx: -30, ty: -34, d: 80, s: 3 }, { tx: 34, ty: -40, d: 120, s: 2 },
-  { tx: -58, ty: -6, d: 60, s: 4 }, { tx: 56, ty: 6, d: 100, s: 3 },
-  { tx: -14, ty: 44, d: 150, s: 2 }, { tx: 16, ty: -52, d: 180, s: 3 },
-  { tx: -40, ty: -22, d: 210, s: 2 }, { tx: 44, ty: -16, d: 240, s: 3 },
-  { tx: -22, ty: -48, d: 270, s: 2 }, { tx: 26, ty: 40, d: 300, s: 3 },
-  { tx: -70, ty: 26, d: 90, s: 2 }, { tx: 72, ty: 30, d: 130, s: 3 },
-  { tx: -8, ty: -66, d: 160, s: 2 }, { tx: 10, ty: 54, d: 200, s: 3 },
-  { tx: -52, ty: -44, d: 230, s: 2 }, { tx: 50, ty: -50, d: 280, s: 3 },
-];
-
-/** Bigger, softer fire fragments that break off the fireball. */
-const FIRE_FRAGMENTS = [
-  { tx: -34, ty: 14, d: 60, s: 10 }, { tx: 30, ty: 20, d: 120, s: 12 },
-  { tx: -24, ty: -26, d: 200, s: 9 }, { tx: 26, ty: -30, d: 260, s: 11 },
-  { tx: -44, ty: -8, d: 340, s: 8 }, { tx: 42, ty: 4, d: 400, s: 10 },
-];
-
-/** Smoke puffs that rise and expand after the blast. */
-const SMOKE = [
-  { tx: -30, ty: -26, d: 220, s: 2.6 }, { tx: 26, ty: -30, d: 280, s: 3 },
-  { tx: -12, ty: -46, d: 360, s: 3.4 }, { tx: 38, ty: -8, d: 420, s: 2.8 },
-  { tx: -44, ty: 2, d: 480, s: 2.7 }, { tx: 8, ty: -16, d: 540, s: 3.1 },
-  { tx: -20, ty: -58, d: 600, s: 3.6 }, { tx: 22, ty: -40, d: 660, s: 3.2 },
-];
-
-/** Tumbling debris thrown from the impact. */
-const DEBRIS = [
-  { tx: -52, ty: 22, d: 40, w: 8, h: 6, c: 'bg-slate-300/80' },
-  { tx: 48, ty: 30, d: 70, w: 6, h: 10, c: 'bg-slate-400/80' },
-  { tx: -34, ty: -30, d: 110, w: 10, h: 4, c: 'bg-slate-200/80' },
-  { tx: 30, ty: -38, d: 150, w: 5, h: 9, c: 'bg-slate-500/80' },
-  { tx: -62, ty: -4, d: 190, w: 7, h: 7, c: 'bg-slate-300/80' },
-  { tx: 60, ty: 8, d: 230, w: 9, h: 5, c: 'bg-fuchsia-300/70' },
-  { tx: -16, ty: 38, d: 270, w: 6, h: 6, c: 'bg-slate-400/80' },
-  { tx: 18, ty: -44, d: 310, w: 8, h: 8, c: 'bg-slate-200/70' },
-  { tx: -46, ty: -40, d: 340, w: 5, h: 10, c: 'bg-slate-500/80' },
-  { tx: 52, ty: -24, d: 380, w: 7, h: 6, c: 'bg-fuchsia-200/60' },
-];
-
-/** Static frozen-aftermath layers (no animation → also correct for reduced motion). */
-const AFTERMATH_SMOKE = [
-  { tx: -30, ty: -30, s: 30 }, { tx: 28, ty: -34, s: 34 }, { tx: -8, ty: -48, s: 38 },
-  { tx: 40, ty: -10, s: 26 }, { tx: -46, ty: -6, s: 28 }, { tx: 12, ty: -20, s: 32 },
-];
-const AFTERMATH_DEBRIS = [
-  { tx: -46, ty: 20 }, { tx: 44, ty: 26 }, { tx: -28, ty: -26 }, { tx: 26, ty: -32 },
-  { tx: 8, ty: 30 }, { tx: -60, ty: 4 }, { tx: 56, ty: -6 }, { tx: -14, ty: -40 },
-];
-
 /** Runway edge lights (static; the blink comes from CSS animation delay). */
 const RUNWAY_LIGHTS = [true, false, true, true, false, true];
 
@@ -379,19 +229,19 @@ const CLOUDS_NEAR = [
   { x: 84, y: 26, w: 42, h: 12, o: 0.8, dur: 54, delay: -48 },
 ];
 
-/* NOTE: the frozen aftermath intentionally contains NO plane wreckage — the spec
-   requires the airplane to disappear completely at crash (only fire, smoke and
-   generic debris remain visible). */
+/* NOTE: a crashed scene intentionally shows NO plane — the fly-off beat ends
+   with the plane removed entirely (only the frozen curve + HUD remain). */
 
 /**
  * Crash-sequence stage.
  *  - 'none':      normal launch / flight
- *  - 'playing':   the explosion is playing (started by a LIVE crash only)
- *  - 'aftermath': the frozen crashed state (also the stage the scene settles on
- *                 when it mounts while the round is already crashed, so a
- *                 refresh / reconnect never replays the explosion)
+ *  - 'escaping':  the plane is flying away off the upper right (600ms beat,
+ *                 only for a LIVE crash this mount actually watched)
+ *  - 'gone':      the plane is removed (also the stage a mount that arrives
+ *                 already crashed starts in, so a refresh / reconnect never
+ *                 replays the fly-off)
  */
-type CrashStage = 'none' | 'playing' | 'aftermath';
+type CrashStage = 'none' | 'escaping' | 'gone';
 
 /** Reduced-motion preference (client only; false during SSR → no mismatch). */
 function usePrefersReducedMotion(): boolean {
@@ -491,10 +341,9 @@ function RoundRocketScene({
   const planeScale = 1 + 0.16 * travel;
   /**
    * Curve-derived pitch, clamped to the 6–14° band (level while on the pad).
-   * Only thrusting matters here: a CRASHED round never renders a plane at all
-   * (`showPlane`), so the old `|| exploding` term could never change the artwork
-   * — and it kept the pitch (and therefore the containment guard) dependent on
-   * state declared further down the component.
+   * Only thrusting matters here: a CRASHED round either shows the 600ms fly-off
+   * or no plane at all (`showPlane`), and neither beats need a pitch — so the
+   * pitch (and therefore the containment guard) never depends on crash state.
    */
   const pitchDeg = thrusting ? flightPitchDegrees(progress, sceneBox) : 0;
 
@@ -523,11 +372,11 @@ function RoundRocketScene({
       `velocity ${inFlight ? velocityRef.current.toFixed(3) : '0.000'} progress/s`;
   }, [progress, shown, phase, roundId, left, top, debugTarget.left, debugTarget.top, inFlight]);
 
-  // Explosion stage. Mounting while the round is ALREADY crashed starts in
-  // 'aftermath', so refresh / reconnect / React remount never replay the blast.
+  // Fly-off stage. Mounting while the round is ALREADY crashed starts in
+  // 'gone', so refresh / reconnect / React remount never replay the fly-off.
   // The crash identity includes the round id so two consecutive rounds that
   // crash at the SAME multiplier still each play exactly once.
-  const [crashStage, setCrashStage] = useState<CrashStage>(crashed ? 'aftermath' : 'none');
+  const [crashStage, setCrashStage] = useState<CrashStage>(crashed ? 'gone' : 'none');
   /** True while this mount has seen the round NOT crashed (i.e. we watched it fly). */
   const sawFlightRef = useRef(inFlight);
   const sawBettingRef = useRef(phase === 'BETTING');
@@ -548,18 +397,19 @@ function RoundRocketScene({
     const key = `${roundId ?? 'live'}:${crashValue}`;
     if (crashKeyRef.current === key) return;
     crashKeyRef.current = key;
-    // Only a crash this mount actually SAW the round fly into plays the blast.
-    // Loading (or reconnecting / refreshing) into an already-crashed round goes
-    // straight to the frozen aftermath — never a replayed explosion, never a plane.
-    const watched = sawFlightRef.current;
-    setCrashStage(watched ? 'playing' : 'aftermath');
+    // Only a crash this mount actually SAW the round fly into plays the
+    // 600ms fly-off. Loading (or reconnecting) into an already-crashed round
+    // goes straight to 'gone' — never a replayed fly-off, never a plane.
+    // Reduced motion removes the plane instantly (no escape beat).
+    const watched = sawFlightRef.current && !reducedMotion;
+    setCrashStage(watched ? 'escaping' : 'gone');
   }, [crashed, crashMultiplier, roundId, reducedMotion]);
 
   useEffect(() => {
-    if (crashStage !== 'playing') return;
-    const timer = setTimeout(() => setCrashStage('aftermath'), reducedMotion ? 600 : 2600);
+    if (crashStage !== 'escaping') return;
+    const timer = setTimeout(() => setCrashStage('gone'), 600);
     return () => clearTimeout(timer);
-  }, [crashStage, reducedMotion]);
+  }, [crashStage]);
 
   // Display-only betting countdown. It ticks a LABEL; the round state itself
   // always comes from the server snapshot / WebSocket events.
@@ -576,11 +426,10 @@ function RoundRocketScene({
       ? Math.max(0, Math.ceil((bettingCloseAtMs - nowMs) / 1000))
       : null;
 
-  const exploding = crashStage === 'playing';
-  const aftermath = crashStage === 'aftermath';
-  // Keep the jet visible through the authoritative crash impact so the presentation
-  // matches the supplied Aviator-style reference: burning jet + fire/smoke.
-  const showPlane = true;
+  const flyingAway = crashStage === 'escaping';
+  // During the 600ms fly-off beat the plane stays mounted (animating out);
+  // once the stage settles to 'gone' a crashed round renders NO plane at all.
+  const showPlane = !crashed || flyingAway;
 
   // Parallax / recede amounts — plain functions of the SERVER-derived progress.
   const dustShift = travel * 74;
@@ -602,7 +451,7 @@ function RoundRocketScene({
   const exhaustOpacity = thrusting ? 0.35 + 0.65 * travel : 0;
 
   const statusText = crashed
-    ? `Crashed at ${shown.toFixed(2)}×`
+    ? `Flew away at ${shown.toFixed(2)}×`
     : cashedOut
       ? 'Cashed out — riding along'
       : flying
@@ -877,225 +726,36 @@ return (
                       ))
                     : null}
 
-                  {/* Cartoon airplane, side view, nose-RIGHT at rest — the trimmed
-                      transparent PNG (public/sky-rocket-plane-trim.png) so the
-                      element box hugs the artwork and it rotates around its real
-                      centre. Width is viewport-led: clamp(120px, 18vw, 260px)
-                      (see `.sr-plane` in app/sky-rocket-phase2.css) so the plane
-                      occupies the same share of the flight area as in the
-                      supplied reference on desktop AND on mobile. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element -- the plane
-                      is positioned/rotated/scaled with CSS transforms and measured
-                      in real pixels by the tests; next/image adds a wrapper element
-                      that would break that geometry for no benefit (the asset is a
-                      fixed-size local PNG with an alpha channel). */}
-                  <img
-                    src="/sky-rocket-reference-jet.png"
-                    alt="Sky Rocket airplane"
-                    className={`sr-plane sr-reference-jet relative block h-auto ${crashed ? 'sr-jet-burning' : ''}`}
-                    draggable={false}
-                  />
-                  {crashed ? (
-                    <span className="sr-jet-fire" aria-hidden>
-                      <span className="sr-jet-fire-core" />
-                      <span className="sr-jet-smoke sr-jet-smoke-a" />
-                      <span className="sr-jet-smoke sr-jet-smoke-b" />
-                    </span>
-                  ) : null}
+
                 </div>
               </div>
             </div>
           </div>
         ) : null}
 
-        {/* ---------- 8. CRASH — effects surrounding the crash point (z-20) ----------
-            Anchored at the SERVER crash position (the frozen crash multiplier, and
-            while flying at the served multiplier), clipped by the scene's
-            overflow-hidden so the explosion can never escape the game area.
-            These render with NO plane — a crashed round never mounts one. */}
-        {crashStage !== 'none' ? (
+        {/* ---------- 8. CRASH - "FLIES AWAY" beat (z-30) ----------
+            A LIVE crash this mount watched plays the 600ms fly-off: the ship
+            above carries `.sr-fly-away` (a pure transform/opacity escape to the
+            upper right; instant removal under reduced motion). The curve and HUD
+            freeze at the server crash value and only a few speed-streaks remain
+            where the plane fled. A mount that arrives already crashed (refresh /
+            reconnect) renders no plane and no beat at all. */}
+        {flyingAway ? (
           <div
-            className="pointer-events-none absolute z-20"
+            className="pointer-events-none absolute z-30"
             style={{ left: `${left}%`, top: `${top}%` }}
             aria-hidden
           >
-            {exploding ? (
-              <>
-                <span className="sr-impact-flare absolute left-0 top-0 block h-16 w-16 rounded-full bg-white" />
-                {/* Layer 4 — soft outer glow, slowest. Sized so the peak fireball
-                    (scale 2.3×, see sr-blast) stays inside a 390px-wide phone
-                    scene instead of swallowing the whole sky. */}
-                <span className="sr-blast-late absolute left-0 top-0 block h-44 w-44 rounded-full bg-orange-500/30 blur-2xl" />
-                {/* Layer 3 — red/orange outer flame */}
-                <span
-                  className="sr-blast absolute left-0 top-0 block h-36 w-36 rounded-full bg-orange-600/45 blur-lg"
-                  style={{ animationDelay: '40ms' }}
-                />
-                {/* Layer 2 — orange fireball */}
-                <span
-                  className="sr-blast absolute left-0 top-0 block h-32 w-32 rounded-full"
-                  style={
-                    {
-                      background:
-                        'radial-gradient(circle, #fff7d6 0%, #fbbf24 34%, #f97316 58%, rgba(239,68,68,0.4) 78%, rgba(239,68,68,0) 100%)',
-                      animationDelay: '20ms',
-                    } as CSSProperties
-                  }
-                />
-                {/* A second, offset fireball puff so the blast is not a perfect circle */}
-                <span
-                  className="sr-blast-late absolute left-0 top-0 block h-24 w-24 rounded-full bg-amber-400/70 blur-md"
-                  style={{ marginLeft: '-18px', marginTop: '-10px' }}
-                />
-                <span
-                  className="sr-blast-late absolute left-0 top-0 block h-20 w-20 rounded-full bg-rose-500/60 blur-md"
-                  style={{ marginLeft: '16px', marginTop: '12px', animationDelay: '220ms' }}
-                />
-
-                {/* Fire fragments thrown off the fireball */}
-                {FIRE_FRAGMENTS.map((fragment, i) => (
-                  <span
-                    key={`fragment-${i}`}
-                    className={`sr-fire-blob absolute left-0 top-0 block rounded-full ${
-                      i % 2 === 0 ? 'bg-orange-400/80' : 'bg-amber-300/80'
-                    } blur-[3px]`}
-                    style={
-                      {
-                        width: fragment.s,
-                        height: fragment.s,
-                        animationDelay: `${fragment.d}ms`,
-                        '--sr-tx': `${fragment.tx}px`,
-                        '--sr-ty': `${fragment.ty}px`,
-                      } as CSSProperties
-                    }
-                  />
-                ))}
-
-                {/* Shockwave — three rings in visibly separate pulses, plus one
-                    soft blurred pressure wave. */}
-                <span className="sr-ring absolute left-0 top-0 block h-24 w-24 rounded-full border-[3px] border-orange-100/90" />
-                <span className="sr-ring-2 absolute left-0 top-0 block h-24 w-24 rounded-full border-2 border-amber-200/75" />
-                <span className="sr-ring-3 absolute left-0 top-0 block h-24 w-24 rounded-full border border-orange-200/50 blur-[1px]" />
-                <span className="sr-ring-2 absolute left-0 top-0 block h-20 w-20 rounded-full bg-white/15 blur-md" />
-              </>
-            ) : null}
-
-            {/* Fire particles (~18) thrown outward from the impact. */}
-            {exploding
-              ? FIRE_PARTICLES.map((spark, i) => (
-                  <span
-                    key={`spark-${i}`}
-                    className="sr-spark absolute left-0 top-0 block rounded-full"
-                    style={
-                      {
-                        width: spark.s,
-                        height: spark.s,
-                        backgroundColor:
-                          i % 3 === 0 ? '#fef3c7' : i % 3 === 1 ? '#fbbf24' : '#fb923c',
-                        boxShadow: '0 0 6px rgba(251,146,60,0.9)',
-                        animationDelay: `${spark.d}ms`,
-                        '--sr-tx': `${spark.tx}px`,
-                        '--sr-ty': `${spark.ty}px`,
-                      } as CSSProperties
-                    }
-                  />
-                ))
-              : null}
-
-            {/* Smoke — dark, rising, expanding, and it LINGERS (the keyframe ends
-                at a small opacity so the aftermath does not blink out). */}
-            {exploding
-              ? SMOKE.map((puff, i) => (
-                  <span
-                    key={`smoke-${i}`}
-                    className="sr-smoke absolute left-0 top-0 block h-12 w-12 rounded-full bg-slate-500/45 blur-md"
-                    style={
-                      {
-                        animationDelay: `${puff.d}ms`,
-                        '--sr-tx': `${puff.tx}px`,
-                        '--sr-ty': `${puff.ty}px`,
-                        '--sr-scale': puff.s,
-                      } as CSSProperties
-                    }
-                  />
-                ))
-              : null}
-
-            {/* Debris — scattered, rotating, falling. */}
-            {exploding
-              ? DEBRIS.map((bit, i) => (
-                  <span
-                    key={`debris-${i}`}
-                    className={`sr-debris absolute left-0 top-0 block rounded-[1px] ${bit.c}`}
-                    style={
-                      {
-                        width: bit.w,
-                        height: bit.h,
-                        animationDelay: `${bit.d}ms`,
-                        '--sr-tx': `${bit.tx}px`,
-                        '--sr-ty': `${bit.ty}px`,
-                      } as CSSProperties
-                    }
-                  />
-                ))
-              : null}
-
-            {/* Frozen crash aftermath — static (no animation), so it reads exactly
-                the same for reduced-motion users, on refresh and after reconnect.
-                Deliberately NO plane and NO wreckage: fire glow, smoke and generic
-                debris only. */}
-            {aftermath ? (
-              <>
-                {/* Smouldering glow at the crash point */}
-                <span className="sr-aftermath-glow absolute left-0 top-0 block h-48 w-48 rounded-full bg-orange-700/25 blur-2xl" />
-                <span className="sr-aftermath-glow absolute left-0 top-0 block h-24 w-24 rounded-full bg-amber-500/20 blur-xl" />
-                <span className="sr-aftermath-glow absolute left-0 top-0 block h-10 w-10 rounded-full bg-red-500/25 blur-md" />
-                {/* Static smoke plumes */}
-                {AFTERMATH_SMOKE.map((puff, i) => (
-                  <span
-                    key={`after-smoke-${i}`}
-                    data-sr-aftermath-smoke
-                    className="absolute left-0 top-0 block rounded-full bg-slate-500/25 blur-md"
-                    style={{
-                      width: puff.s,
-                      height: puff.s,
-                      marginLeft: puff.tx,
-                      marginTop: puff.ty,
-                    }}
-                  />
-                ))}
-                {/* Static scattered debris (generic — not plane parts) */}
-                {AFTERMATH_DEBRIS.map((bit, i) => (
-                  <span
-                    key={`after-debris-${i}`}
-                    data-sr-aftermath-debris
-                    className="absolute left-0 top-0 block h-2 w-1.5 rounded-[1px] bg-slate-300/60"
-                    style={{
-                      transform: `translate(${bit.tx}px, ${bit.ty}px) rotate(${i * 47}deg)`,
-                    }}
-                  />
-                ))}
-              </>
-            ) : null}
-          </div>
-        ) : null}
-
-{/* ---------- 9. CRASH CORE — the white-hot centre of the blast (z-30).
-            A crashed round mounts no plane, so from the very first crashed frame
-            this is fire / smoke / debris ONLY — no plane silhouette remains. */}
-        {exploding ? (
-          <div className="pointer-events-none absolute z-30" style={{ left: `${left}%`, top: `${top}%` }} aria-hidden>
+            <span className="sr-fly-streak absolute left-0 top-0 block rounded-full" style={{ width: 64 }} />
             <span
-              className="sr-blast absolute left-0 top-0 block h-16 w-16 rounded-full bg-white"
-              style={{ animationDelay: '60ms' }}
+              className="sr-fly-streak absolute left-0 top-0 block rounded-full"
+              style={{ width: 40, animationDelay: '90ms', opacity: 0.5 }}
             />
-            <span className="sr-blast absolute left-0 top-0 block h-24 w-24 rounded-full bg-yellow-200/80 blur-sm" />
+            <span
+              className="sr-fly-streak absolute left-0 top-0 block rounded-full"
+              style={{ width: 28, animationDelay: '180ms', opacity: 0.35 }}
+            />
           </div>
-        ) : null}
-
-        {/* ---------- 10. Detonation flash across the whole scene ---------- */}
-        {exploding ? (
-          <span className="sr-flash pointer-events-none absolute inset-0 z-40 block bg-orange-50" aria-hidden />
         ) : null}
 
         {/* ---------- 11. HUD: the big multiplier ----------

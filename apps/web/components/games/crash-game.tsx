@@ -355,7 +355,7 @@ export function SkyRocketGame() {
           ? 'BETTING'
           : 'IDLE';
   return (
-    <div className="sr-aviator-shell w-full">
+    <div className="sr-game-shell w-full">
       <div className="sr-game-topbar flex items-center px-3">
         <Link href="/games" className="sr-game-brand" aria-label="Back to games">Sky Rocket</Link>
         <span className="sr-game-balance" aria-label="Game currency">

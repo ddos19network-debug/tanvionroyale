@@ -1,6 +1,7 @@
-import { SkyRocketChrome } from '@/components/games/sky-rocket-chrome';
+"use client";
 
 import { AppHeader } from '@/components/layout/app-header';
+import { usePathname } from 'next/navigation';
 
 /**
  * Shared layout for EVERY TANVIONROYALE user-panel route.
@@ -34,13 +35,16 @@ import { AppHeader } from '@/components/layout/app-header';
  * content area at 100% of the width available next to the desktop sidebar.
  */
 export default function UserPanelLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  // Hide the top navigation during full-screen gameplay so the game gets the
+  // entire display. Game play pages live under /games/play/<slug>.
+  const isGamePlay = pathname.startsWith("/games/play/");
+
   return (
     <>
-      {/* Top navigation: rendered ONCE here for the whole user panel. Hidden on
-          the dedicated Sky Rocket board for the fullscreen game shell. */}
-      <SkyRocketChrome>
-        <AppHeader />
-      </SkyRocketChrome>
+      {/* Top navigation: rendered ONCE here for the whole user panel.
+          Hidden on game-play pages for a full-screen, immersive game shell. */}
+      {!isGamePlay && <AppHeader />}
 
       {/* Full-width content column — pages own the inner <main>. */}
       <div className="w-full min-w-0 flex-1">{children}</div>

@@ -1,6 +1,12 @@
 'use client';
 
-import type { FreePlayResultView } from '@/lib/api/games';
+import { useCallback, useEffect, useState } from 'react';
+import { describeApiError } from '@/lib/api/client';
+import {
+  getFreePlayPoints,
+  type FreePlayPointsView,
+  type FreePlayResultView,
+} from '@/lib/api/games';
 
 /** Clearly labelled free-play disclaimer. Never shown as real-money gambling. */
 export function FreePlayBanner() {
@@ -16,7 +22,89 @@ export function FreePlayBanner() {
   );
 }
 
-/** Small shared inbox for a finished free-play round. */
+/**
+ * Shared free-play points hook — the ONE read path for demo points.
+ *
+ * Points live in the server `CrashFreePlayWallet` ledger (FREEPLAY currency,
+ * no cash value) and are only ever set from GET /games/crash/free-play/points.
+ * Never mutated client-side; failures surface as an explicit error, never zero.
+ */
+export function useFreePlayPoints(enabled: boolean): {
+  points: FreePlayPointsView | null;
+  pointsError: string | null;
+  pointsLoading: boolean;
+  refreshPoints: () => Promise<void>;
+} {
+  const [points, setPoints] = useState<FreePlayPointsView | null>(null);
+  const [pointsError, setPointsError] = useState<string | null>(null);
+  const [pointsLoading, setPointsLoading] = useState(false);
+
+  const refreshPoints = useCallback(async (): Promise<void> => {
+    setPointsLoading(true);
+    try {
+      const view = await getFreePlayPoints();
+      setPoints(view);
+      setPointsError(null);
+    } catch (e) {
+      setPoints(null);
+      setPointsError(describeApiError(e));
+    } finally {
+      setPointsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let alive = true;
+    void (async () => {
+      setPointsLoading(true);
+      try {
+        const view = await getFreePlayPoints();
+        if (alive) {
+          setPoints(view);
+          setPointsError(null);
+        }
+      } catch (e) {
+        if (alive) {
+          setPoints(null);
+          setPointsError(describeApiError(e));
+        }
+      } finally {
+        if (alive) setPointsLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [enabled]);
+
+  return { points, pointsError, pointsLoading, refreshPoints };
+}
+
+/** Compact points chip used by every free-play game header (never money). */
+export function FreePlayPointsChip({
+  points,
+  pointsError,
+  pointsLoading,
+  testId = 'freeplay-points-chip',
+}: {
+  points: FreePlayPointsView | null;
+  pointsError: string | null;
+  pointsLoading: boolean;
+  testId?: string;
+}): JSX.Element {
+  return (
+    <span
+      className="flex items-center gap-1 rounded-full bg-ink-900 px-2 py-1 text-[10px] font-bold text-emerald-300"
+      data-testid={testId}
+      title="Free-play points (practice only — no cash value)"
+    >
+      <span className="uppercase tracking-wide text-slate-400">Pts</span>
+      {pointsLoading ? '…' : pointsError || !points ? '—' : points.points.toLocaleString()}
+    </span>
+  );
+}
+
 export function FreePlayInbox({
   message,
   score,

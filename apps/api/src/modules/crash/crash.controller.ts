@@ -11,6 +11,8 @@ import { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CrashService } from './crash.service';
+import { CrashFreePlayWalletService } from './crash-freeplay-wallet.service';
+import { CRASH_FREE_PLAY_CURRENCY } from './crash.types';
 import {
   CashOutCrashBetDto,
   CrashHistoryQueryDto,
@@ -21,7 +23,37 @@ import {
 
 @Controller('games/crash')
 export class CrashController {
-  constructor(private readonly crash: CrashService) {}
+  constructor(
+    private readonly crash: CrashService,
+    private readonly freePlayWallet: CrashFreePlayWalletService,
+  ) {}
+
+  /**
+   * The caller's FREE-PLAY points balance.
+   *
+   * This is the ONLY way the frontend may read demo points. The points ledger
+   * (`CrashFreePlayWallet` / `CrashFreePlayTransaction`) is a completely
+   * separate, append-only ledger from the real-money `Wallet` — different
+   * table, different currency code, no deposit or withdrawal path — so this
+   * value must never be rendered next to, or mistaken for, a real balance.
+   *
+   * The wallet row is created on first read so a brand-new account reports the
+   * configured starting points instead of a misleading zero.
+   */
+  @Get('free-play/points')
+  async getFreePlayPoints(@CurrentUser() user: AuthenticatedUser) {
+    const wallet = await this.freePlayWallet.getOrCreateWallet(user.id);
+
+    return {
+      points: wallet.balance,
+      currency: CRASH_FREE_PLAY_CURRENCY,
+      /*
+       * An explicit marker so the client can never accidentally treat this
+       * number as money.
+       */
+      mode: 'FREE_PLAY',
+    };
+  }
 
   /** Authoritative snapshot — the reconnect/resume mechanism. */
   @Get('current')

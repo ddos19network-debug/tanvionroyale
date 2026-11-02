@@ -1,0 +1,7 @@
+
+> @tanvion-royale/api@0.1.0 start D:\tanvionroyale\apps\api
+> nest start
+
+Found 2 error(s).
+
+ ELIFECYCLE  Command failed with exit code 1.

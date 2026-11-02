@@ -1,0 +1,7 @@
+At line:1 char:30
++ cd d:\tanvionroyale\apps\api && pnpm build
++                              ~~
+The token '&&' is not a valid statement separator in this version.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : InvalidEndOfLine
+ 

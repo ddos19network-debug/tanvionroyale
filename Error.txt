@@ -1,0 +1,9 @@
+[96msrc/modules/auth/auth.controller.ts[0m:[93m10[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module './oauth.service' or its corresponding type declarations.
+
+[7m10[0m import { OAuthService } from './oauth.service';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.module.ts[0m:[93m7[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module './oauth.service' or its corresponding type declarations.
+
+[7m7[0m import { OAuthService } from "./oauth.service";
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~[0m
+

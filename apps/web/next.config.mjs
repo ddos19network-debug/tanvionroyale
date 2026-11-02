@@ -1,7 +1,15 @@
 /** @type {import('next').NextConfig} */
+import path from 'path';
+
+const __dirname = path.dirname(import.meta.url);
+
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@tanvion-royale/types', '@tanvion-royale/validation', '@tanvion-royale/config', '@tanvion-royale/ui'],
+  webpack: (config) => {
+    config.resolve.alias['@ui'] = path.resolve(__dirname, '../packages/ui/dist');
+    return config;
+  },
   // NOTE: this app never proxies /api through Next.js -- every API call goes
   // directly to the absolute NEXT_PUBLIC_API_URL resolved lazily by the API
   // client (apps/web/lib/api/client.ts). There is deliberately NO localhost

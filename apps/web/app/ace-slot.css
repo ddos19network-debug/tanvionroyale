@@ -1,0 +1,458 @@
+/**
+ * TANVION ROYALE — Royale Ace presentation layer (ORIGINAL art direction:
+ * royal casino night — candle gold on midnight velvet, ivory cards, aurora
+ * accent for the free-spins feature). No third-party game's art, layout or
+ * name is referenced or imitated.
+ *
+ * Performance rules (60fps on mid phones):
+ *   - every keyframe animates ONLY `transform` and/or `opacity`;
+ *   - no layout-triggering properties (width/height/top/left/filter);
+ *   - glows use a scaled radial-gradient pseudo-element, never box-shadow
+ *     animation.
+ *
+ * Timings are injected from React via CSS custom properties
+ * (--ace-spin-ms, --ace-stagger-ms …) so turbo / reduced-motion collapse
+ * lives in ONE place: lib/ace-replay.ts (aceReplayTimings).
+ */
+
+/* ---------------------------------------------------------------------------
+ * Reel spin streaks with staggered stop.
+ *
+ * Each reel column gets a streak layer whose animation duration is
+ * calc(spin + i * stagger) — reel 0 stops first, reel 4 last. The keyframes
+ * decelerate (ease-out) and fade the streak off at the end, revealing the
+ * settled server grid underneath. transform + opacity only.
+ * ------------------------------------------------------------------------- */
+@keyframes ace-reel-streak {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.95;
+    animation-timing-function: linear;
+  }
+  70% {
+    /* 3 of 4 screens scrolled at constant speed */
+    transform: translate3d(0, -60%, 0);
+    opacity: 0.9;
+    /* final 30% decelerates hard: staggered "stop" feel */
+    animation-timing-function: cubic-bezier(0.12, 0.72, 0.2, 1);
+  }
+  92% {
+    transform: translate3d(0, -78.4%, 0);
+    opacity: 0.5;
+  }
+  100% {
+    /* 4 screens = content height − one column: lands exactly on the last set */
+    transform: translate3d(0, -80%, 0);
+    opacity: 0;
+  }
+}
+
+.ace-streak {
+  animation: ace-reel-streak
+    calc(
+      var(--ace-spin-ms, 460ms) + var(--ace-reel-i, 0) *
+        var(--ace-stagger-ms, 95ms)
+    )
+    both;
+}
+
+/* ---------------------------------------------------------------------------
+ * Cascade DROP: survivors drop + new cells fall from the top. Per-row delay
+ * sells the "cards raining in" feel without any JS per-cell work.
+ * ------------------------------------------------------------------------- */
+@keyframes ace-drop-in {
+  0% {
+    transform: translate3d(0, -135%, 0) scale(0.96);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+.ace-drop {
+  animation: ace-drop-in var(--ace-drop-ms, 320ms)
+    cubic-bezier(0.2, 0.8, 0.25, 1) both;
+  animation-delay: calc(var(--ace-row, 0) * 26ms + var(--ace-reel-i, 0) * 12ms);
+}
+
+/* ---------------------------------------------------------------------------
+ * Cascade BURST: winning cells pop and fade out before the drop.
+ * ------------------------------------------------------------------------- */
+@keyframes ace-burst {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+  35% {
+    transform: translate3d(0, 0, 0) scale(1.22);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, -24%, 0) scale(0.35);
+    opacity: 0;
+  }
+}
+
+.ace-burst {
+  animation: ace-burst var(--ace-burst-ms, 240ms) cubic-bezier(0.3, 0.9, 0.4, 1)
+    both;
+}
+
+/* ---------------------------------------------------------------------------
+ * Golden-card shimmer: a soft light sweep across the ivory face. The sweep is
+ * a translated pseudo-element inside an overflow-hidden card (transform only).
+ * ------------------------------------------------------------------------- */
+@keyframes ace-shimmer-sweep {
+  0% {
+    transform: translate3d(-130%, 0, 0) skewX(-18deg);
+  }
+  100% {
+    transform: translate3d(230%, 0, 0) skewX(-18deg);
+  }
+}
+
+.ace-golden::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  overflow: hidden;
+  border-radius: inherit;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    rgb(var(--ra-gold) / 0.55) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: ace-shimmer-sweep 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * Wild / Scatter glow: a scaled radial-gradient halo (no box-shadow paint).
+ * ------------------------------------------------------------------------- */
+@keyframes ace-halo-pulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.86);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.18);
+    opacity: 0.95;
+  }
+}
+
+.ace-wild::before,
+.ace-scatter::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 160%;
+  height: 160%;
+  border-radius: 9999px;
+  pointer-events: none;
+  animation: ace-halo-pulse 1.7s ease-in-out infinite;
+}
+
+.ace-wild::before {
+  background: radial-gradient(
+    circle,
+    rgb(var(--ra-gold) / 0.6) 0%,
+    rgb(var(--ra-gold) / 0) 68%
+  );
+}
+
+.ace-scatter::before {
+  background: radial-gradient(
+    circle,
+    rgb(var(--ra-accent) / 0.6) 0%,
+    rgb(var(--ra-accent) / 0) 68%
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * Win highlight ring on winning cells (STEP phase, before the burst).
+ * ------------------------------------------------------------------------- */
+@keyframes ace-win-ring {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+.ace-win {
+  animation: ace-win-ring 0.9s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------------------
+ * Multiplier ladder: the current rung glows forward. transform/opacity only.
+ * ------------------------------------------------------------------------- */
+@keyframes ace-rung-active {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+.ace-rung-active {
+  animation: ace-rung-active 1.2s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------------------
+ * Branded loading bar sweep.
+ * ------------------------------------------------------------------------- */
+@keyframes ace-load-sweep {
+  0% {
+    transform: translate3d(-110%, 0, 0);
+  }
+  100% {
+    transform: translate3d(320%, 0, 0);
+  }
+}
+
+.ace-load-sweep {
+  animation: ace-load-sweep 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ---------------------------------------------------------------------------
+ * Free-spins intro card entrance.
+ * ------------------------------------------------------------------------- */
+@keyframes ace-intro-pop {
+  0% {
+    transform: scale(0.82);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.ace-intro-pop {
+  animation: ace-intro-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+/* ---------------------------------------------------------------------------
+ * prefers-reduced-motion: park every Royale Ace effect on a clearly visible
+ * STATIC state. The blanket global rule collapses durations to 0.01ms (which
+ * would park transient effects on an invisible end frame); these higher
+ * specificity, later rules pin meaningful stills instead — exactly like the
+ * Sky Rocket block in globals.css. Motion stops, STATE never does.
+ * ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .ace-streak,
+  .ace-drop,
+  .ace-burst,
+  .ace-win,
+  .ace-rung-active,
+  .ace-load-sweep,
+  .ace-intro-pop,
+  .ace-golden::after {
+    animation: none !important;
+  }
+
+  /* Streaks simply do not exist; the settled grid is always visible. */
+  .ace-streak {
+    opacity: 0 !important;
+  }
+
+  /* Cells render at their final position — no fall, no burst. */
+  .ace-drop,
+  .ace-burst {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Bursting cells must still disappear (they are leaving the grid). */
+  .ace-burst {
+    opacity: 0 !important;
+  }
+
+  /* Glows stay lit but static (the wild/scatter STATE remains visible). */
+  .ace-wild::before,
+  .ace-scatter::before {
+    animation: none !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+    opacity: 0.75 !important;
+  }
+
+  .ace-golden::after {
+    opacity: 0 !important;
+  }
+
+  .ace-win,
+  .ace-rung-active {
+    transform: none !important;
+  }
+
+  .ace-load-sweep {
+    transform: none !important;
+    opacity: 1 !important;
+    width: 100% !important;
+  }
+
+  .ace-intro-pop {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Loading screen: sunburst radial background + floating gold coins (OUR art).
+ * transform/opacity only (no layout props) so it stays on the compositor.
+ * ------------------------------------------------------------------------- */
+.ace-sunburst {
+  background:
+    radial-gradient(
+      circle at 50% 38%,
+      rgb(var(--ra-table) / 0.95) 0%,
+      rgb(var(--ra-bg-deep)) 62%
+    ),
+    repeating-conic-gradient(
+      from 0deg at 50% 38%,
+      rgb(var(--ra-gold) / 0.06) 0deg 6deg,
+      transparent 6deg 12deg
+    );
+}
+
+@keyframes ace-coin-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) rotate(8deg);
+  }
+}
+
+.ace-coin {
+  animation: ace-coin-float 3.4s ease-in-out infinite;
+
+/* ---------------------------------------------------------------------------\n * SPIN exit: previous grid drops OUT downward, column by column left-to-right.\n * ------------------------------------------------------------------------- */\n@keyframes ace-exit {\n  0% { transform: translate3d(0, 0, 0); opacity: 1; }\n  100% { transform: translate3d(0, 115%, 0); opacity: 0; }\n}\n.ace-exit {\n  animation: ace-exit 240ms cubic-bezier(0.4, 0, 1, 1) both;\n  animation-delay: calc(var(--ace-reel-i, 0) * 50ms + (3 - var(--ace-row, 0)) * 25ms);\n}\n/* ---------------------------------------------------------------------------\n * SPIN enter: new grid falls in from above, column by column left-to-right.\n * ------------------------------------------------------------------------- */\n@keyframes ace-enter {\n  0% { transform: translate3d(0, -130%, 0) scale(0.97); opacity: 0; }\n  70% { transform: translate3d(0, 3%, 0) scale(1); opacity: 1; }\n  100% { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }\n}\n.ace-enter {\n  animation: ace-enter 380ms cubic-bezier(0.2, 0.8, 0.25, 1) both;\n  animation-delay: calc(520ms + var(--ace-reel-i, 0) * var(--ace-stagger-ms, 90ms) + (3 - var(--ace-row, 0)) * 40ms);\n}\n
+  box-shadow: inset 0 0 0 2px rgb(var(--ra-gold-dark) / 0.5);
+}
+
+/* Coin rain for the big-win overlay (transform/opacity only). */
+@keyframes ace-coin-rain {
+  0% {
+    transform: translate3d(0, -20px, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 110vh, 0) rotate(220deg);
+    opacity: 0.9;
+  }
+}
+
+div[data-testid="ace-bigwin"] .ace-coin {
+  animation: ace-coin-rain 2.6s linear infinite;
+}
+
+/* ---------------------------------------------------------------------------
+ * Multiplier ribbon: the active rung pulses forward. transform/opacity only.
+ * ------------------------------------------------------------------------- */
+@keyframes ace-ribbon-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.ace-ribbon-active {
+  animation: ace-ribbon-pulse 1.1s ease-in-out infinite;
+  box-shadow: 0 0 12px rgb(var(--ra-gold) / 0.7);
+}
+
+/* Marquee for long idle hint lines (transform only). */
+@keyframes ace-marquee-scroll {
+  0% {
+    transform: translateX(60%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.ace-marquee {
+  animation: ace-marquee-scroll 14s linear infinite;
+  padding-left: 100%;
+}
+
+/* BUY BONUS badge: a soft attention pulse (transform/opacity only). */
+@keyframes ace-buy-bonus-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.ace-buy-bonus {
+  animation: ace-buy-bonus-pulse 2.2s ease-in-out infinite;
+}
+
+/* Combo banner (COMBO 1, COMBO 2, ...) entrance at the top of the board. */
+@keyframes ace-combo-pop {
+  0% {
+    transform: translate3d(0, -8px, 0) scale(0.9);
+    opacity: 0;
+  }
+  60% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+.ace-combo {
+  animation: ace-combo-pop 0.4s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ace-coin,
+  .ace-ribbon-active,
+  .ace-marquee,
+  .ace-buy-bonus,
+  .ace-combo,
+  div[data-testid="ace-bigwin"] .ace-coin {
+    animation: none !important;
+  }
+
+  /* The marquee still shows its full text; the combo banner still shows. */
+  .ace-marquee {
+    transform: none !important;
+    padding-left: 0 !important;
+  }
+  .ace-combo {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}

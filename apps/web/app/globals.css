@@ -1,5 +1,3 @@
-@import './sky-rocket-phase2.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -601,3 +599,215 @@ textarea:focus-visible {
     transform: translate(-50%, -50%) scale(1.2) !important;
   }
 }
+
+/* ===========================================================================
+ * Royale Ace — 3D Classic Casino Reel Spinning Engine (Top-to-Bottom Drop)
+ * Drives high-fidelity staggered cascading drops mapping physical cell updates.
+ * =========================================================================== */
+
+@keyframes aceReelSpinDrop {
+  0% {
+    transform: translateY(-100%);
+    filter: blur(4px);
+  }
+  85% {
+    transform: translateY(4%);
+  }
+  100% {
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* স্পিন রানিং ফেজে প্রতিটি রিল এক এক করে ওপর থেকে নিচে নামবে */
+.ace-enter {
+  animation: aceReelSpinDrop
+    var(--ace-spin-ms, 740ms)
+    cubic-bezier(0.25, 1, 0.5, 1)
+    forwards;
+  animation-delay: calc(var(--ace-reel-i, 0) * var(--ace-stagger-ms, 90ms));
+  will-change: transform, filter;
+}
+
+/* ক্যাসিনো স্ট্রিপ রানিং ব্লার ওভারলে */
+.ace-streak {
+  animation: aceReelSpinDrop var(--ace-spin-ms, 500ms) linear infinite;
+  filter: blur(3px);
+  opacity: 0.75;
+}
+
+/* গোল্ডেন কার্ডের জন্য গর্জিয়াস ব্রিদিং গ্লো */
+@keyframes ra-gold-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(246, 210, 122, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(246, 210, 122, 0.8);
+  }
+}
+.ace-card--golden-active {
+  animation: ra-gold-glow 2s ease-in-out infinite;
+}
+
+/* Respect reduced-motion preferences for Royale Ace animations */
+@media (prefers-reduced-motion: reduce) {
+  .ace-enter {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+  .ace-streak {
+    animation: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+  .ace-card--golden-active {
+    animation: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ===========================================================================
+ * REALISTIC CASINO SLOT MACHINE MECHANICS — KEYFRAMES
+ * =========================================================================== */
+
+/* ১. ঘূর্ণন ও গতি কমার কিফ্রেম (Deceleration Loop) */
+@keyframes aceReelSpinCycle {
+  0% {
+    transform: translateY(-33.333%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+/* ২. চূড়ান্ত ল্যান্ডিং ও ইলাস্টিক বাউন্স (Final Snap with Bounce) */
+@keyframes aceReelSnapBounce {
+  0% {
+    transform: translateY(-100%);
+    filter: blur(4px);
+  }
+  75% {
+    transform: translateY(12px); /* নিচে অতিরিক্ত নেমে বাউন্স করবে */
+    filter: blur(0);
+  }
+  90% {
+    transform: translateY(-4px); /* সামঞ্জস্য করতে একটু ওপরে উঠবে */
+  }
+  100% {
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* ৩. ক্যাসকেড ড্রপ কাইনেটিক বাউন্স */
+@keyframes aceCascadeDrop {
+  0% { transform: translateY(-100%); }
+  70% { transform: translateY(8px); }
+  100% { transform: translateY(0); }
+}
+
+/* --- এক্সিকিউশন ক্লাসেস (Execution CSS Classes) --- */
+
+/* Spin শুরু ও দ্রুত ঘূর্ণন + Motion Blur */
+.ace-reel-spinning {
+  animation: aceReelSpinCycle 160ms linear infinite;
+  filter: blur(3px) brightness(1.1);
+  will-change: transform, filter;
+}
+
+/* Sequential Stop + Deceleration Curve + Final Snap */
+.ace-reel-stopping {
+  animation: aceReelSnapBounce var(--ace-snap-duration, 500ms) cubic-bezier(0.25, 1.1, 0.5, 1.1) forwards;
+  will-change: transform, filter;
+}
+
+/* Cascade ল্যান্ডিং ক্লাস */
+.ace-drop-active {
+  animation: aceCascadeDrop 350ms cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards;
+  animation-delay: calc(var(--ace-row) * 40ms);
+}
+
+/* Royale Ace - Top to Bottom Drop Animation Matrix Rules (User keyframes) */
+
+@keyframes slotDropTopToBottom {
+  0% {
+    transform: translateY(-100%);
+    filter: blur(3px); /* উপর থেকে নামার সময় মোশন ব্লার তৈরি করবে */
+  }
+  100% {
+    transform: translateY(100%);
+    filter: blur(2px);
+  }
+}
+
+@keyframes slotSnapLandingBounce {
+  0% { transform: translateY(-10%); }
+  50% { transform: translateY(3%); }
+  100% { transform: translateY(0); }
+}
+
+/* কাস্টম ইউটিলিটি ক্লাস সমূহ */
+.animate-slot-drop {
+  animation: slotDropTopToBottom 0.1s linear infinite;
+}
+
+.animate-slot-snap {
+  animation: slotSnapLandingBounce 0.22s cubic-bezier(0.25, 0.8, 0.25, 1.2) forwards;
+}
+
+/* ==========================================================================
+   MASTER-CLASS CASINO SLOT ENGINE ANIMATION SYSTEM (TOP-TO-BOTTOM ARCHITECTURE)
+   ========================================================================== */
+
+@keyframes masterSpinLoop {
+  0% { transform: translateY(-50%); }
+  100% { transform: translateY(50%); }
+}
+
+@keyframes masterDeceleration {
+  0% { transform: translateY(-30%); }
+  100% { transform: translateY(0%); }
+}
+
+@keyframes masterElasticSnapBounce {
+  0% { transform: translateY(-12%); }
+  50% { transform: translateY(4%); }
+  75% { transform: translateY(-1.5%); }
+  100% { transform: translateY(0); }
+}
+
+.animate-master-spin-loop {
+  animation: masterSpinLoop 0.1s linear infinite;
+}
+
+.animate-master-deceleration {
+  animation: masterDeceleration 0.15s cubic-bezier(0.215, 0.610, 0.355, 1) forwards;
+}
+
+.animate-master-snap-bounce {
+  animation: masterElasticSnapBounce 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Gold celebration particles */
+@keyframes goldRainAnimation {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* Fade-in effect */
+@keyframes fadeInEffect {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-gold-rain {
+  animation: goldRainAnimation 1.8s linear infinite;
+}
+
+.animate-fade-in {
+  animation: fadeInEffect 0.2s ease-out forwards;
+}
+

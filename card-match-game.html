@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Match Game</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #2d6a4f;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #fff; min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16px;
+}
+.header { text-align: center; margin-bottom: 12px; }
+.header h1 { margin: 0; font-size: 1.9rem; text-shadow: 0 2px 6px rgba(0,0,0,.45); letter-spacing: 1px; }
+.header p { margin: 4px 0 0; opacity: .92; font-size: .95rem; }
+.stats { display: flex; gap: 18px; justify-content: center; margin-bottom: 10px; font-size: 1rem; opacity: .95; }
+.stats b { color: #ffe066; }
+.board {
+  display: grid; grid-template-columns: repeat(4, 104px);
+  gap: 12px; perspective: 900px;
+  margin-bottom: 16px; justify-content: center;
+}
+.card {
+  width: 104px; height: 144px; position: relative;
+  cursor: pointer; transform-style: preserve-3d;
+  transform: rotateY(180deg); transition: transform .42s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,.4);
+}
+.card.flipped { transform: rotateY(0deg); }
+.card.matched { border-color: #2ecc71; opacity: .86; transform: rotateY(0deg); }
+.card:disabled { cursor: default; }
+.face, .back {
+  position: absolute; inset: 0; border-radius: 10px;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  padding: 8px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  border: 2px solid #888; background: #fff;
+}
+.back { transform: rotateY(180deg);
+  background: linear-gradient(145deg, #1e5f3a, #2d6a4f);
+  background-image: var(--back-img); background-size: 26px 26px;
+  background-repeat: repeat; border-color: #555;
+}
+.rank { font-weight: 900; font-size: 1.5rem; line-height: 1; }
+.suit.big { font-size: 2.1rem; margin: 2px 0 4px; line-height: 1; }
+.ace-text { font-size: 1.25rem; font-weight: 800; letter-spacing: 1px; }
+.red { color: #c00; } .black { color: #111; }
+.corner { position: absolute; top: 6px; left: 7px; font-size: 1.15rem; font-weight: 900; line-height: 1; }
+.corner.bottom { top: auto; bottom: 7px; left: auto; right: 7px; transform: rotate(180deg); }
+.controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+button {
+  padding: 10px 20px; font-size: 1rem; border: none; border-radius: 8px;
+  cursor: pointer; font-weight: 700; color: #fff;
+  background: linear-gradient(145deg, #e67e22, #d35400);
+  box-shadow: 0 3px 8px rgba(0,0,0,.35);
+}
+button:hover { filter: brightness(1.12); }
+button:active { transform: translateY(1px); }
+button.secondary { background: linear-gradient(145deg, #5d6d7e, #34495e); }
+#msg { margin-top: 12px; font-size: 1.05rem; font-weight: 700; height: 1.4em; text-align: center; }
+.win-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column; gap: 14px; z-index: 50;
+}
+.win-overlay .win-box { background: #fff; color: #2d6a4f; padding: 26px 34px;
+  border-radius: 14px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+.win-overlay h2 { margin: 0 0 8px; font-size: 1.8rem; color: #e67e22; }
+@media (max-width: 520px) {
+  .board { grid-template-columns: repeat(3, 92px); gap: 10px; }
+  .card { width: 92px; height: 128px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Card Match Game</h1>
+  <p>Flip two cards at a time — find the matching pairs!</p>
+</div>
+<div class="stats">Moves: <b id="moves">0</b> &bull; Pairs: <b id="pairs">0</b>/<b id="total">8</b></div>
+<div class="board" id="board"></div>
+<div class="controls">
+  <button id="newBtn">New Game</button>
+  <button class="secondary" id="shuffleBtn">Shuffle</button>
+</div>
+<div id="msg"></div>
+
+<div class="win-overlay" id="win">
+  <div class="win-box">
+    <h2>You Win!</h2>
+    <p id="winMsg"></p>
+    <button onclick="closeWin()">Play Again</button>
+  </div>
+</div>
+
+<script>
+const SUITS = { spade: { sym: '\u2660', name: 'Spade', color: 'black' }, heart: { sym: '\u2665', name: 'Heart', color: 'red' } };
+const RANKS = [
+  { id: 'A♠', rank: 'ACE', suit: 'spade',  face: 'ACE' },
+  { id: 'K♥', rank: 'K',   suit: 'heart',  face: 'K' },
+  { id: 'Q♥', rank: 'Q',   suit: 'heart',  face: 'Q' },
+  { id: 'J♥', rank: 'J',   suit: 'heart',  face: 'J' },
+  { id: 'A♥', rank: 'ACE', suit: 'heart',  face: 'ACE' },
+  { id: 'K♠', rank: 'K',   suit: 'spade',  face: 'K' },
+  { id: 'Q♠', rank: 'Q',   suit: 'spade',  face: 'Q' },
+  { id: 'J♠', rank: 'J',   suit: 'spade',  face: 'J' }
+];
+const PAIRS = 8;
+const backImg = 'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2230%22 text-anchor=%22middle%22 dominant-baseline=%22central%22 fill=%22rgba(255,255,255,.18)%22 font-weight=%22bold%22%3E%26spades;%3C/text%3E%3C/svg%3E")';
+
+let cards = [], first = null, lock = false, moves = 0, found = 0;
+const boardEl = document.getElementById('board');
+const movesEl = document.getElementById('moves');
+const pairsEl = document.getElementById('pairs');
+const totalEl = document.getElementById('total');
+const msgEl = document.getElementById('msg');
+totalEl.textContent = PAIRS;
+
+function shuffle(array){ return array.map(v=>({sort:Math.random(),value:v})).sort((a,b)=>a.sort-b.sort).map(a=>a.value); }
+
+function cardSvg(c){
+  const red = c.suit==='heart';
+  const col = red?'#c00':'#111';
+  const sym = SUITS[c.suit].sym;
+  if(c.face==='ACE'){
+    return `<svg viewBox="0 0 88 128" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
+      <rect width="88" height="128" rx="10" fill="#fff" stroke="#888" stroke-width="2"/>
+      <text x="10" y="20" font-family="serif" font-weight="900" font-size="14" fill="${col}">A ${sym}</text>
+      <text x="74" y="112" font-family="serif" font-weight="900" font-size="14" fill="${col}" transform="rotate(180 74 112)">A ${sym}</text>
+      <path d="M44 30 C 30 30, 20 50, 20 70 C 20 90, 30 110, 44 110 C 58 110, 68 90, 68 70 C 68 50, 58 30, 44 30 Z" fill="${col}"/>
+      <text x="44" y="60" font-family="serif" font-weight="900" font-size="26" fill="${col}" text-anchor="middle">ACE</text>
+      <circle cx="44" cy="78" r="5" fill="${col}"/>
+      <circle cx="34" cy="92" r="4" fill="${col}"/>
+      <circle cx="54" cy="92" r="4" fill="${col}"/>
+    </svg>`;
+  }
+  const crown = `
+    <path d="M 22 40 L 26 32 L 30 40 L 34 32 L 38 40 L 42 32 L 46 40 L 50 32 L 54 40 L 58 32 L 62 40 L 66 32 L 70 40 Z" fill="none" stroke="${col}" stroke-width="2"/>
+    <circle cx="26" cy="32" r="2" fill="${col}"/>
+    <circle cx="34" cy="32" r="2" fill="${col}"/>
+    <circle cx="42" cy="32" r="2" fill="${col}"/>
+    <circle cx="50" cy="32" r="2" fill="${col}"/>
+    <circle cx="58" cy="32" r="2" fill="${col}"/>
+    <circle cx="66" cy="32" r="2" fill="${col}"/>
+  `;
+  const face = c.face;
+  return `<svg viewBox="0 0 88 128" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
+    <rect width="88" height="128" rx="10" fill="#fff" stroke="#888" stroke-width="2"/>
+    <text x="10" y="18" font-family="serif" font-weight="900" font-size="14" fill="${col}">${face} ${sym}</text>
+    <text x="78" y="114" font-family="serif" font-weight="900" font-size="14" fill="${col}" transform="rotate(180 78 114)">${face} ${sym}</text>
+    ${crown}
+    <ellipse cx="44" cy="56" rx="14" ry="16" fill="#f5d7b0" stroke="${col}" stroke-width="1"/>
+    <path d="M 30 72 Q 44 84 58 72" fill="none" stroke="${col}" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="36" cy="52" r="2.5" fill="${col}"/>
+    <circle cx="52" cy="52" r="2.5" fill="${col}"/>
+    <text x="44" y="96" font-family="serif" font-weight="900" font-size="20" fill="${col}" text-anchor="middle">${face}</text>
+    <text x="10" y="114" font-family="serif" font-weight="900" font-size="14" fill="${col}">${face} ${sym}</text>
+    <text x="78" y="18" font-family="serif" font-weight="900" font-size="14" fill="${col}" transform="rotate(180 78 18)">${face} ${sym}</text>
+  </svg>`;
+}
+
+function init(){
+  cards = [];
+  RANKS.forEach(r=>{
+    [1,2].forEach(()=> cards.push({...r, matched:false, flipped:false}));
+  });
+  cards = shuffle(cards);
+  first = null; lock = false; moves = 0; found = 0;
+  movesEl.textContent = '0'; pairsEl.textContent = '0';
+  msgEl.textContent = '';
+  boardEl.innerHTML = '';
+  cards.forEach((c,i)=>{
+    const el = document.createElement('div');
+    el.className = 'card'; el.dataset.index = i;
+    el.innerHTML = `
+      <div class="back" style="--back-img:${backImg}"></div>
+      <div class="face">${cardSvg(c)}</div>`;
+    el.addEventListener('click',()=>flip(i));
+    boardEl.appendChild(el);
+  });
+}
+
+function flip(i){
+  if(lock || cards[i].matched || cards[i].flipped) return;
+  const el = boardEl.children[i];
+  cards[i].flipped = true; el.classList.add('flipped');
+  if(!first){ first = i; return; }
+  lock = true; moves++; movesEl.textContent = moves;
+  const j = first;
+  if(cards[i].id === cards[j].id){
+    setTimeout(()=>{
+      cards[i].matched = cards[j].matched = true;
+      boardEl.children[i].classList.add('matched');
+      boardEl.children[j].classList.add('matched');
+      found++; pairsEl.textContent = found;
+      first = null; lock = false;
+      if(found === PAIRS){ msgEl.textContent = 'সব জোড়া মিলে গেছে!'; setTimeout(showWin, 500); }
+    }, 500);
+  } else {
+    setTimeout(()=>{
+      cards[i].flipped = cards[j].flipped = false;
+      boardEl.children[i].classList.remove('flipped');
+      boardEl.children[j].classList.remove('flipped');
+      first = null; lock = false;
+    }, 900);
+  }
+}
+
+function showWin(){
+  document.getElementById('win').style.display = 'flex';
+  document.getElementById('winMsg').textContent = `জিতলেন! মোট ${moves} মুভে শেষ করলেন।`;
+}
+function closeWin(){ document.getElementById('win').style.display = 'none'; init(); }
+document.getElementById('newBtn').addEventListener('click', ()=>{ closeWin(); init(); });
+document.getElementById('shuffleBtn').addEventListener('click', init);
+init();
+</script>
+
+</body>
+</html>
