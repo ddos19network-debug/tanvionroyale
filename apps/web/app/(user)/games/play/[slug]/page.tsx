@@ -6,6 +6,7 @@ import { AppFooter } from '@/components/layout/app-footer';
 import { RoyaleFlyGame } from '@/components/games/crash-game';
 import RoyaleAceSlot from '@/components/games/ace-slot-game';
 import { RoyaleTimeGame } from '@/components/games/roulette/roulette-game';
+import { SlotGame } from '@/components/games/slot-game';
 import { getFreePlayGame } from '@/lib/data/games';
 
 /**
@@ -65,6 +66,16 @@ export default function FreePlayGamePage() {
       </main>
     );
   }
+
+  const slotSlugs = ['pharaohs-legacy','atlantis-treasure','neon-cyber-rush','mystic-forest','samurai-fortune','cosmic-odyssey','dragons-kingdom','tropical-paradise','steampunk-revolution','frozen-empire'];
+  if (slotSlugs.includes(game.slug ?? '')) {
+    return (
+      <main className="min-h-[100dvh] w-full bg-[#0b0c10] pb-[env(safe-area-inset-bottom)]">
+        <SlotGame slug={game.slug!} title={game.title} />
+      </main>
+    );
+  }
+
 
   return (
     <>
