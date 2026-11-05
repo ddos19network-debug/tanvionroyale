@@ -208,7 +208,7 @@ textarea:focus-visible {
 }
 
 /* ---------------------------------------------------------------------------
- * Sky Rocket scene (components/games/crash-rocket.tsx)
+ * Royale Fly scene (components/games/crash-rocket.tsx)
  *
  * PURELY PRESENTATION. Every animation below only moves / fades existing
  * elements (transform + opacity → GPU composited) so the parent's 40 ms
@@ -528,7 +528,7 @@ textarea:focus-visible {
 }
 
 /* ---------------------------------------------------------------------------
- * Sky Rocket crash state under reduced motion.
+ * Royale Fly crash state under reduced motion.
  *
  * The blanket rule above collapses EVERY animation to 0.01ms, which parks each
  * crash layer on its FINAL keyframe (opacity 0) — i.e. the explosion would be
@@ -763,32 +763,97 @@ textarea:focus-visible {
    ========================================================================== */
 
 @keyframes masterSpinLoop {
-  0% { transform: translateY(-50%); }
-  100% { transform: translateY(50%); }
+  0%   { transform: translateY(-50%); animation-timing-function: ease-in-out; }
+  25%  { transform: translateY(-25%); animation-timing-function: ease-in-out; }
+  50%  { transform: translateY(0%);   animation-timing-function: ease-in-out; }
+  75%  { transform: translateY(25%);  animation-timing-function: ease-in-out; }
+  100% { transform: translateY(50%);  }
 }
 
 @keyframes masterDeceleration {
-  0% { transform: translateY(-30%); }
+  0%   { transform: translateY(-20%); }
+  60%  { transform: translateY(2%); }
+  80%  { transform: translateY(-1%); }
   100% { transform: translateY(0%); }
 }
 
 @keyframes masterElasticSnapBounce {
-  0% { transform: translateY(-12%); }
-  50% { transform: translateY(4%); }
-  75% { transform: translateY(-1.5%); }
+  0%   { transform: translateY(-8%); }
+  40%  { transform: translateY(2.5%); }
+  70%  { transform: translateY(-1%); }
+  90%  { transform: translateY(0.4%); }
   100% { transform: translateY(0); }
 }
 
 .animate-master-spin-loop {
-  animation: masterSpinLoop 0.1s linear infinite;
+  animation: masterSpinLoop 0.5s ease-in-out infinite;
 }
 
 .animate-master-deceleration {
-  animation: masterDeceleration 0.15s cubic-bezier(0.215, 0.610, 0.355, 1) forwards;
+  animation: masterDeceleration 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 .animate-master-snap-bounce {
-  animation: masterElasticSnapBounce 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: masterElasticSnapBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards;
+}
+
+@keyframes cardExitDown {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(115%);
+    opacity: 0;
+  }
+}
+
+.animate-card-exit-down {
+  animation: cardExitDown 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes masterSingleDrop {
+  0% {
+    transform: translateY(-115%);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+}
+
+.animate-single-drop {
+  animation: masterSingleDrop 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-single-drop-turbo {
+  animation: masterSingleDrop 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ===========================================================================
+ * Royale Time — 3D Speed Auto Roulette
+ * =========================================================================== */
+
+/* 3-2-1 Countdown pop-in for BETTING_CLOSED overlay */
+@keyframes countdown-pop {
+  0%   { transform: scale(0.5); opacity: 0.4; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.rt-countdown-pop {
+  animation: countdown-pop 0.3s ease-out both;
+}
+
+/* Win number badge flash */
+@keyframes rt-winner-flash {
+  0%, 100% { box-shadow: 0 0 0 rgba(251,191,36,0); }
+  50%       { box-shadow: 0 0 24px rgba(251,191,36,0.9); }
+}
+
+.rt-winner-badge {
+  animation: rt-winner-flash 1s ease-in-out infinite;
 }
 
 /* Gold celebration particles */

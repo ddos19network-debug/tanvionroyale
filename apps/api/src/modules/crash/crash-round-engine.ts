@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown, ServiceUnavailableException } from '@nestjs/common';
+import type { Server } from 'socket.io';
 import { Prisma } from '../../generated/prisma';
 import type { CrashRoundStatus } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
@@ -90,6 +91,11 @@ export class CrashRoundEngine implements OnApplicationBootstrap, OnApplicationSh
 
   private tickTimer: ReturnType<typeof setInterval> | null = null;
   private broadcastTimer: ReturnType<typeof setInterval> | null = null;
+  private wsServer: Server | null = null;
+
+  setServer(server: Server): void {
+    this.wsServer = server;
+  }
 
   constructor(
     private readonly prisma: PrismaService,
@@ -155,35 +161,41 @@ export class CrashRoundEngine implements OnApplicationBootstrap, OnApplicationSh
     if (this.ticking) return;
     this.ticking = true;
     try {
-      await this.prisma.$transaction(async (db) => {
-        // Transaction-scoped advisory lock: only ONE API instance runs the
-        // scheduler per tick (multi-instance safe, auto-released on commit).
-        await db.$executeRaw`SELECT pg_advisory_xact_lock(${this.config.advisoryLockId}::bigint)`;
-        const round = (await db.crashRound.findFirst({
-          where: { gameSlug: this.config.gameSlug, status: { in: ACTIVE_ROUND_STATUSES } },
-          orderBy: { roundNumber: 'desc' },
-        })) as unknown as CrashRoundRow | null;
-        if (!round) {
-          await this.createRoundInTx(db);
-          return;
-        }
-        const now = Date.now();
-        switch (round.status) {
-          case 'CREATED':
-            await this.openBettingInTx(db, round, now);
-            break;
-          case 'BETTING_OPEN':
-            if (now >= round.bettingCloseAt.getTime()) {
-              await this.startRunningInTx(db, round, now);
-            }
-            break;
-          case 'RUNNING':
-            await this.maybeCrashInTx(db, round, now);
-            break;
-          default:
-            break;
-        }
-      });
+      await this.prisma.$transaction(
+        async (db) => {
+          // Transaction-scoped advisory lock: only ONE API instance runs the
+          // scheduler per tick (multi-instance safe, auto-released on commit).
+          await db.$executeRaw`SELECT pg_advisory_xact_lock(${this.config.advisoryLockId}::bigint)`;
+          const round = (await db.crashRound.findFirst({
+            where: { gameSlug: this.config.gameSlug, status: { in: ACTIVE_ROUND_STATUSES } },
+            orderBy: { roundNumber: 'desc' },
+          })) as unknown as CrashRoundRow | null;
+          if (!round) {
+            await this.createRoundInTx(db);
+            return;
+          }
+          const now = Date.now();
+          switch (round.status) {
+            case 'CREATED':
+              await this.openBettingInTx(db, round, now);
+              break;
+            case 'BETTING_OPEN':
+              if (now >= round.bettingCloseAt.getTime()) {
+                await this.startRunningInTx(db, round, now);
+              }
+              break;
+            case 'RUNNING':
+              await this.maybeCrashInTx(db, round, now);
+              break;
+            default:
+              break;
+          }
+        },
+        {
+          maxWait: 5000,
+          timeout: 15000,
+        },
+      );
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       this.logger.error(`Crash scheduler tick failed: ${msg}`);
@@ -343,12 +355,19 @@ export class CrashRoundEngine implements OnApplicationBootstrap, OnApplicationSh
       await this.voidRoundSafely(round);
       return;
     }
-    const crashAtMs = round.startAt.getTime() + crashDurationMs(crashMultiplier);
+    // The actual flight begins RIGHT NOW — record the authoritative flight start time
+    // so elapsed time for multiplier calculation starts at 0ms (1.00x), not 6s in the past.
+    const flightStartMs = now;
+    const crashAtMs = flightStartMs + crashDurationMs(crashMultiplier);
 
     assertRoundTransition('BETTING_OPEN', 'RUNNING');
     await db.crashRound.update({
       where: { id: round.id, status: 'BETTING_OPEN' },
-      data: { status: 'RUNNING', bettingClosedAt: new Date(now) },
+      data: {
+        status: 'RUNNING',
+        bettingClosedAt: new Date(now),
+        startAt: new Date(flightStartMs),
+      },
     });
     // In-process timing authority for cash-outs (single instance holds it).
     this.running.set(round.id, { crashMultiplier, crashAtMs });
@@ -361,7 +380,7 @@ export class CrashRoundEngine implements OnApplicationBootstrap, OnApplicationSh
     this.events.emit(CRASH_ROOM, 'ROUND_STARTED', {
       roundId: round.id,
       roundNumber: round.roundNumber,
-      startAt: round.startAt.getTime(),
+      startAt: flightStartMs,
       serverTime: now,
     });
     this.logger.log(`Round #${round.roundNumber} started (RUNNING)`);

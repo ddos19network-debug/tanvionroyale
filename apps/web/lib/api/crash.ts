@@ -1,5 +1,5 @@
 /**
- * Sky Rocket crash-game client (REST + WebSocket).
+ * Royale Fly crash-game client (REST + WebSocket).
  *
  * The browser is ONLY a client: it renders the server snapshot, interpolates
  * between server multiplier updates, and never decides multiplier, crash
@@ -93,6 +93,7 @@ export interface CrashSnapshotView {
   realMoneyAvailable: boolean;
   round: CrashRoundView | null;
   myBet: CrashBetView | null;
+  myBets?: CrashBetView[];
   lastCrash: {
     roundId: string;
     roundNumber: number;
@@ -247,7 +248,7 @@ export interface RoundCrashedEvent {
   serverTime: number;
 }
 
-/** Connects (and reconnects automatically) to the Sky Rocket room. */
+/** Connects (and reconnects automatically) to the Royale Fly room. */
 export function createCrashSocket(): Socket {
   return io(`${getWsOrigin()}/games/crash`, {
     auth: { token: getAccessToken() ?? undefined },

@@ -23,6 +23,7 @@ import { WalletModule } from "./modules/wallet/wallet.module";
 import { BettingModule } from "./modules/betting/betting.module";
 import { GamesModule } from "./modules/games/games.module";
 import { CrashModule } from "./modules/crash/crash.module";
+import { RouletteModule } from "./modules/roulette/roulette.module";
 import { RoyaleModule } from "./modules/royale/royale.module";
 import { AdminModule } from "./modules/admin/admin.module";
 import { TradingModule } from "./modules/trading/trading.module";
@@ -80,6 +81,7 @@ function resolveJwtSecret(): string {
     BettingModule,
     GamesModule,
     CrashModule,
+    RouletteModule,
     // Royale Play: original server-authoritative Plinko + Mines (reuses the
     // ONE wallet ledger and the ONE free-play points ledger).
     RoyaleModule,

@@ -78,14 +78,14 @@ export function GamesTab() {
       {loading ? <LoadingRows />
         : error ? <div className="mt-4"><ErrorBox message={error} onRetry={() => load(1, false)} /></div>
         : items.length === 0 && (!crash || crash.length === 0) ? (
-          <div className="mt-4"><EmptyState title="No games played yet." hint="Free-play results and Sky Rocket rounds will appear here." actionHref="/games/play" actionLabel="Browse Games" /></div>
+          <div className="mt-4"><EmptyState title="No games played yet." hint="Free-play results and Royale Fly rounds will appear here." actionHref="/games/play" actionLabel="Browse Games" /></div>
         ) : (
           <div className="mt-4 space-y-2">
             {crash?.map((c, i) => (
               <Card key={`crash-${c.roundNumber}-${c.createdAt}-${i}`}>
                 <CardContent className="flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium">Sky Rocket · Round {c.roundNumber}</p>
+                    <p className="text-sm font-medium">Royale Fly · Round {c.roundNumber}</p>
                     <p className="text-xs text-slate-500">
                       {fmtDate(c.createdAt)} · Stake {money(c.stake, c.currency)}{c.cashoutMultiplier != null ? ` · Cash out ${c.cashoutMultiplier}x` : ''}
                     </p>

@@ -140,12 +140,14 @@ export class CrashService {
     ]);
 
     let myBet: CrashBetView | null = null;
+    let myBets: CrashBetView[] = [];
     if (userId && round) {
-      const bet = (await this.prisma.crashBet.findFirst({
+      const bets = (await this.prisma.crashBet.findMany({
         where: { roundId: round.id, userId },
-        orderBy: { placedAt: 'desc' },
-      })) as unknown as (CrashBetRow & { settlement?: CrashBetRow['settlement'] }) | null;
-      if (bet) myBet = this.toBetView(bet, round.roundNumber);
+        orderBy: { placedAt: 'asc' },
+      })) as unknown as (CrashBetRow & { settlement?: CrashBetRow['settlement'] })[];
+      myBets = bets.map((b) => this.toBetView(b, round.roundNumber));
+      myBet = myBets[myBets.length - 1] ?? null;
     }
 
     return {
@@ -155,6 +157,7 @@ export class CrashService {
       realMoneyAvailable: this.config.realMoneyAvailable,
       round: round ? this.toRoundView(round) : null,
       myBet,
+      myBets,
       sequence: await this.sequence.getPublicView(this.config.gameSlug),
       lastCrash:
         lastCrash && lastCrash.crashMultiplier != null
@@ -229,6 +232,18 @@ export class CrashService {
     if (!bet) crashError('BET_NOT_FOUND', 'Bet not found', 404);
     if (bet.userId !== userId) crashError('BET_NOT_YOURS', 'This bet belongs to another player', 403);
     return this.toBetView(bet, bet.round.roundNumber);
+  }
+
+  async findActiveBetForUser(userId: string): Promise<CrashBetRow | null> {
+    const bet = await this.prisma.crashBet.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        round: { status: 'RUNNING' },
+      },
+      orderBy: { placedAt: 'desc' },
+    });
+    return bet as unknown as CrashBetRow | null;
   }
 
   async getMyHistory(userId: string, limit = 25, mode?: string): Promise<CrashPlayerHistoryEntry[]> {

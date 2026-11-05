@@ -254,7 +254,7 @@
  * STATIC state. The blanket global rule collapses durations to 0.01ms (which
  * would park transient effects on an invisible end frame); these higher
  * specificity, later rules pin meaningful stills instead — exactly like the
- * Sky Rocket block in globals.css. Motion stops, STATE never does.
+ * Royale Fly block in globals.css. Motion stops, STATE never does.
  * ------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .ace-streak,

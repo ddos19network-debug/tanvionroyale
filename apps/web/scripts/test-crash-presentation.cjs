@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Sky Rocket presentation + snapshot-reconciliation regression test.
+ * Royale Fly presentation + snapshot-reconciliation regression test.
  *
  * Runs in plain Node (no browser, no build) by transpiling the app's own
  * TypeScript on the fly, and asserts the two things that made the scene look

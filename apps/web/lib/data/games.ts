@@ -36,6 +36,8 @@ export interface Game {
   kind: GameKind;
   /** Free-play engine slug (only for kind === 'freeplay'). */
   slug?: string;
+  /** Custom logo or cover image artwork URL. */
+  coverImage?: string;
 }
 
 export interface GameSectionData {
@@ -56,6 +58,7 @@ function makeGame(
   featured?: boolean,
   kind: GameKind = 'demo',
   slug?: string,
+  coverImage?: string,
 ): Game {
   return {
     id: `game-${id}`,
@@ -67,17 +70,18 @@ function makeGame(
     featured,
     kind,
     slug,
+    coverImage,
   };
 }
 
 export const games: Game[] = [
   makeGame(1, 'Teal Fortune', 'Provider One', 'Slots', 168, 'HOT', true),
   makeGame(2, 'Crystal Mines', 'Provider Two', 'Arcade', 200, 'NEW'),
-  makeGame(3, 'Sky Rocket', 'Provider Three', 'Crash', 190, 'LIVE', true, 'freeplay', 'sky-rocket'),
+  makeGame(3, 'Royale Fly', 'TANVIONROYALE', 'Crash', 190, 'LIVE', true, 'freeplay', 'royale-fly', '/assets/image/royale-fly-theme.png'),
   makeGame(4, 'Royal Aces', 'Provider One', 'Table Games', 260),
   makeGame(5, 'Neon Spin', 'Provider Four', 'Slots', 300, 'HOT'),
   makeGame(6, 'Jade Temple', 'Provider Five', 'Slots', 150, 'NEW', true),
-  makeGame(7, 'Lightning Dice', 'Provider Two', 'Live Games', 40, undefined, undefined, 'freeplay', 'lightning-dice'),
+  makeGame(7, 'Lightning Dice', 'Provider Two', 'Live Games', 40),
   makeGame(8, 'Fruit Nova', 'Provider Six', 'Mini Games', 20, 'HOT'),
   makeGame(9, 'Ocean Gold', 'Provider Three', 'Arcade', 210),
   makeGame(10, 'Rocket Rush', 'Provider Four', 'Crash', 15, 'LIVE'),
@@ -95,20 +99,31 @@ export const games: Game[] = [
   makeGame(22, 'Quantum Roulette', 'Provider Four', 'Live Games', 240, 'LIVE'),
   makeGame(23, 'Mystic Mahjong', 'Provider Five', 'Arcade', 130),
   makeGame(24, 'Golden Goal', 'Provider One', 'Mini Games', 90),
-  // --- Internally developed, genuinely playable free-play games (Phase 5) ---
-  makeGame(25, 'Coin Flip', 'TANVIONROYALE', 'Arcade', 210, 'NEW', undefined, 'freeplay', 'coin-flip'),
-  makeGame(26, 'Higher or Lower', 'TANVIONROYALE', 'Arcade', 30, undefined, undefined, 'freeplay', 'higher-or-lower'),
-  makeGame(27, 'Number Guess', 'TANVIONROYALE', 'Arcade', 260, undefined, undefined, 'freeplay', 'number-guess'),
-  makeGame(28, 'Rock Paper Scissors', 'TANVIONROYALE', 'Arcade', 330, undefined, undefined, 'freeplay', 'rock-paper-scissors'),
-  makeGame(29, 'Wheel Spin', 'TANVIONROYALE', 'Arcade', 130, 'NEW', undefined, 'freeplay', 'wheel-spin'),
-  makeGame(30, 'Dice Roll', 'TANVIONROYALE', 'Arcade', 200, undefined, undefined, 'freeplay', 'dice-roll'),
-  makeGame(31, 'High Card', 'TANVIONROYALE', 'Card Games', 280, undefined, undefined, 'freeplay', 'high-card'),
-  makeGame(32, 'Color Prediction', 'TANVIONROYALE', 'Arcade', 300, undefined, undefined, 'freeplay', 'color-prediction'),
-  makeGame(33, 'Lucky Number', 'TANVIONROYALE', 'Mini Games', 20, undefined, undefined, 'freeplay', 'lucky-number'),
-  // --- TANVION ROYALE — Royale Play (server-authoritative, wallet-backed) ---
-  makeGame(34, 'Plinko Royale', 'TANVIONROYALE', 'Mini Games', 155, 'NEW', undefined, 'freeplay', 'royale-plinko'),
-  makeGame(35, 'Mines Royale', 'TANVIONROYALE', 'Mini Games', 195, 'NEW', undefined, 'freeplay', 'royale-mines'),
-  makeGame(36, 'Royale Ace', 'TANVIONROYALE', 'Slots', 220, 'NEW', undefined, 'freeplay', 'royale-ace'),
+  // --- TANVION ROYALE — Royale Play ---
+  makeGame(
+    36,
+    'Royale Ace',
+    'TANVIONROYALE',
+    'Slots',
+    220,
+    'NEW',
+    true,
+    'freeplay',
+    'royale-ace',
+    '/assets/image/royale-ace-logo.png',
+  ),
+  makeGame(
+    37,
+    'Royale Time',
+    'TANVIONROYALE',
+    'Live Games',
+    45,
+    'LIVE',
+    true,
+    'freeplay',
+    'royale-time',
+    '/assets/image/royale-time-cover.svg',
+  ),
 ];
 
 export function gamesByCategory(category: string): Game[] {
@@ -161,5 +176,8 @@ export function freeplayGames(): Game[] {
 
 /** Look up an internally developed free-play game by its engine slug. */
 export function getFreePlayGame(slug: string): Game | undefined {
+  if (slug === 'sky-rocket') {
+    return games.find((g) => g.kind === 'freeplay' && (g.slug === 'royale-fly' || g.slug === 'sky-rocket'));
+  }
   return games.find((g) => g.kind === 'freeplay' && g.slug === slug);
 }

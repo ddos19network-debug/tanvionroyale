@@ -3,15 +3,10 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { AppFooter } from '@/components/layout/app-footer';
-import { SkyRocketGame } from '@/components/games/crash-game';
-import { LightningDiceGame } from '@/components/games/dice-game';
-import { PlinkoGame } from '@/components/games/plinko-game';
-import { MinesGame } from '@/components/games/mines-game';
-import { HeaderBalance } from '@/components/layout/header-balance';
-import { ActionGame, getActionGameConfig } from '@/components/games/action-game';
+import { RoyaleFlyGame } from '@/components/games/crash-game';
 import RoyaleAceSlot from '@/components/games/ace-slot-game';
+import { RoyaleTimeGame } from '@/components/games/roulette/roulette-game';
 import { getFreePlayGame } from '@/lib/data/games';
-import { useEffect } from 'react';
 
 /**
  * Free-play game launcher.
@@ -47,10 +42,10 @@ export default function FreePlayGamePage() {
     );
   }
 
-  if (game.slug === 'sky-rocket') {
+  if (game.slug === 'royale-fly' || game.slug === 'sky-rocket') {
     return (
-      <main className="min-h-[100dvh] w-full bg-[#071522] pb-[env(safe-area-inset-bottom)]">
-        <SkyRocketGame />
+      <main className="h-screen max-h-screen w-full bg-[#0b0c10] overflow-y-auto lg:overflow-hidden">
+        <RoyaleFlyGame />
       </main>
     );
   }
@@ -59,6 +54,14 @@ export default function FreePlayGamePage() {
     return (
       <main className="min-h-[100dvh] w-full bg-[#071522] pb-[env(safe-area-inset-bottom)]">
         <RoyaleAceSlot />
+      </main>
+    );
+  }
+
+  if (game.slug === 'royale-time') {
+    return (
+      <main className="min-h-[100dvh] w-full bg-[#070b14] pb-[env(safe-area-inset-bottom)]">
+        <RoyaleTimeGame />
       </main>
     );
   }
@@ -75,63 +78,12 @@ export default function FreePlayGamePage() {
         <p className="mt-1 max-w-2xl text-sm text-slate-400">{game.provider} · {game.category}</p>
 
         <div className="mt-6">
-          {game.slug === 'sky-rocket' ? <SkyRocketGame /> : null}
-          {game.slug === 'lightning-dice' ? <LightningDiceGame /> : null}
-          {game.slug === 'royale-plinko' ? <PlinkoGame /> : null}
-          {game.slug === 'royale-mines' ? <MinesGame /> : null}
-          {(() => {
-            const actionConfig = getActionGameConfig(game.slug ?? '');
-            return actionConfig ? (
-              <ActionGame key={actionConfig.slug} config={actionConfig} />
-            ) : null;
-          })()}
-          {game.slug !== 'sky-rocket' &&
-          game.slug !== 'lightning-dice' &&
-          game.slug !== 'royale-plinko' &&
-          game.slug !== 'royale-mines' &&
-          game.slug !== 'royale-ace' &&
-          !getActionGameConfig(game.slug ?? '') ? (
-            <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
-              This free-play game is registered in the catalog but has no playable engine yet.
-            </p>
-          ) : null}
+          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+            This free-play game is registered in the catalog but has no playable engine yet.
+          </p>
         </div>
       </main>
       <AppFooter />
     </>
-  );
-}
-function RoyaleAceShell() {
-  useEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const prevHtmlOverflow = html.style.overflow;
-    const prevBodyOverflow = body.style.overflow;
-    const prevHtmlOverscroll = html.style.overscrollBehavior;
-    const prevBodyOverscroll = body.style.overscrollBehavior;
-    html.style.overflow = 'hidden';
-    body.style.overflow = 'hidden';
-    html.style.overscrollBehavior = 'none';
-    body.style.overscrollBehavior = 'none';
-    return () => {
-      html.style.overflow = prevHtmlOverflow;
-      body.style.overflow = prevBodyOverflow;
-      html.style.overscrollBehavior = prevHtmlOverscroll;
-      body.style.overscrollBehavior = prevBodyOverscroll;
-    };
-  }, []);
-  return (
-    <div
-      className="fixed inset-0 flex flex-col overflow-hidden bg-royale-royalDeep"
-      style={{
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingRight: 'env(safe-area-inset-right)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-        paddingLeft: 'env(safe-area-inset-left)',
-      }}
-    >
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      </div>
-    </div>
   );
 }

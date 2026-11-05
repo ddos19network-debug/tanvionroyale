@@ -169,6 +169,7 @@ export interface CrashSnapshotView {
   realMoneyAvailable: boolean;
   round: CrashRoundView | null;
   myBet: CrashBetView | null;
+  myBets?: CrashBetView[];
   lastCrash: CrashHistoryEntry | null;
   /** Operator sequence phase + consumed position (never future multipliers). */
   sequence: {

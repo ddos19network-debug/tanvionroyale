@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import type { Game } from '@/lib/data/games';
@@ -42,14 +42,26 @@ export function GameCard({ game, favorite = false, onToggleFavorite }: GameCardP
   const openLabel = isFreePlay ? `Launch ${game.title} free play` : `Open ${game.title} demo preview`;
   return (
     <article className="group relative overflow-hidden rounded-xl border border-white/10 bg-ink-800 transition duration-200 hover:-translate-y-1 hover:border-brand/60 hover:shadow-[0_8px_30px_rgba(20,184,166,0.15)]">
-      {/* Placeholder artwork: original CSS gradient tile, no external assets */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-gradient-to-br sm:aspect-square">
-        <div className={`absolute inset-0 bg-gradient-to-br ${game.image} transition duration-300 group-hover:scale-105`} />
-        <div className="absolute inset-0 flex items-center justify-center p-2">
-          <span className="text-center text-sm font-extrabold uppercase tracking-wide text-white/90 drop-shadow line-clamp-3 sm:text-base">
-            {game.title}
-          </span>
-        </div>
+      {/* Artwork: custom cover image/logo if available, or placeholder gradient tile */}
+      <div className="relative aspect-[3/4] w-full overflow-hidden bg-gradient-to-br from-ink-700 to-ink-900 sm:aspect-square">
+        {game.coverImage || game.slug === 'royale-ace' || game.slug === 'royale-fly' || game.slug === 'royale-time' ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={game.coverImage || (game.slug === 'royale-fly' ? '/assets/image/royale-fly-theme.png' : game.slug === 'royale-time' ? '/assets/image/royale-time-cover.svg' : '/assets/image/royale-ace-logo.png')}
+            alt={game.title}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <>
+            <div className={`absolute inset-0 bg-gradient-to-br ${game.image} transition duration-300 group-hover:scale-105`} />
+            <div className="absolute inset-0 flex items-center justify-center p-2">
+              <span className="text-center text-sm font-extrabold uppercase tracking-wide text-white/90 drop-shadow line-clamp-3 sm:text-base">
+                {game.title}
+              </span>
+            </div>
+          </>
+        )}
 
         {game.badge && (
           <span
@@ -73,8 +85,8 @@ export function GameCard({ game, favorite = false, onToggleFavorite }: GameCardP
             the heart and play actions stay above it (z-10). */}
         <Link
             href={playHref}
-            target={isFreePlay && game.slug === 'royale-ace' ? '_blank' : undefined}
-            rel={isFreePlay && game.slug === 'royale-ace' ? 'noopener noreferrer' : undefined}
+            target={isFreePlay ? '_blank' : undefined}
+            rel={isFreePlay ? 'noopener noreferrer' : undefined}
             className="absolute inset-0 z-0"
           >
           <span className="sr-only">{openLabel}</span>
@@ -102,8 +114,8 @@ export function GameCard({ game, favorite = false, onToggleFavorite }: GameCardP
         <div className="absolute inset-x-0 bottom-0 z-10 flex translate-y-full items-center justify-center bg-gradient-to-t from-black/80 to-transparent p-3 transition duration-200 group-hover:translate-y-0 focus-within:translate-y-0">
           <Link
             href={playHref}
-            target={isFreePlay && game.slug === 'royale-ace' ? '_blank' : undefined}
-            rel={isFreePlay && game.slug === 'royale-ace' ? 'noopener noreferrer' : undefined}
+            target={isFreePlay ? '_blank' : undefined}
+            rel={isFreePlay ? 'noopener noreferrer' : undefined}
             className="w-full rounded-lg bg-brand px-3 py-1.5 text-center text-xs font-semibold text-ink-950 transition hover:bg-brand-dark"
             aria-label={openLabel}
           >

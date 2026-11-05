@@ -47,7 +47,7 @@ export default function UserPanelLayout({ children }: { children: React.ReactNod
       {!isGamePlay && <AppHeader />}
 
       {/* Full-width content column — pages own the inner <main>. */}
-      <div className="w-full min-w-0 flex-1">{children}</div>
+      <div className="w-full min-w-0 flex-1 pt-14 pb-[calc(var(--bottom-nav-height,0)+env(safe-area-inset-bottom))] sm:pt-16 md:pb-0 lg:pb-0">{children}</div>
     </>
   );
 }

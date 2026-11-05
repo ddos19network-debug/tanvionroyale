@@ -27,7 +27,7 @@ const NAV_ITEMS: Array<{
   { href: '/admin/partner-providers', label: 'Partner providers', icon: '🔌', permission: ADMIN_PERMISSIONS.PARTNER_PROVIDERS_READ },
   { href: '/admin/casino', label: 'Casino provider', icon: '🎰', permission: ADMIN_PERMISSIONS.CASINO_READ },
   { href: '/admin/betting', label: 'Betting', icon: '🎲', permission: ADMIN_PERMISSIONS.BETTING_READ },
-  { href: '/admin/crash', label: 'Sky Rocket', icon: '🚀', permission: ADMIN_PERMISSIONS.CRASH_READ },
+  { href: '/admin/crash', label: 'Royale Fly', icon: '🚀', permission: ADMIN_PERMISSIONS.CRASH_READ },
   { href: '/admin/royale-ace', label: 'Royale Ace', icon: '🂡', permission: ADMIN_PERMISSIONS.ROYALE_READ },
   { href: '/admin/wallets', label: 'Wallets', icon: '👛', permission: ADMIN_PERMISSIONS.WALLETS_READ },
   { href: '/admin/payment-gateways', label: 'Payment gateways', icon: '🔐', permission: ADMIN_PERMISSIONS.PAYMENT_GATEWAYS_READ },

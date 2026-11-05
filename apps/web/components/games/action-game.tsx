@@ -154,7 +154,7 @@ const CONFIGS: Record<string, ActionGameConfig> = {
 
 /**
  * Look up the generic action-game config for a free-play engine slug.
- * Returns null for slugs without a config (Sky Rocket / Lightning Dice have
+ * Returns null for slugs without a config (Royale Fly / Lightning Dice have
  * their own dedicated components).
  */
 export function getActionGameConfig(slug: string): ActionGameConfig | null {

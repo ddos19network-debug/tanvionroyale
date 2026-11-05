@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Sky Rocket — crash-point sequence configuration (admin only).
+ * Royale Fly — crash-point sequence configuration (admin only).
  *
  * Backed by the audited /admin/crash endpoints (ADMIN / SUPER_ADMIN enforced
  * server-side by JwtAuthGuard + RolesGuard). The page:
@@ -90,7 +90,7 @@ export default function AdminCrashPage() {
       setError(
         err instanceof ApiClientError
           ? err.status === 403
-            ? '403 — only ADMIN / SUPER_ADMIN accounts can manage the Sky Rocket sequence.'
+            ? '403 — only ADMIN / SUPER_ADMIN accounts can manage the Royale Fly sequence.'
             : err.message
           : 'Failed to load the sequence configuration.',
       );
@@ -188,9 +188,9 @@ export default function AdminCrashPage() {
     return (
       <div>
         <AdminPageHeader
-          title="Sky Rocket"
+          title="Royale Fly"
           description="Crash-point sequence configuration."
-          crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Sky Rocket' }]}
+          crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Royale Fly' }]}
         />
         <p className="text-sm text-slate-400">Loading sequence runtime…</p>
       </div>
@@ -200,9 +200,9 @@ export default function AdminCrashPage() {
   return (
     <div>
       <AdminPageHeader
-        title="Sky Rocket"
+        title="Royale Fly"
         description="Operator crash-point sequence. Backend remains the ONLY source of truth — each round consumes exactly one configured multiplier; admin changes never affect a running round."
-        crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Sky Rocket' }]}
+        crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Royale Fly' }]}
         actions={
           <Button variant="outline" size="sm" onClick={() => void load()}>
             Refresh

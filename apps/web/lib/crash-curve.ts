@@ -1,5 +1,5 @@
 /**
- * Sky Rocket — pure multiplier → scene geometry (no React, no DOM, no clock).
+ * Royale Fly — pure multiplier → scene geometry (no React, no DOM, no clock).
  *
  * This is the SINGLE source of truth for how a server-authoritative multiplier
  * maps to a point on the flight curve. Both the drawn curve and the plane

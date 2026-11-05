@@ -3,10 +3,10 @@
 import { Button } from '@tanvion-royale/ui';
 
 /**
- * Stake input panel for Sky Rocket. Pure presentation/input: the server
+ * Stake input panel for Royale Fly. Pure presentation/input: the server
  * validates every stake against its own configuration before accepting a bet.
  *
- * STATUS: not referenced by the running app. The live Sky Rocket stake/action
+ * STATUS: not referenced by the running app. The live Royale Fly stake/action
  * control is the inline panel inside crash-game.tsx (it is wired to
  * `placeCrashBet` / `cashOutCrashBet` and the authoritative crash snapshot).
  * This component is kept as a reusable, dependency-free variant — it is NOT the
@@ -15,7 +15,7 @@ import { Button } from '@tanvion-royale/ui';
  * leaves no empty or broken panel anywhere.
  */
 
-export interface SkyRocketBetPanelProps {
+export interface RoyaleFlyBetPanelProps {
   label: string;
   stakeText: string;
   onStakeChange: (next: string) => void;
@@ -29,7 +29,9 @@ export interface SkyRocketBetPanelProps {
   error?: string | null;
 }
 
-export function SkyRocketBetPanel({
+export type SkyRocketBetPanelProps = RoyaleFlyBetPanelProps;
+
+export function RoyaleFlyBetPanel({
   label,
   stakeText,
   onStakeChange,
@@ -41,7 +43,7 @@ export function SkyRocketBetPanel({
   primaryLoading,
   onPrimary,
   error,
-}: SkyRocketBetPanelProps) {
+}: RoyaleFlyBetPanelProps) {
   const parsed = Number(stakeText) || 0;
 
   function step(delta: number) {
@@ -138,3 +140,5 @@ export function SkyRocketBetPanel({
     </div>
   );
 }
+
+export const SkyRocketBetPanel = RoyaleFlyBetPanel;

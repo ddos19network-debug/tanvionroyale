@@ -231,7 +231,7 @@ export class ProfileActivityService {
         if (!inRange(b.placedAt)) continue;
         const rn = (b as unknown as { round: { roundNumber: number } }).round.roundNumber;
         items.push({
-          id: `crash-${b.id}`, kind: 'CRASH', title: `Sky Rocket / Round ${rn}`,
+          id: `crash-${b.id}`, kind: 'CRASH', title: `Royale Fly / Round ${rn}`,
           subtitle: b.cashoutMultiplier != null ? `Cash out ${b.cashoutMultiplier}x` : 'Crash bet',
           amount: b.payout != null && b.payout > 0 ? b.payout : -Math.abs(b.stake),
           currency: b.currency, status: b.status,

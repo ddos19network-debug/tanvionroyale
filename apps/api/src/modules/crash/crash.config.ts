@@ -105,7 +105,7 @@ export function loadCrashConfig(env: NodeJS.ProcessEnv = process.env): CrashConf
     enabled: env.CRASH_GAME_ENABLED === 'false' ? false : true,
     mode,
     currency: env.CRASH_CURRENCY ?? env.BETTING_CURRENCY ?? 'BDT',
-    minStake: parseIntEnv('CRASH_MIN_STAKE', 100),
+    minStake: parseIntEnv('CRASH_MIN_STAKE', 5),
     maxStake: parseIntEnv('CRASH_MAX_STAKE', 100_000),
     initialFreePlayPoints: parseIntEnv('FREEPLAY_INITIAL_POINTS', 100_000),
     bettingDurationMs: parseIntEnv('CRASH_BETTING_DURATION_MS', 6_000),

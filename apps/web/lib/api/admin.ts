@@ -948,7 +948,7 @@ export function updateAdminSport(
 }
 
 // ---------------------------------------------------------------------------
-// Sky Rocket — crash-point sequence configuration
+// Royale Fly — crash-point sequence configuration
 // ---------------------------------------------------------------------------
 
 /** Mirrors CrashSequenceAdminView (crash-sequence.service.ts). */

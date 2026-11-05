@@ -38,7 +38,7 @@ export class ProfileController {
   }
 
   @Get('crash')
-  @ApiOperation({ summary: 'My Sky Rocket crash bets (paginated)' })
+  @ApiOperation({ summary: 'My Royale Fly crash bets (paginated)' })
   listCrash(@CurrentUser() auth: AuthenticatedUser, @Query() query: ListGamesQueryDto) {
     return this.activity.listCrash(auth, query);
   }

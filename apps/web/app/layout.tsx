@@ -71,7 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <HideOnGamePlay>
                 <UserSidebar />
               </HideOnGamePlay>
-              <div className='flex min-w-0 flex-1 flex-col lg:overflow-y-auto lg:overscroll-contain'>
+              <div className='flex min-w-0 flex-1 flex-col lg:overflow-y-auto lg:overscroll-contain pt-[var(--header-height,0)] lg:pt-[var(--header-height-lg,0)]'>
                 {children}
               </div>
             </div>

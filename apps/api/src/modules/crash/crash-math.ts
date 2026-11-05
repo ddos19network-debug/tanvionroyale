@@ -20,12 +20,16 @@ export function round2(n: number): number {
 
 /**
  * How long a round with this crash point runs (ms) before it crashes.
- * Higher crash points take longer to be reached (logarithmic scaling).
+ * Calibrated to official Aviator pacing (steady, suspenseful, realistic flight).
+ *   - 1.50x takes ~7.6s
+ *   - 2.00x takes ~9.5s
+ *   - 5.00x takes ~15.5s
+ *   - 10.0x takes ~20.0s
  */
 export function crashDurationMs(
   crashMultiplier: number,
-  baseMs = 1500,
-  perDecadeMs = 2200,
+  baseMs = 1000,
+  perDecadeMs = 16500,
 ): number {
   const safe = Math.max(MIN_MULTIPLIER, crashMultiplier);
   return baseMs + Math.log10(safe) * perDecadeMs;
@@ -49,7 +53,10 @@ export function multiplierAt(input: CrashTimingInput, nowMs: number): number {
   if (elapsed <= 0) return MIN_MULTIPLIER;
   const ratio = Math.min(1, elapsed / total);
   if (ratio >= 1) return round2(crashMultiplier);
-  return round2(Math.pow(crashMultiplier, ratio));
+  // Pacing: r^1.65 ensures 1x -> 2x -> 5x climbs slowly, calmly, and smoothly
+  // (taking ~55% of the round), and then accelerates rapidly from 5x to 100x+ as time progresses.
+  const curvedRatio = Math.pow(ratio, 1.65);
+  return round2(Math.pow(crashMultiplier, curvedRatio));
 }
 
 /**

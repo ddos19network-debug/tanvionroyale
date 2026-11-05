@@ -31,7 +31,7 @@ const NAV_LINKS = [
  * rendered through <NavIcon> so they inherit the row's text colour.
  *
  *   PROFILE_ICON is the EXACT path the mobile bottom nav already uses for
- *   "Profile" (bottom-nav.tsx ITEMS) — reusing it verbatim keeps one icon for
+ *   "Profile" (bottom-nav.tsx ITEMS) â€” reusing it verbatim keeps one icon for
  *   one destination instead of inventing a second look-alike.
  *
  *   LOGOUT_ICON is the sign-out glyph (door + outgoing arrow). There is no
@@ -107,7 +107,7 @@ export function AppHeader() {
    * `loggingOut` closure (React batches state updates), so `if (loggingOut)`
    * would still let every one of them through. The ref is updated
    * synchronously, so the guard is correct even for a burst. `loggingOut`
-   * state is kept purely to drive `disabled` / the "Logging out…" label.
+   * state is kept purely to drive `disabled` / the "Logging outâ€¦" label.
    */
   const [loggingOut, setLoggingOut] = useState(false);
   const loggingOutRef = useRef(false);
@@ -166,15 +166,15 @@ export function AppHeader() {
    * Scroll behaviour:
    *
    *      scroll starts
-   *          ↓
+   *          â†“
    *      header hides
-   *          ↓
+   *          â†“
    *      momentum scrolling continues
-   *          ↓
+   *          â†“
    *      header stays hidden
-   *          ↓
+   *          â†“
    *      scroll stops
-   *          ↓
+   *          â†“
    *      header shows
    */
   useEffect(() => {
@@ -451,14 +451,14 @@ export function AppHeader() {
    * `logout()` is the single source of truth and it already:
    *   1. POSTs /auth/logout so the server-side Session row is revoked
    *      (the API's JwtAuthGuard re-checks the Session row on every request,
-   *      so revoking it is what actually ends the session — not just the token);
+   *      so revoking it is what actually ends the session â€” not just the token);
    *   2. swallows a failed/expired request on purpose, so a session that is
    *      ALREADY invalid still transitions to logged-out instead of stranding
    *      the user, and no raw API error is ever surfaced;
    *   3. calls clearSession('logout') -> removes ng.access / ng.refresh /
    *      ng.user and dispatches `ng:session-changed` ('cleared'), which the
    *      provider itself listens for, so `user` becomes null everywhere;
-   *   4. router.replace('/login') — the canonical logged-out destination.
+   *   4. router.replace('/login') â€” the canonical logged-out destination.
    *
    * So all that is left here is the UI sequencing:
    *   - single-flight guard, so a double tap cannot double-POST or
@@ -647,7 +647,7 @@ export function AppHeader() {
                   onFocus={() =>
                     setSearchOpen(true)
                   }
-                  placeholder="Search games…"
+                  placeholder="Search gamesâ€¦"
                   aria-label="Search games by title, provider, or category"
                   className="h-9 w-48 rounded-full border border-white/10 bg-ink-800 pl-9 pr-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand xl:w-56"
                 />
@@ -707,7 +707,7 @@ export function AppHeader() {
                       className="rounded-lg px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
                     >
                       {loggingOut
-                        ? 'Logging out…'
+                        ? 'Logging outâ€¦'
                         : 'Log out'}
                     </button>
                   </>
@@ -746,7 +746,7 @@ export function AppHeader() {
                 aria-expanded={
                   mobileMenuOpen
                 }
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-200 transition hover:bg-white/10 hover:text-white md:hidden"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-200 transition hover:bg-white/10 hover:text-white lg:hidden"
               >
                 {mobileMenuOpen ? (
                   <svg
@@ -790,7 +790,7 @@ export function AppHeader() {
             carries four sections (MAIN / ACCOUNT / SERVICE / PERSONAL), and
             the header this panel lives in is `position: fixed`:
 
-                <header className="fixed inset-x-0 top-0 …">
+                <header className="fixed inset-x-0 top-0 â€¦">
 
             A fixed box does not travel with the document, so once the menu is
             taller than the viewport its tail is pushed past the bottom edge of
@@ -803,7 +803,7 @@ export function AppHeader() {
             scroll container, so every section stays reachable. The reserved
             space keeps the two fixed bars clear:
 
-                3.5rem  the header bar itself (h-14) — logo + close X stay usable
+                3.5rem  the header bar itself (h-14) â€” logo + close X stay usable
                 ~3.5rem the mobile bottom nav (fixed bottom-0, ~50px)
                 ~2rem   breathing room / safe-area
 
@@ -818,7 +818,7 @@ export function AppHeader() {
             `UserSidebar` is not affected.
           */}
           {mobileMenuOpen && (
-            <div className="max-h-[calc(100vh-9rem)] supports-[height:0dvh]:max-h-[calc(100dvh-9rem)] overflow-y-auto overscroll-contain border-t border-white/10 py-3 md:hidden">
+            <div className="max-h-[calc(100dvh-9rem)] supports-[height:0dvh]:max-h-[calc(100dvh-9rem)] overflow-y-auto overscroll-contain border-t border-white/10 py-3 lg:hidden">
 
               {/* Same user-panel items + routes as the desktop sidebar */}
               {userNavSections.map(
@@ -852,13 +852,13 @@ export function AppHeader() {
               )}
 
               {/*
-                SESSION ACTIONS — the last block of the menu, below a rule so it
+                SESSION ACTIONS â€” the last block of the menu, below a rule so it
                 can never be mistaken for a navigation section.
 
                 Deliberately NOT part of `userNavSections`: that array is a list
                 of real ROUTES consumed by BOTH the mobile menu and the desktop
                 sidebar, and logout is not a destination. There is no /logout
-                page and none was added — the button runs the same canonical
+                page and none was added â€” the button runs the same canonical
                 `onLogout()` the desktop header button runs, which delegates to
                 <AuthProvider>'s `logout()`.
 
@@ -893,7 +893,7 @@ export function AppHeader() {
 
                       <span className="min-w-0 flex-1 truncate text-left">
                         {loggingOut
-                          ? 'Logging out…'
+                          ? 'Logging outâ€¦'
                           : 'Logout'}
                       </span>
                     </button>
@@ -986,7 +986,7 @@ export function AppHeader() {
 }
 
 /**
- * Mobile hamburger entry —
+ * Mobile hamburger entry â€”
  * same item/route as the desktop sidebar.
  */
 function MobileNavItem({
@@ -997,7 +997,7 @@ function MobileNavItem({
   onNavigate: () => void;
 }) {
   /*
-   * Feature does not exist on the platform yet —
+   * Feature does not exist on the platform yet â€”
    * keep an honest disabled entry.
    */
   if (item.href === null) {

@@ -16,12 +16,14 @@
     "test:ace-drop": "node scripts/test-ace-drop-order.cjs",
     "test:ace-chrome": "node scripts/test-ace-chrome.cjs",
     "test:ace-fx": "node scripts/test-ace-fx.cjs",
-    "test:crash-browser": "node scripts/test-sky-rocket-browser.cjs",
+    "test:crash-browser": "node scripts/test-royale-fly-browser.cjs",
     "test:home-browser": "node scripts/verify-home-catalog-browser.cjs",
     "test:mobile-nav-browser": "node scripts/verify-mobile-nav-browser.cjs",
     "icons:generate": "node scripts/generate-brand-icons.mjs && node scripts/generate-og-image.mjs"
   },
   "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.17.10",
     "@tanvion-royale/config": "workspace:*",
     "@tanvion-royale/types": "workspace:*",
     "@tanvion-royale/ui": "workspace:*",
@@ -30,12 +32,14 @@
     "next": "14.2.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "@types/node": "^20.16.11",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
+    "@types/three": "^0.187.0",
     "autoprefixer": "^10.4.20",
     "eslint-config-next": "14.2.15",
     "postcss": "^8.4.47",

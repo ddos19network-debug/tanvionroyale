@@ -8,7 +8,7 @@ import type {
 import { PlayerActionError } from './engine-errors';
 
 /**
- * Sky Rocket — internally developed free-play crash game.
+ * Royale Fly — internally developed free-play crash game.
  *
  * FREE PLAY ONLY. A multiplier climbs while the round runs; the player "cashes
  * out" before the hidden crash point is reached. Points are free-play only
@@ -85,10 +85,10 @@ function isLiveRound(state: CrashState): boolean {
 
 export class CrashEngine implements FreePlayGameEngine {
   readonly meta = {
-    slug: 'sky-rocket',
-    title: 'Sky Rocket',
+    slug: 'royale-fly',
+    title: 'Royale Fly',
     description:
-      'Free-play crash game. Cash out before the rocket crashes to bank your multiplier — built by TANVIONROYALE, no real money.',
+      'Free-play crash game. Cash out before the plane flies away to bank your multiplier — built by TANVIONROYALE, no real money.',
     kind: 'FREE_PLAY' as const,
     tagline: 'Free-play — no real money',
   };
@@ -113,7 +113,7 @@ export class CrashEngine implements FreePlayGameEngine {
   ): FreePlayActionResult {
     const state = rawState as unknown as CrashState;
     if (!this.allowedActions.includes(action.type)) {
-      throw new PlayerActionError(`Unsupported action "${action.type}" for sky-rocket`);
+      throw new PlayerActionError(`Unsupported action "${action.type}" for royale-fly`);
     }
 
     switch (action.type) {
