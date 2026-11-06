@@ -5,8 +5,8 @@ import { startFreePlaySession, sendFreePlayAction } from '@/lib/api/games';
 type Theme = { name: string; bg: string; frame: string; accent: string; symbols: { id: string; svg: string }[] };
 
 const THEMES: Record<string, Theme> = {
-  'pharaohs-legacy': {
-    name: "Pharaoh's Legacy",
+  'royale-pharaoh': {
+    name: "Royale Pharaoh",
     bg: 'bg-gradient-to-b from-amber-900 via-yellow-950 to-black',
     frame: 'border-amber-400',
     accent: 'text-amber-300',
@@ -24,7 +24,6 @@ const THEMES: Record<string, Theme> = {
 };
 
 const EXTRA: Record<string, Partial<Theme>> = {
-  'atlantis-treasure': { bg: 'bg-gradient-to-b from-blue-900 via-cyan-950 to-black', frame: 'border-cyan-400', accent: 'text-cyan-300' },
   'neon-cyber-rush': { bg: 'bg-gradient-to-b from-purple-950 via-fuchsia-950 to-black', frame: 'border-fuchsia-400', accent: 'text-fuchsia-300' },
   'mystic-forest': { bg: 'bg-gradient-to-b from-emerald-950 via-green-950 to-black', frame: 'border-emerald-400', accent: 'text-emerald-300' },
   'samurai-fortune': { bg: 'bg-gradient-to-b from-red-950 via-rose-950 to-black', frame: 'border-rose-400', accent: 'text-rose-300' },

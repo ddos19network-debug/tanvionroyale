@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import { TradingController, AdminTradingController } from './trading.controller';
 import { TradingService } from './trading.service';
+import { TradingGateway } from './trading.gateway';
 
 /**
  * PAPER (virtual) trading module — TANVION ROYALE Trading Platform.
@@ -10,8 +12,9 @@ import { TradingService } from './trading.service';
  * virtual: no deposits/withdrawals, no real-money language.
  */
 @Module({
+  imports: [JwtModule.register({})],
   controllers: [TradingController, AdminTradingController],
-  providers: [TradingService],
+  providers: [TradingService, TradingGateway],
   exports: [TradingService],
 })
 export class TradingModule {}

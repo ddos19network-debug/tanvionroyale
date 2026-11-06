@@ -12,13 +12,6 @@ import { LuckyNumberEngine } from './lucky-number.engine';
 import { SLOT_ENGINES } from './slot-engines.config';
 import type { FreePlayGameEngine, PublicFreePlayGame } from './free-play-engine.interface';
 
-/**
- * Registry of internally developed FREE-PLAY game engines.
- *
- * Only engines listed here are playable. Demo presentation tiles and
- * third-party games (future provider launches) live outside this registry —
- * this is deliberately the single source of truth for free-play games.
- */
 const ENGINES: readonly FreePlayGameEngine[] = [
   new CrashEngine(),
   new LightningDiceEngine(),

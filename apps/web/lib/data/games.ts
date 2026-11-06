@@ -1,15 +1,15 @@
-/**
+﻿﻿/**
  * TANVIONROYALE — game catalog.
  *
  * Architecture separation (three distinct layers, never mixed):
- *   1. `demo`       — presentation-only tiles (this file). Placeholder artwork,
+ *   1. demo       — presentation-only tiles (this file). Placeholder artwork,
  *                     no playable game behind them → they route to the
  *                     /games/demo-preview explainer.
- *   2. `freeplay`   — INTERNALLY developed, genuinely playable free-play games
+ *   2. reeplay   — INTERNALLY developed, genuinely playable free-play games
  *                     (see apps/api/src/modules/games + /games/play/[slug]).
  *                     Real engine, real sessions/results (free-play points
  *                     only — never money).
- *   3. `third-party`— reserved for future licensed third-party game launches
+ *   3. 	hird-party— reserved for future licensed third-party game launches
  *                     (no provider is integrated yet; never fabricated).
  *
  * Server-owned data (wallet, bets, user, free-play results) is always fetched
@@ -38,6 +38,8 @@ export interface Game {
   slug?: string;
   /** Custom logo or cover image artwork URL. */
   coverImage?: string;
+  /** Explicit display order — never rely on alphabetical or array-order sorting. */
+  sortOrder: number;
 }
 
 export interface GameSectionData {
@@ -59,6 +61,7 @@ function makeGame(
   kind: GameKind = 'demo',
   slug?: string,
   coverImage?: string,
+  sortOrder?: number,
 ): Game {
   return {
     id: `game-${id}`,
@@ -71,6 +74,7 @@ function makeGame(
     kind,
     slug,
     coverImage,
+    sortOrder: sortOrder ?? id,
   };
 }
 
@@ -112,17 +116,17 @@ export const games: Game[] = [
     'royale-ace',
     '/assets/image/royale-ace-logo.png',
   ),
-  makeGame(37, "Royale Time", "TANVIONROYALE", "Live Games", 45, "LIVE", true, "freeplay", "royale-time", "/assets/image/royale-time-cover.svg"),
-  makeGame(100, "Pharaoh's Legacy", "TANVIONROYALE", "Slots", 45, "NEW", true, "freeplay", "pharaohs-legacy"),
-  makeGame(101, "Atlantis Treasure", "TANVIONROYALE", "Slots", 200, "NEW", true, "freeplay", "atlantis-treasure"),
-  makeGame(102, "Neon Cyber Rush", "TANVIONROYALE", "Slots", 300, "NEW", true, "freeplay", "neon-cyber-rush"),
-  makeGame(103, "Mystic Forest", "TANVIONROYALE", "Slots", 150, "NEW", true, "freeplay", "mystic-forest"),
-  makeGame(104, "Samurai Fortune", "TANVIONROYALE", "Slots", 15, "NEW", true, "freeplay", "samurai-fortune"),
-  makeGame(105, "Cosmic Odyssey", "TANVIONROYALE", "Slots", 270, "NEW", true, "freeplay", "cosmic-odyssey"),
-  makeGame(106, "Dragon's Kingdom", "TANVIONROYALE", "Slots", 10, "NEW", true, "freeplay", "dragons-kingdom"),
-  makeGame(107, "Tropical Paradise", "TANVIONROYALE", "Slots", 20, "NEW", true, "freeplay", "tropical-paradise"),
-  makeGame(108, "Steampunk Revolution", "TANVIONROYALE", "Slots", 30, "NEW", true, "freeplay", "steampunk-revolution"),
-  makeGame(109, "Frozen Empire", "TANVIONROYALE", "Slots", 210, "NEW", true, "freeplay", "frozen-empire"),
+  makeGame(37, "ROYALE TIME", "TANVIONROYALE", "Live Games", 45, "LIVE", true, "freeplay", "royale-time", "/assets/image/royale-time-cover.svg", 3),
+  makeGame(100, "ROYALE PHARAOH", "TANVIONROYALE", "Slots", 45, "NEW", true, "freeplay", "royale-pharaoh", undefined, 4),
+  makeGame(110, "ROYALE ATLANTIS", "TANVIONROYALE", "Slots", 60, "NEW", true, "freeplay", "royale-atlantis", 5),
+  makeGame(102, "ROYALE NEON CYBER RUSH", "TANVIONROYALE", "Slots", 300, "NEW", true, "freeplay", "neon-cyber-rush", "/assets/image/ROYALE NEON CYBER RUSH.jpg", 6),
+  makeGame(103, "ROYALE MYSTIC FOREST", "TANVIONROYALE", "Slots", 150, "NEW", true, "freeplay", "mystic-forest", "/assets/image/ROYALE MYSTIC FOREST.jpg", 7),
+  makeGame(104, "ROYALE SAMURAI FORTUNE", "TANVIONROYALE", "Slots", 15, "NEW", true, "freeplay", "samurai-fortune", "/assets/image/ROYALE SAMURAI FORTUNE.jpg", 8),
+  makeGame(105, "ROYALE COSMIC ODYSSEY", "TANVIONROYALE", "Slots", 270, "NEW", true, "freeplay", "cosmic-odyssey", "/assets/image/ROYALE COSMIC ODYSSEY.jpg", 9),
+  makeGame(106, "ROYALE DRAGON'S KINGDOM", "TANVIONROYALE", "Slots", 10, "NEW", true, "freeplay", "dragons-kingdom", "/assets/image/ROYALE DRAGON'S KINGDOM.jpg", 10),
+  makeGame(107, "ROYALE TROPICAL PARADISE", "TANVIONROYALE", "Slots", 20, "NEW", true, "freeplay", "tropical-paradise", "/assets/image/ROYALE TROPICAL PARADISE.jpg", 11),
+  makeGame(108, "ROYALE STEAMPUNK REVOLUTION", "TANVIONROYALE", "Slots", 30, "NEW", true, "freeplay", "steampunk-revolution", "/assets/image/ROYALE STEAMPUNK REVOLUTION.jpg", 12),
+  makeGame(109, "ROYALE FROZEN EMPIRE", "TANVIONROYALE", "Slots", 210, "NEW", true, "freeplay", "frozen-empire", "/assets/image/ROYALE FROZEN EMPIRE.jpg", 13),
 ];
 
 export function gamesByCategory(category: string): Game[] {

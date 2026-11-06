@@ -404,8 +404,8 @@ export function RoyaleTimeGame() {
           <div
             className={`relative flex shrink-0 items-center justify-center rounded-2xl border border-amber-500/30 bg-black overflow-hidden shadow-2xl transition-all duration-700 ease-in-out ${
               isBettingOpen
-                ? 'w-full max-w-[280px] h-[220px] sm:h-[260px] sm:w-[260px] xl:w-[280px] xl:h-[280px]'
-                : 'w-full h-[60%] max-w-none'
+                ? 'w-[260px] h-[260px]'
+                : 'w-[500px] h-[500px]'
             }`}
           >
             <RouletteWheelR3F

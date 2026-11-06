@@ -222,7 +222,8 @@ function WheelScene({ gameState, winningNumber }: WheelSceneProps) {
       ballWorldAngleRef.current -= ballSpeedRef.current * dt;
 
       // Friction deceleration: Decays smoothly over ~7.5 seconds
-      ballSpeedRef.current = Math.max(0, ballSpeedRef.current - dt * 1.15);
+      ballSpeedRef.current = Math.max(0, ballSpeedRef.current * Math.exp(-dt * 1.15));
+       if (ballSpeedRef.current < 0.01) ballSpeedRef.current = 0;
 
       const progress = 1 - ballSpeedRef.current / 8.5;
 
