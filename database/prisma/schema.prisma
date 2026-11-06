@@ -157,6 +157,7 @@ model User {
   royalePlinkoRounds        RoyalePlinkoRound[]
   royaleMinesRounds         RoyaleMinesRound[]
   royaleAceRounds           RoyaleAceRound[]
+  freePlaySlotRounds        FreePlaySlotRound[]
   royaleAceConfigsCreated   RoyaleAceConfigVersion[]    @relation("RoyaleAceConfigCreatedBy")
   royaleAceConfigsActivated RoyaleAceConfigVersion[]    @relation("RoyaleAceConfigActivatedBy")
   royaleAceReportsCreated   RoyaleAceSimulationReport[] @relation("RoyaleAceReportCreatedBy")
@@ -3834,4 +3835,23 @@ enum ReconciliationStatus {
   PENDING
   RESOLVED
   UNRESOLVED
+}
+
+/// Free-play slot game round (Games #4 to #13).
+/// One round per spin; pre-derived server-authoritatively.
+model FreePlaySlotRound {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameSlug        String
+  clientRequestId String
+  stake           Int
+  totalPayBp      Int
+  payout          Int
+  capped          Boolean  @default(false)
+  outcome         Json
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, clientRequestId])
+  @@index([userId, gameSlug, createdAt])
 }

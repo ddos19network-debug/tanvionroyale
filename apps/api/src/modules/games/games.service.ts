@@ -7,6 +7,7 @@ import {
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
 import { getFreePlayEngine, getFreePlayGameMeta, listFreePlayGameMeta } from './game-engines/registry';
+import { getSlot, listSlotSlugs } from './slots/slot.registry';
 import { PlayerActionError } from './game-engines/engine-errors';
 import { stripEngineState } from './game-engines/engine-state';
 import type { FreePlayActionResult, FreePlayRoundResult, FreePlayState, PublicFreePlayGame } from './game-engines/free-play-engine.interface';
@@ -54,13 +55,39 @@ export class GamesService {
   // --------------------------------------------------------------------------
 
   listGames(): PublicFreePlayGame[] {
-    return listFreePlayGameMeta();
+    const list = [...listFreePlayGameMeta()];
+    const existing = new Set(list.map((g) => g.slug));
+    for (const slug of listSlotSlugs()) {
+      if (!existing.has(slug)) {
+        const slot = getSlot(slug);
+        if (slot) {
+          list.push({
+            slug: slot.config.slug,
+            title: slot.config.title,
+            description: `${slot.config.title} free-play slot.`,
+            kind: 'FREE_PLAY',
+            tagline: 'Free-play — no real money',
+          });
+        }
+      }
+    }
+    return list;
   }
 
   getGameMeta(slug: string): PublicFreePlayGame {
     const meta = getFreePlayGameMeta(slug);
-    if (!meta) throw new NotFoundException('Free-play game not found');
-    return meta;
+    if (meta) return meta;
+    const slot = getSlot(slug);
+    if (slot) {
+      return {
+        slug: slot.config.slug,
+        title: slot.config.title,
+        description: `${slot.config.title} free-play slot.`,
+        kind: 'FREE_PLAY',
+        tagline: 'Free-play — no real money',
+      };
+    }
+    throw new NotFoundException('Free-play game not found');
   }
 // --------------------------------------------------------------------------
   // Sessions

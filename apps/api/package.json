@@ -27,6 +27,8 @@
     "promote-admin": "ts-node ../../database/scripts/promote-admin.ts",
     "sim:royale-ace": "ts-node -r tsconfig-paths/register src/modules/royale/ace/ace-sim.cli.ts",
     "sim:tune:royale-ace": "ts-node -r tsconfig-paths/register src/modules/royale/ace/ace-tune.ts",
+    "slots:sim": "ts-node -r tsconfig-paths/register src/modules/games/slots/slot-sim.cli.ts",
+    "slots:tune": "ts-node -r tsconfig-paths/register src/modules/games/slots/slot-tune.cli.ts",
     "audit-account-domains": "ts-node ../../database/scripts/audit-account-domains.ts",
     "db:setup": "pnpm prisma:generate && pnpm prisma:migrate",
     "postinstall": "prisma generate --schema ../../database/prisma/schema.prisma && node prisma-copy-binary.cjs"

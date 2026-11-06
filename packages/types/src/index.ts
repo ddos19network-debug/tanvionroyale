@@ -8,3 +8,4 @@ export * from './wallet';
 export * from './trading';
 export * from './casino';
 export * from './winhouse';
+export * from './slots';

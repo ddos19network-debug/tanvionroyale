@@ -1,15 +1,19 @@
 import { Module } from '@nestjs/common';
 import { FreePlayGamesController } from './games.controller';
 import { GamesService } from './games.service';
+import { SlotController } from './slots/slot.controller';
+import { SlotService } from './slots/slot.service';
+import { CrashModule } from '../crash/crash.module';
 
 /**
  * Free-play games module (internally developed, zero-money games).
- * No free-play game touches the wallet, bets, odds or any licensed-provider
- * boundary — those stay behind the betting/payment fail-safe gates.
+ * Includes the 10 Royale Play slots (royale-pharaoh through frozen-empire)
+ * with server-authoritative integer math and free-play points wallet integration.
  */
 @Module({
-  controllers: [FreePlayGamesController],
-  providers: [GamesService],
-  exports: [GamesService],
+  imports: [CrashModule],
+  controllers: [FreePlayGamesController, SlotController],
+  providers: [GamesService, SlotService],
+  exports: [GamesService, SlotService],
 })
 export class GamesModule {}

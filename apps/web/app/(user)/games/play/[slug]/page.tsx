@@ -6,9 +6,8 @@ import { AppFooter } from '@/components/layout/app-footer';
 import { RoyaleFlyGame } from '@/components/games/crash-game';
 import RoyaleAceSlot from '@/components/games/ace-slot-game';
 import { RoyaleTimeGame } from '@/components/games/roulette/roulette-game';
-import { PharaohGame } from '@/components/games/royale-pharaoh/PharaohGame';
-import { AtlantisGame } from '@/components/games/atlantis-game';
-import { SlotGame } from '@/components/games/slot-game';
+import { SlotShell } from '@/components/games/slots/SlotShell';
+import { isRoyaleSlotSlug } from '@/components/games/slots/slot-registry';
 import { getFreePlayGame } from '@/lib/data/games';
 
 /**
@@ -45,6 +44,7 @@ export default function FreePlayGamePage() {
     );
   }
 
+  // Games 1–3: Royale Fly / Sky Rocket, Royale Ace, Royale Time (DO NOT TOUCH)
   if (game.slug === 'royale-fly' || game.slug === 'sky-rocket') {
     return (
       <main className="h-screen max-h-screen w-full bg-[#0b0c10] overflow-y-auto lg:overflow-hidden">
@@ -69,31 +69,14 @@ export default function FreePlayGamePage() {
     );
   }
 
-  if (game.slug === 'royale-pharaoh') {
+  // Games 4–13: Shared SlotShell with server-authoritative slot engine
+  if (game.slug && isRoyaleSlotSlug(game.slug)) {
     return (
-      <main className="min-h-[100dvh] w-full bg-slate-950 pb-[env(safe-area-inset-bottom)]">
-        <PharaohGame />
+      <main className="min-h-[100dvh] w-full pb-[env(safe-area-inset-bottom)]">
+        <SlotShell slug={game.slug} />
       </main>
     );
   }
-
-  if (game.slug === 'royale-atlantis') {
-    return (
-      <main className="min-h-[100dvh] w-full bg-slate-950 pb-[env(safe-area-inset-bottom)]">
-        <AtlantisGame />
-      </main>
-    );
-  }
-
-  const slotSlugs = ['neon-cyber-rush','mystic-forest','samurai-fortune','cosmic-odyssey','dragons-kingdom','tropical-paradise','steampunk-revolution','frozen-empire'];
-  if (slotSlugs.includes(game.slug ?? '')) {
-    return (
-      <main className="min-h-[100dvh] w-full bg-[#0b0c10] pb-[env(safe-area-inset-bottom)]">
-        <SlotGame slug={game.slug!} title={game.title} />
-      </main>
-    );
-  }
-
 
   return (
     <>
