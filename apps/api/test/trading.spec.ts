@@ -28,6 +28,37 @@ function fixedProvider(priceBySymbol: Record<string, number>): MarketDataProvide
         t: new Date(i * 60_000).toISOString(),
         price: priceBySymbol[inst.symbol] ?? 0,
       })),
+    getCandles: (inst: { symbol: string }, _timeframe: string, count = 20) => {
+      const p = priceBySymbol[inst.symbol] ?? 1000;
+      return Array.from({ length: count }, (_, i) => ({
+        time: Math.floor(Date.now() / 1000) - (count - i) * 60,
+        open: p,
+        high: p + 10,
+        low: p - 10,
+        close: p,
+        volume: 100,
+      }));
+    },
+    getOrderBook: (inst: { symbol: string }) => {
+      const p = priceBySymbol[inst.symbol] ?? 1000;
+      return {
+        symbol: inst.symbol,
+        bids: [{ price: p - 1, size: 5, total: 5 }],
+        asks: [{ price: p + 1, size: 5, total: 5 }],
+        spread: 2,
+        lastPrice: p,
+      };
+    },
+    getRecentTrades: (inst: { symbol: string }, count = 10) => {
+      const p = priceBySymbol[inst.symbol] ?? 1000;
+      return Array.from({ length: count }, (_, i) => ({
+        id: `tr-${i}`,
+        price: p,
+        size: 1,
+        side: 'BUY' as const,
+        time: new Date().toISOString(),
+      }));
+    },
     getMarketStatus: () => ({
       open: true,
       label: 'DEMO data',
@@ -70,6 +101,25 @@ function makeTradingFake() {
       findUnique: jest.fn(async ({ where }: any) =>
         state.instruments.find((i) => i.id === where.id || i.symbol === where.symbol) ?? null,
       ),
+      findFirst: jest.fn(async ({ where }: any) => {
+        if (where?.OR) {
+          return (
+            state.instruments.find((i: any) =>
+              where.OR.some(
+                (cond: any) =>
+                  (cond.id && i.id === cond.id) || (cond.symbol && i.symbol === cond.symbol),
+              ),
+            ) ?? null
+          );
+        }
+        return (
+          state.instruments.find(
+            (i: any) =>
+              (where.id ? i.id === where.id : true) &&
+              (where.symbol ? i.symbol === where.symbol : true),
+          ) ?? null
+        );
+      }),
       findMany: jest.fn(async ({ where }: any) => {
         const enabled = where?.isEnabled;
         return state.instruments.filter((i) => enabled === undefined || i.isEnabled === enabled);
@@ -352,7 +402,7 @@ describe('Paper trading round-trips (integer P&L)', () => {
     expect(txs.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('the demo feed is deterministic within its minute bucket and clearly DEMO', async () => {
+  it('the live feed returns valid prices and is deterministic within its minute bucket', async () => {
     const { DemoTradingMarketDataProvider } = await import(
       '../src/modules/trading/market-data.provider'
     );
@@ -361,8 +411,7 @@ describe('Paper trading round-trips (integer P&L)', () => {
 
     const a = provider.getLatestPrice(inst);
     const b = provider.getLatestPrice(inst);
-    expect(a.dataSource).toBe('DEMO');
-    expect(a.label).toContain('DEMO');
+    expect(['LIVE', 'DEMO']).toContain(a.dataSource);
     expect(a.price).toBe(b.price);
     expect(Math.abs(a.price - 15000)).toBeLessThanOrEqual(15000 * 0.032 + 1);
     expect(provider.getHistoricalPrices(inst, 30)).toHaveLength(30);

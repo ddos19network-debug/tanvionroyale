@@ -126,7 +126,7 @@ export const userNavSections: readonly UserNavSection[] = [
     items: [
       {
         key: 'notification',
-        label: 'Notification',
+        label: 'Notifications',
         href: '/notifications',
         note: 'In-app notification center (also the destination for browser push).',
         icon: 'M11 5h2v3H11V8zM11 13h3v6H11V19z',
@@ -247,7 +247,6 @@ const USER_PANEL_PREFIXES = [
   '/favorites',
   '/my-bets',
   '/promotions',
-  '/trading',
   // In-app notification center — must stay inside the user shell (desktop
   // sidebar + mobile header) exactly like every other account page.
   '/notifications',

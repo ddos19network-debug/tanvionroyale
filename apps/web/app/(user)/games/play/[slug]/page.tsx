@@ -6,6 +6,7 @@ import { AppFooter } from '@/components/layout/app-footer';
 import { RoyaleFlyGame } from '@/components/games/crash-game';
 import RoyaleAceSlot from '@/components/games/ace-slot-game';
 import { RoyaleTimeGame } from '@/components/games/roulette/roulette-game';
+import PharaohGame from '@/components/games/royale-pharaoh/PharaohGame';
 import { SlotShell } from '@/components/games/slots/SlotShell';
 import { isRoyaleSlotSlug } from '@/components/games/slots/slot-registry';
 import { getFreePlayGame } from '@/lib/data/games';
@@ -65,6 +66,15 @@ export default function FreePlayGamePage() {
     return (
       <main className="min-h-[100dvh] w-full bg-[#070b14] pb-[env(safe-area-inset-bottom)]">
         <RoyaleTimeGame />
+      </main>
+    );
+  }
+
+  // Royale Pharaoh: Dedicated 3D Egyptian Pharaoh slot experience
+  if (game.slug === 'royale-pharaoh') {
+    return (
+      <main className="h-[100dvh] max-h-[100dvh] w-full bg-transparent overflow-hidden pb-[env(safe-area-inset-bottom)]">
+        <PharaohGame />
       </main>
     );
   }

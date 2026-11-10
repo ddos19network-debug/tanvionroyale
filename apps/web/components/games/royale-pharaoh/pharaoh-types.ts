@@ -1,33 +1,69 @@
 export type PharaohSymbolId =
-  | "pharaoh-mask"
-  | "anubis"
-  | "cleopatra"
-  | "golden-scarab"
-  | "sarcophagus"
-  | "ankh"
-  | "eye-of-horus"
-  | "golden-coin"
-  | "papyrus"
-  | "wild"
-  | "scatter";
+  | 'pharaoh-mask'
+  | 'anubis'
+  | 'cleopatra'
+  | 'golden-scarab'
+  | 'sarcophagus'
+  | 'ankh'
+  | 'eye-of-horus'
+  | 'golden-coin'
+  | 'papyrus'
+  | 'wild'
+  | 'scatter'
+  | 'mask'
+  | 'scarab'
+  | 'horus'
+  | 'coin';
 
-export interface PharaohSymbol {
-  id: PharaohSymbolId;
+export type SymbolType = 'premium' | 'high' | 'regular' | 'medium' | 'special' | 'wild' | 'scatter';
+
+export interface SymbolConfig {
+  id: string;
   name: string;
+  type: SymbolType;
   image: string;
-  type: "premium" | "regular" | "wild" | "scatter";
+  multiplier: number[]; // 3x, 4x, 5x matches
+  tierLabel?: string;
+  description?: string;
 }
 
-export const PHARAOH_SYMBOLS: PharaohSymbol[] = [
-  { id: "pharaoh-mask", name: "Pharaoh Mask", image: "/games/royale-pharaoh/symbols/pharaoh-mask.png", type: "premium" },
-  { id: "anubis", name: "Anubis", image: "/games/royale-pharaoh/symbols/anubis.png", type: "premium" },
-  { id: "cleopatra", name: "Cleopatra", image: "/games/royale-pharaoh/symbols/cleopatra.png", type: "premium" },
-  { id: "golden-scarab", name: "Golden Scarab", image: "/games/royale-pharaoh/symbols/golden-scarab.png", type: "premium" },
-  { id: "sarcophagus", name: "Royal Sarcophagus", image: "/games/royale-pharaoh/symbols/sarcophagus.png", type: "premium" },
-  { id: "ankh", name: "Ankh", image: "/games/royale-pharaoh/symbols/ankh.png", type: "regular" },
-  { id: "eye-of-horus", name: "Eye of Horus", image: "/games/royale-pharaoh/symbols/eye-of-horus.png", type: "regular" },
-  { id: "golden-coin", name: "Golden Coin", image: "/games/royale-pharaoh/symbols/golden-coin.png", type: "regular" },
-  { id: "papyrus", name: "Ancient Papyrus", image: "/games/royale-pharaoh/symbols/papyrus.png", type: "regular" },
-  { id: "wild", name: "Ancient Wild", image: "/games/royale-pharaoh/symbols/wild.png", type: "wild" },
-  { id: "scatter", name: "Golden Scatter", image: "/games/royale-pharaoh/symbols/scatter.png", type: "scatter" },
-];
+export interface WinLineResult {
+  lineIndex: number;
+  symbolId: string;
+  count: number;
+  payout: number;
+  coords: { col: number; row: number }[];
+}
+
+export interface SpinHistoryItem {
+  id: string;
+  time: string;
+  bet: number;
+  multiplier: number;
+  win: number;
+  isBonus?: boolean;
+}
+
+export interface GameState {
+  reels: string[][]; // 5 columns x 3 rows: reels[col][row]
+  isSpinning: boolean;
+  reelSpinning: boolean[]; // Staggered spin state per reel
+  bet: number;
+  balance: number;
+  win: number;
+  totalWin: number;
+  multiplier: number;
+  freeSpins: number;
+  inFreeSpins: boolean;
+  showBonusAnimation: boolean;
+  winningLines: number[];
+  winningCells: { col: number; row: number }[];
+  activeWinResults: WinLineResult[];
+  autoPlay: boolean;
+  autoPlayCount: number;
+  turbo: boolean;
+  soundEnabled: boolean;
+  showPaytable: boolean;
+  showRules: boolean;
+  showSettings: boolean;
+}

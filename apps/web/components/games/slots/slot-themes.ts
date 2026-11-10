@@ -13,12 +13,12 @@ export const SLOT_THEMES: Record<string, SlotTheme> = {
   'royale-pharaoh': {
     slug: 'royale-pharaoh',
     title: 'ROYALE PHARAOH',
-    tagline: 'Curse of the Golden Kingdom · Free-play',
-    bgGradient: 'bg-gradient-to-b from-amber-950 via-yellow-950 to-slate-950',
-    frameBorderColor: 'border-amber-400/70',
-    frameGlowColor: 'rgba(251,191,36,0.25)',
-    accentColor: 'text-amber-300',
-    spinButtonBg: 'bg-amber-400 hover:bg-amber-300 text-slate-950',
+    tagline: 'Curse of the Golden Kingdom · The Kingdom of Eternal Gold',
+    bgGradient: 'bg-gradient-to-b from-[#080E24] via-[#050917] to-[#02040A]',
+    frameBorderColor: 'border-[#F5C451]',
+    frameGlowColor: 'rgba(245,196,81,0.35)',
+    accentColor: 'text-[#19C6C2]',
+    spinButtonBg: 'bg-gradient-to-b from-[#FFF2A3] via-[#F5C451] to-[#A66B16] text-[#080E24]',
   },
   'royale-atlantis': {
     slug: 'royale-atlantis',

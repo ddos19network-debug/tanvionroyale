@@ -36,18 +36,19 @@ import { usePathname } from 'next/navigation';
  */
 export default function UserPanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // Hide the top navigation during full-screen gameplay so the game gets the
-  // entire display. Game play pages live under /games/play/<slug>.
+  // Hide the top navigation during full-screen gameplay or trading pages so
+  // those experiences get the entire display without the casino header.
   const isGamePlay = pathname.startsWith("/games/play/");
+  const isTrading = pathname.startsWith("/trading");
 
   return (
     <>
       {/* Top navigation: rendered ONCE here for the whole user panel.
-          Hidden on game-play pages for a full-screen, immersive game shell. */}
-      {!isGamePlay && <AppHeader />}
+          Hidden on game-play pages and trading pages for an immersive full-screen experience. */}
+      {!isGamePlay && !isTrading && <AppHeader />}
 
       {/* Full-width content column — pages own the inner <main>. */}
-      <div className="w-full min-w-0 flex-1 pt-14 pb-[calc(var(--bottom-nav-height,0)+env(safe-area-inset-bottom))] sm:pt-16 md:pb-0 lg:pb-0">{children}</div>
+      <div className={`w-full min-w-0 flex-1 ${isGamePlay || isTrading ? 'pt-0 pb-0' : 'pt-14 pb-[calc(var(--bottom-nav-height,0)+env(safe-area-inset-bottom))] sm:pt-16 md:pb-0 lg:pb-0'}`}>{children}</div>
     </>
   );
 }

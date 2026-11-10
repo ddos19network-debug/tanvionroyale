@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSlotGame } from './useSlotGame';
 import { getSlotTheme } from './slot-themes';
 import { ReelGrid } from './ReelGrid';
 import { Hud } from './Hud';
-import { StakeSelector } from './StakeSelector';
+
 import { AutoPlay } from './AutoPlay';
 import { FreeSpinsBanner } from './FreeSpinsBanner';
 import { PaytablePanel } from './PaytablePanel';
@@ -43,6 +43,8 @@ export function SlotShell({ slug }: SlotShellProps) {
     showRules,
     setShowRules,
   } = useSlotGame(slug);
+
+  const [isMuted, setIsMuted] = useState(false);
 
   // Keyboard shortcut: Space = spin (when not modal open)
   useEffect(() => {
@@ -98,6 +100,22 @@ export function SlotShell({ slug }: SlotShellProps) {
         </div>
       </header>
 
+      {/* Top Info Row: Bet Amount + Win Amount */}
+      <div className="w-full flex items-center justify-between gap-2 mb-3 rounded-xl border border-white/10 bg-black/60 p-3 sm:p-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-xs sm:text-sm font-medium text-slate-300">
+            BET AMOUNT
+          </span>
+          <span className="text-sm sm:text-base font-bold text-white">{stake}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs sm:text-sm font-medium text-slate-300">
+            WIN AMOUNT
+          </span>
+          <span className="text-sm sm:text-base font-bold text-amber-300">{totalRoundWin}</span>
+        </div>
+      </div>
+
       {/* Main Game Stage */}
       <main className="w-full max-w-4xl my-auto py-4 flex flex-col items-center gap-3">
         {/* Free-play disclaimer pill */}
@@ -145,24 +163,53 @@ export function SlotShell({ slug }: SlotShellProps) {
           </div>
         ) : null}
 
-        {/* Controls Section */}
-        <div className="w-full flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/60 p-3 shadow-xl backdrop-blur">
-          {/* Left: Stake Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-              Stake:
-            </span>
-            <StakeSelector
-              levels={config?.stakeLevels ?? [10, 20, 50, 100, 200, 500, 1000]}
-              stake={stake}
-              onSelect={setStake}
-              disabled={isSpinning || autoPlayCount > 0}
-              balance={balance}
-              accentBg={theme.spinButtonBg}
-            />
+        {/* Controls Section per prompt spec */}
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
+          {/* Top Info Row: BET AMOUNT left, WIN AMOUNT right */}
+          <div className="w-full flex items-center justify-between gap-2 mb-3 rounded-xl border border-white/10 bg-black/60 p-3 sm:p-4 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-medium text-slate-300">
+                BET AMOUNT
+              </span>
+              <span className="text-sm sm:text-base font-bold text-white">{stake}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-medium text-slate-300">
+                WIN AMOUNT
+              </span>
+              <span className="text-sm sm:text-base font-bold text-amber-300">{totalRoundWin}</span>
+            </div>
           </div>
 
-          {/* Right: Actions (Turbo, Auto, Spin) */}
+          {/* Center Spin Row: Minus | Spin | Plus */}
+          <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 mb-3">
+            <button
+              type="button"
+              onClick={() => setStake(Math.max(1, stake - 10))}
+              disabled={isSpinning || autoPlayCount > 0 || balance === null || balance < stake}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-300 transition hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed">
+              −
+            </button>
+
+            <button
+              type="button"
+              onClick={spin}
+              disabled={isSpinning || autoPlayCount > 0 || balance === null || balance < stake}
+              className={`rounded-xl px-6 sm:px-8 py-2.5 sm:py-3 font-black text-sm sm:text-base shadow-lg transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${theme.spinButtonBg}`}
+            >
+              {isSpinning ? 'Spinning...' : 'SPIN'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStake(stake + 10)}
+              disabled={isSpinning || autoPlayCount > 0 || balance === null || balance < stake}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-300 transition hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed">
+              +
+            </button>
+          </div>
+
+          {/* Bottom Action Row: Settings + Auto Spin left | Turbo + Sound right */}
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -177,6 +224,22 @@ export function SlotShell({ slug }: SlotShellProps) {
               ⚡ Turbo
             </button>
 
+            <button
+              type="button"
+              onClick={() => setShowPaytable(true)}
+              className="rounded-lg border border-white/20 bg-white/5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10 transition"
+              aria-label="Paytable"
+            >
+              Paytable
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowRules(true)}
+              className="rounded-lg border border-white/20 bg-white/5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10 transition"
+              aria-label="Rules"
+            >
+              Rules
+            </button>
             <AutoPlay
               autoPlayCount={autoPlayCount}
               onStart={startAutoPlay}
@@ -186,16 +249,11 @@ export function SlotShell({ slug }: SlotShellProps) {
 
             <button
               type="button"
-              onClick={spin}
-              disabled={
-                isSpinning ||
-                autoPlayCount > 0 ||
-                balance === null ||
-                balance < stake
-              }
-              className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-black text-sm sm:text-base shadow-lg transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${theme.spinButtonBg}`}
+              onClick={() => setIsMuted((prev) => !prev)}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isMuted ? 'bg-slate-700' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]'}`}
+              aria-checked={!isMuted}
             >
-              {isSpinning ? 'Spinning...' : 'SPIN'}
+              <span aria-hidden="true" className={`inline-block h-5 w-5 rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${isMuted ? 'translate-x-0' : 'translate-x-5'}`}></span>
             </button>
           </div>
         </div>

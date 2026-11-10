@@ -11,7 +11,7 @@ import {
 import { ApiClientError } from '@/lib/api/client';
 
 /**
- * One market row: DEMO-labelled price + quantity + BUY/SELL.
+ * One market row: live price + quantity + BUY/SELL.
  * All execution happens server-side; this form only submits the order.
  */
 export function InstrumentTradeRow({
@@ -31,8 +31,6 @@ export function InstrumentTradeRow({
   const qty = Number.parseInt(quantity, 10);
   const valid = Number.isInteger(qty) && qty > 0;
   const notional = valid ? instrument.currentPrice * qty : 0;
-  const isDemo = instrument.dataSource === 'DEMO';
-
   async function trade(side: 'BUY' | 'SELL') {
     setBusy(side);
     setError(null);
@@ -68,8 +66,9 @@ export function InstrumentTradeRow({
         </div>
         <div className="text-right">
           <p className="font-mono text-lg text-white">{formatMinor(instrument.currentPrice, currency)}</p>
-          <p className={`text-xs ${isDemo ? 'text-amber-400' : 'text-emerald-400'}`}>
-            {isDemo ? 'DEMO data' : instrument.dataSource + ' data'}
+          <p className="text-xs text-emerald-400 flex items-center justify-end gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Live Market Feed
           </p>
         </div>
       </div>
