@@ -1,0 +1,1088 @@
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  HttpException,
+  Injectable,
+  Logger,
+  Optional,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { Prisma } from '../../generated/prisma';
+import { PrismaService } from '../../database/prisma.service';
+import { randomToken, sha256 } from '../../common/utils/crypto';
+import { isBlockedAccountStatus } from '../../common/utils/account-status';
+import { getEmailSender } from '../notifications/email-sender';
+import { NotificationService } from '../notifications/notification.service';
+import { ReferralService } from '../referral/referral.service';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import type { PublicUser } from '@tanvion-royale/types';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { normalizePhone, tryNormalizePhone } from '../../common/utils/phone';
+import { AdminLoginDto } from './dto/admin-login.dto';
+import { OtpService } from './otp.service';
+import { randomBytes } from 'crypto';
+import * as argon2 from 'argon2';
+
+/** Account lockout policy (config-driven in Phase 11). */
+const LOCKOUT_THRESHOLD = 5;
+const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
+const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
+const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const EMAIL_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+
+export interface TokenPair {
+  accessToken: string;
+  accessTokenExpiresIn: number;
+  refreshToken: string;
+}
+
+export function toPublicUser(user: {
+  id: string;
+  email: string | null;
+  username: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  country: string | null;
+  timezone: string;
+  status: string;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  kycStatus: string;
+  createdAt: Date;
+  updatedAt: Date;
+}): PublicUser {
+  return {
+    id: user.id,
+    email: user.email ?? '',
+    username: user.username,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phone: user.phone,
+    country: user.country,
+    timezone: user.timezone,
+    status: user.status as PublicUser['status'],
+    emailVerified: user.emailVerified,
+    phoneVerified: user.phoneVerified,
+    kycStatus: user.kycStatus as PublicUser['kycStatus'],
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
+  };
+}
+
+@Injectable()
+export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly otpService: OtpService,
+    // Global NotificationsModule provider; optional so unit tests that new
+    // AuthService directly (3-arg) keep compiling. Runtime always injects it.
+    @Optional() private readonly notifications?: NotificationService,
+    // Referral program. Same rationale: optional so a 3-arg test construction
+    // still compiles, and so a referral failure can never break registration.
+    @Optional() private readonly referrals?: ReferralService,
+  ) {}
+
+  // --------------------------------------------------------------------------
+  // Registration
+  // --------------------------------------------------------------------------
+
+  async register(dto: RegisterDto, ip?: string, userAgent?: string): Promise<PublicUser> {
+    const existing = await this.prisma.user.findFirst({
+      where: { OR: [{ email: dto.email.toLowerCase() }, { username: dto.username }] },
+      select: { email: true, username: true },
+    });
+    if (existing) {
+      throw new ConflictException('Email or username already registered');
+    }
+
+    const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
+    const userRole = await this.prisma.role.upsert({
+      where: { name: 'USER' },
+      update: {},
+      create: { name: 'USER', description: 'Standard customer account' },
+    });
+
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email.toLowerCase(),
+        username: dto.username,
+        passwordHash,
+        passwordSetAt: new Date(),
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        country: dto.country,
+        status: 'PENDING',
+        // Registration ALWAYS creates a customer account. accountType is not a
+        // RegisterDto field (the global ValidationPipe rejects unknown body
+        // properties), so no request body / query / client value can select
+        // STAFF through this endpoint.
+        accountType: 'CUSTOMER',
+        userRoles: { create: [{ roleId: userRole.id }] },
+      },
+    });
+
+    await this.createAuthToken(
+      user.id,
+      'EMAIL_VERIFICATION',
+      EMAIL_TOKEN_TTL_MS,
+      dto.email.toLowerCase(),
+    );
+    await this.recordSecurityEvent(user.id, 'REGISTER', ip, userAgent);
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        actorType: 'USER',
+        action: 'AUTH_REGISTER',
+        entityType: 'User',
+        entityId: user.id,
+        ip,
+        userAgent,
+      },
+    });
+
+    // Referral attribution — recorded ONCE, here, and immutable afterwards.
+    // Best-effort and already self-contained: an invalid/disabled/unknown code
+    // simply leaves the new user unattributed, and a failure can never prevent
+    // a legitimate registration. The user is never told their referrer id, and
+    // the code cannot be changed later (there is no such endpoint).
+    await this.referrals
+      ?.attributeRegistration(user.id, dto.ref)
+      .catch(() => undefined);
+
+    // Operational signal: admins get a NEW_USER_REGISTRATION in their own
+    // notification center. Post-commit, best-effort, dedupe-keyed — never
+    // fails the registration and never blocks it.
+    await this.notifications
+      ?.notifyNewUserRegistration({ userId: user.id, username: user.username })
+      .catch(() => undefined);
+
+    return toPublicUser(user);
+  }
+
+  // --------------------------------------------------------------------------
+  // Login / logout / refresh
+  // --------------------------------------------------------------------------
+
+  /**
+   * Customer password login — ONE authentication path for BOTH identifier
+   * kinds (single "Email or Phone Number" field, Part 20).
+   *
+   * Detection uses the SHARED phone normalizer (identical to the dedicated
+   * phone endpoint): an identifier that normalizes to canonical E.164 goes down
+   * the phone path — so `01712345678` and `+8801712345678` both reach the phone
+   * login and therefore the SAME account. Anything else is treated as an email
+   * address: trimmed and lower-cased (registration stores lower-cased emails, so
+   * the lookup is case-insensitive for Gmail and every other provider). Both
+   * shapes funnel into the shared passwordLogin() routine, which also refuses
+   * STAFF accounts before completeLogin() — the CUSTOMER-session chokepoint —
+   * ever runs. Unknown identifier and wrong password collapse to the same
+   * uniform 401 (no user enumeration).
+   */
+  async login(
+    dto: LoginDto,
+    ip?: string,
+    userAgent?: string,
+  ): Promise<TokenPair & { user: PublicUser }> {
+    const identifier = (dto.identifier ?? '').trim();
+    const asPhone = tryNormalizePhone(identifier);
+    if (asPhone.ok) {
+      return this.passwordLogin({ phone: asPhone.phone }, dto.password, 'phone', ip, userAgent);
+    }
+    return this.passwordLogin(
+      { email: identifier.toLowerCase() },
+      dto.password,
+      'email',
+      ip,
+      userAgent,
+    );
+  }
+
+  /**
+   * Shared customer credential check for every password login (email OR
+   * phone) — the single implementation of the customer authentication steps:
+   *
+   *   1. resolve the account by its canonical lookup key (unique email or
+   *      unique phone — already normalized by the caller),
+   *   2. apply the existing lockout probe (5 failures / 15 min → 423),
+   *   3. verify the argon2id password (uniform 401 for unknown identifier and
+   *      wrong password — no user enumeration),
+   *   4. refuse blocked account statuses (403),
+   *   5. refuse STAFF accounts / staff roles (403) — the customer login never
+   *      downgrades a staff account into a CUSTOMER session,
+   *   6. hand off to completeLogin() which creates the CUSTOMER session,
+   *      records LOGIN_SUCCESS, bumps lastLoginAt and returns the token pair.
+   *
+   * `method` ('email' | 'phone') is recorded on LOGIN_FAILURE events for
+   * auditability. Lockout, rate-limit (route throttle), audit and security
+   * event behaviour of the historical email-only and phone-only paths is
+   * preserved exactly — the two implementations were merged, not loosened.
+   */
+  private async passwordLogin(
+    where: { email: string } | { phone: string },
+    password: string,
+    method: 'email' | 'phone',
+    ip?: string,
+    userAgent?: string,
+  ): Promise<TokenPair & { user: PublicUser }> {
+    const user = await this.prisma.user.findUnique({
+      where,
+      include: { userRoles: { include: { role: true } } },
+    });
+
+    if (user) {
+      await this.assertNotLocked(user.id, ip, userAgent);
+    }
+
+    // Uniform error for unknown identifier / wrong password (no user enumeration).
+    const passwordOk =
+      user && (await argon2.verify(user.passwordHash, password).catch(() => false));
+
+    if (!user || !passwordOk) {
+      if (user) {
+        await this.recordSecurityEvent(user.id, 'LOGIN_FAILURE', ip, userAgent, { method });
+      }
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (isBlockedAccountStatus(user.status)) {
+      throw new ForbiddenException('Account is not permitted to sign in');
+    }
+
+    // Staff accounts must use the staff login (POST /auth/admin-login) — the
+    // same gate the historical email login() applied, now shared by BOTH the
+    // email and phone identifier paths (and still enforced a second time in
+    // completeLogin as defense-in-depth). Two independent checks:
+    //   * the historical role gate (ADMIN/SUPER_ADMIN), which stays as
+    //     defense-in-depth for rows not yet reclassified, and
+    //   * the authoritative AccountType gate — EVERY STAFF account (including
+    //     SUPPORT/FINANCE-only staff) is refused, so staff can never "fall
+    //     back" to customer authentication.
+    const roles = user.userRoles.map((ur) => ur.role.name);
+    const isStaffRole = roles.includes('ADMIN') || roles.includes('SUPER_ADMIN');
+    if (isStaffRole || user.accountType === 'STAFF') {
+      await this.recordSecurityEvent(user.id, 'LOGIN_FAILURE', ip, userAgent, {
+        method: 'customer-login',
+        reason: 'staff-account',
+      });
+      throw new ForbiddenException('Staff accounts must sign in at the staff login.');
+    }
+
+    return this.completeLogin(user.id, user.userRoles, ip, userAgent, 'CUSTOMER', user.accountType);
+  }
+
+  /**
+   * Staff-only login (POST /auth/admin-login).
+   *
+   * Same credential verification as the customer login (argon2id, uniform
+   * 401 on bad credentials, lockout probe) plus two staff-only gates:
+   *   * the account must hold ADMIN or SUPER_ADMIN — otherwise 403 with a
+   *     generic staff-only message (a correct password never leaks a token);
+   *   * a blocked status (SUSPENDED/BANNED/LOCKED/CLOSED) is refused.
+   * The identity may be EITHER the username or the Gmail address
+   * (AdminLoginDto.identifier); unknown identifier and wrong password collapse
+   * to the same 401 (no enumeration).
+   * Success issues the SAME token shape as the normal login so the existing
+   * JwtAuthGuard/RolesGuard/admin-guard chain keeps working unchanged — but on
+   * a Session row marked kind=STAFF (see completeLogin), which is the ONLY
+   * authentication context the admin routes accept.
+   * Every attempt is audited best-effort (ADMIN_LOGIN_SUCCESS/DENIED) and
+   * never fails the request when the audit write itself fails.
+   * TODO: enforce 2FA here once the OTP flow covers staff accounts
+   * (User.isTwoFactorEnabled already exists — hook the check in here).
+   */
+  async adminLogin(
+    dto: AdminLoginDto,
+    ip?: string,
+    userAgent?: string,
+  ): Promise<TokenPair & { user: PublicUser }> {
+    const identifier = dto.identifier.trim();
+    const user = await this.prisma.user.findFirst({
+      where: {
+        OR: [{ email: identifier.toLowerCase() }, { username: identifier }],
+      },
+      include: { userRoles: { include: { role: true } } },
+    });
+
+    if (user) {
+      await this.assertNotLocked(user.id, ip, userAgent);
+    }
+
+    const passwordOk =
+      user && (await argon2.verify(user.passwordHash, dto.password).catch(() => false));
+
+    if (!user || !passwordOk) {
+      if (user) {
+        await this.recordSecurityEvent(user.id, 'LOGIN_FAILURE', ip, userAgent, {
+          method: 'admin-login',
+        });
+        await this.safeAdminLoginAudit(user.id, 'ADMIN_LOGIN_DENIED', ip, userAgent, {
+          reason: 'bad-credentials',
+        });
+      }
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const roles = user.userRoles.map((ur) => ur.role.name);
+    // /auth/admin-login authenticates ONLY staff-domain accounts. The
+    // authoritative check is AccountType === STAFF (every row classified as
+    // staff: master admins, ordinary admins, SUPPORT/FINANCE/... staff). The
+    // role check is intentionally NOT required here — a SUPPORT-only staff
+    // account has no customer surface to fall back to (customer login refuses
+    // STAFF rows) and reaches only what its roles authorize via RolesGuard.
+    // A customer-classified account is refused even with a stray staff role.
+    if (user.accountType !== 'STAFF') {
+      await this.recordSecurityEvent(user.id, 'LOGIN_FAILURE', ip, userAgent, {
+        method: 'admin-login',
+        reason: 'not-staff',
+      });
+      await this.safeAdminLoginAudit(user.id, 'ADMIN_LOGIN_DENIED', ip, userAgent, {
+        reason: 'not-staff',
+      });
+      throw new ForbiddenException('This login is for staff accounts only.');
+    }
+
+    if (isBlockedAccountStatus(user.status)) {
+      await this.safeAdminLoginAudit(user.id, 'ADMIN_LOGIN_DENIED', ip, userAgent, {
+        reason: 'blocked-status',
+        status: user.status,
+      });
+      throw new ForbiddenException('Account is not permitted to sign in');
+    }
+
+    const result = await this.completeLogin(user.id, user.userRoles, ip, userAgent, 'STAFF');
+    await this.safeAdminLoginAudit(user.id, 'ADMIN_LOGIN_SUCCESS', ip, userAgent, {
+      roles,
+    });
+    return result;
+  }
+
+  /** Best-effort audit for the staff login — never fails the auth flow. */
+  private async safeAdminLoginAudit(
+    actorId: string,
+    action: 'ADMIN_LOGIN_SUCCESS' | 'ADMIN_LOGIN_DENIED',
+    ip?: string,
+    userAgent?: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          actorId,
+          actorType: 'USER',
+          action,
+          entityType: 'User',
+          entityId: actorId,
+          ip,
+          userAgent,
+          newValue: metadata as Prisma.InputJsonValue | undefined,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to audit ${action}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  /**
+   * Refresh-token rotation — race-safe for the same device.
+   *
+   * Contract: returns the rotated token pair TOGETHER with the current user.
+   * The frontend persists the whole response, so a response without `user`
+   * corrupts the cached session and logs the user out on the next reload —
+   * the exact historical cause of "logged out after some time / after
+   * refresh / in a new tab".
+   *
+   * Rotation rule: the presented token must hash to the session's CURRENT
+   * refreshTokenHash. The PREVIOUS hash is accepted for exactly one more
+   * rotation: two tabs of the same browser routinely fire /auth/refresh with
+   * the same token at the same moment; the second request would otherwise get
+   * a definitive 401 after the first rotated the hash, and the frontend clears
+   * the whole session in response. Accepting the previous hash lets the racing
+   * tab rotate forward too — every accepted response carries the NEWEST pair,
+   * so all tabs converge. A token matching NEITHER slot is a genuine replay
+   * and is rejected with 401.
+   */
+  async refresh(
+    refreshToken: string,
+    ip?: string,
+    userAgent?: string,
+  ): Promise<TokenPair & { user: PublicUser }> {
+    const presentedHash = sha256(refreshToken);
+
+    const session =
+      (await this.prisma.session.findUnique({
+        where: { refreshTokenHash: presentedHash },
+        include: { user: { include: { userRoles: { include: { role: true } } } } },
+      })) ??
+      // previousRefreshTokenHash is NOT unique — several rows could
+      // transiently share it, so the fallback lookup must be findFirst.
+      (await this.prisma.session.findFirst({
+        where: { previousRefreshTokenHash: presentedHash },
+        include: { user: { include: { userRoles: { include: { role: true } } } } },
+      }));
+
+    if (!session || session.revokedAt || session.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+    if (isBlockedAccountStatus(session.user.status)) {
+      throw new ForbiddenException('Account is not permitted to sign in');
+    }
+    // Account-domain separation: a customer session can never be refreshed for
+    // an account classified STAFF — the holder must re-authenticate through
+    // /auth/admin-login (which mints a STAFF session). Fail-closed.
+    if (session.kind === 'CUSTOMER' && session.user.accountType === 'STAFF') {
+      throw new UnauthorizedException('Staff accounts must sign in at the staff login.');
+    }
+
+    const roles = session.user.userRoles.map((ur) => ur.role.name);
+
+    /*
+     * Rotate forward atomically (compare-and-set on the CURRENT hash):
+     *   current = NEW, previous = the hash that was current until now.
+     * A concurrent rotation between the read above and this write moves the
+     * hash, the CAS fails, and the state is re-observed and retried. Each
+     * attempt signs a throwaway access token only until the CAS succeeds.
+     */
+    let tokens: TokenPair | null = null;
+    for (let attempt = 0; attempt < 3 && !tokens; attempt++) {
+      const current = await this.prisma.session.findUnique({
+        where: { id: session.id },
+        select: { refreshTokenHash: true, previousRefreshTokenHash: true },
+      });
+      if (
+        !current ||
+        !current.refreshTokenHash ||
+        (current.refreshTokenHash !== presentedHash &&
+          current.previousRefreshTokenHash !== presentedHash)
+      ) {
+        break; // presented token matches neither slot — replay/foreign token
+      }
+
+      const previousHash = current.refreshTokenHash;
+      const nextRefreshToken = randomToken();
+      const rotated = await this.prisma.session.updateMany({
+        where: {
+          id: session.id,
+          refreshTokenHash: previousHash,
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        data: {
+          refreshTokenHash: sha256(nextRefreshToken),
+          previousRefreshTokenHash: previousHash,
+        },
+      });
+      if (rotated.count === 1) {
+        const accessToken = await this.jwtService.signAsync(
+          { sub: session.userId, sid: session.id, roles },
+          { expiresIn: `${ACCESS_TOKEN_TTL_SECONDS}s` },
+        );
+        tokens = {
+          accessToken,
+          accessTokenExpiresIn: ACCESS_TOKEN_TTL_SECONDS,
+          refreshToken: nextRefreshToken,
+        };
+      }
+    }
+
+    if (!tokens) {
+      // Lost every CAS attempt / the presented token never matched. The stale
+      // tab receives 401, which the frontend treats as definitive ONLY when
+      // the stored token did not change underneath it.
+      this.logger.warn(
+        `Refresh rejected (sessionId=${session.id}, reason=replay-or-race, hashPrefix=${presentedHash.slice(0, 8)})`,
+      );
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    await this.prisma.session.update({
+      where: { id: session.id },
+      data: { ip, userAgent },
+    });
+    return { ...tokens, user: toPublicUser(session.user) };
+  }
+
+  async logout(auth: AuthenticatedUser): Promise<void> {
+    await this.prisma.session.updateMany({
+      where: { id: auth.sessionId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Phase 11 — phone + password + OTP authentication
+  // --------------------------------------------------------------------------
+
+  /**
+   * Step 1 of phone signup: validate phone + password, create a PENDING user
+   * (or refresh the password of an existing unverified one) and send an OTP.
+   * The account is only activated after the OTP is verified (step 2), at which
+   * point phoneVerified/phoneVerifiedAt are set automatically.
+   */
+  async sendPhoneSignupOtp(
+    dto: { phone: string; password: string; username?: string; ref?: string },
+    ip?: string,
+    userAgent?: string,
+  ): Promise<{ message: string; phone: string }> {
+    // ONE canonical value for the whole flow. `01712345678` and
+    // `+8801712345678` both become `+8801712345678` HERE, so the user row, the
+    // PHONE identity, the OTP identifier and the later verify/login/recovery
+    // lookups all address the exact same account — the same input can never
+    // create a second user under a second representation.
+    const phone = normalizePhone(dto.phone);
+
+    const existing = await this.prisma.user.findUnique({ where: { phone } });
+    if (existing?.phoneVerified) {
+      throw new ConflictException('Phone already registered');
+    }
+
+    if (existing) {
+      // Unverified phone signup restarted — refresh the credentials.
+      const now = new Date();
+      await this.prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          passwordHash: await argon2.hash(dto.password, { type: argon2.argon2id }),
+          passwordSetAt: now,
+        },
+      });
+    } else {
+      if (dto.username) {
+        const taken = await this.prisma.user.findFirst({
+          where: { username: dto.username },
+          select: { id: true },
+        });
+        if (taken) throw new ConflictException('Username already registered');
+      }
+      const username = dto.username ?? `user_${randomBytes(5).toString('hex')}`;
+      const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
+      const userRole = await this.prisma.role.upsert({
+        where: { name: 'USER' },
+        update: {},
+        create: { name: 'USER', description: 'Standard customer account' },
+      });
+      const user = await this.prisma.user.create({
+        data: {
+          email: null,
+          phone,
+          username,
+          passwordHash,
+          passwordSetAt: new Date(),
+          status: 'PENDING',
+          // Phone signup ALWAYS creates a customer account — never staff.
+          accountType: 'CUSTOMER',
+          userRoles: { create: [{ roleId: userRole.id }] },
+        },
+      });
+      await this.ensurePhoneIdentity(user.id, phone);
+      await this.recordSecurityEvent(user.id, 'PHONE_SIGNUP_START', ip, userAgent);
+      await this.prisma.auditLog.create({
+        data: {
+          actorId: user.id,
+          actorType: 'USER',
+          action: 'AUTH_PHONE_SIGNUP_START',
+          entityType: 'User',
+          entityId: user.id,
+          ip,
+          userAgent,
+        },
+      });
+
+      // Referral attribution — recorded ONCE, here, at account creation, and
+      // immutable afterwards. Best-effort and self-contained: an invalid,
+      // unknown or disabled code simply leaves the new user unattributed, and a
+      // failure can never prevent a legitimate signup. Restarting an unverified
+      // signup is safe too, because an existing attribution is always kept.
+      await this.referrals
+        ?.attributeRegistration(user.id, dto.ref)
+        .catch(() => undefined);
+    }
+
+    await this.otpService.issue(phone, 'PHONE_SIGNUP', 'sms');
+    // The canonical phone is echoed back so the client verifies the OTP against
+    // the exact value the code was ISSUED for. Without this a client that kept
+    // sending the raw `01712345678` would verify a different OTP identifier and
+    // the OTP would (correctly) never match.
+    return {
+      message: 'If the phone number is valid, a verification code has been sent.',
+      phone,
+    };
+  }
+
+  /**
+   * Step 2 of phone signup: verify the OTP, activate the account and sign the
+   * user in. Phone verification happens here automatically — the user is never
+   * asked to verify the same phone again.
+   */
+  async verifyPhoneSignup(
+    dto: { phone: string; code: string },
+    ip?: string,
+    userAgent?: string,
+  ): Promise<TokenPair & { user: PublicUser }> {
+    // Same normalizer as step 1: the OTP was issued for the canonical E.164
+    // identifier, so it MUST be verified against that same value. A raw
+    // `01712345678` here would address a different (empty) OTP record.
+    const phone = normalizePhone(dto.phone);
+    await this.otpService.verify(phone, 'PHONE_SIGNUP', dto.code);
+
+    const user = await this.prisma.user.findUnique({
+      where: { phone },
+      include: { userRoles: { include: { role: true } } },
+    });
+    if (!user) throw new UnauthorizedException('Invalid or expired code');
+    if (isBlockedAccountStatus(user.status)) {
+      throw new ForbiddenException('Account is not permitted to sign in');
+    }
+
+    if (!user.phoneVerified) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          phoneVerified: true,
+          phoneVerifiedAt: new Date(),
+          // Marks the verification as automatic (signup OTP), never set by
+          // the later manual Verification Center flow.
+          phoneVerifiedDuringSignupAt: new Date(),
+          status: 'ACTIVE',
+        },
+      });
+      await this.ensurePhoneIdentity(user.id, phone);
+      // Only the authoritative phone OTP channel marks the PHONE verification
+      // record as VERIFIED. Social/email login can never change this state.
+      await this.prisma.verification.upsert({
+        where: { userId_type: { userId: user.id, type: 'PHONE' } },
+        update: { status: 'VERIFIED', verifiedAt: new Date() },
+        create: { userId: user.id, type: 'PHONE', status: 'VERIFIED', verifiedAt: new Date() },
+      });
+      await this.recordSecurityEvent(user.id, 'PHONE_VERIFIED', ip, userAgent, {
+        context: 'SIGNUP',
+      });
+    }
+
+    const fresh =
+      (await this.prisma.user.findUnique({
+        where: { id: user.id },
+        include: { userRoles: { include: { role: true } } },
+      })) ?? user;
+    return this.completeLogin(fresh.id, fresh.userRoles, ip, userAgent, 'CUSTOMER', fresh.accountType);
+  }
+
+  /**
+   * Phone + password login (POST /auth/phone/login) — kept as a thin wrapper
+   * over the SAME shared passwordLogin() routine as login(), so there is no
+   * second authentication implementation. The phone is canonicalized with the
+   * shared normalizer, so a customer who signed up as `01712345678` signs in
+   * with either that or `+8801712345678` and reaches the SAME account.
+   */
+  async loginWithPhone(
+    dto: { phone: string; password: string },
+    ip?: string,
+    userAgent?: string,
+  ): Promise<TokenPair & { user: PublicUser }> {
+    return this.passwordLogin({ phone: normalizePhone(dto.phone) }, dto.password, 'phone', ip, userAgent);
+  }
+
+  /**
+   * Shared tail of every login path: session + tokens + audit events.
+   *
+   * `kind` is the session authentication context (SessionKind):
+   *   * 'CUSTOMER' (default) — email login, phone login, phone-signup verify,
+   *     OAuth exchange. A STAFF-classified account (or a staff-role account,
+   *     kept as defense-in-depth for rows not yet reclassified) is REFUSED
+   *     here — the same gate login() applies, now as a chokepoint covering
+   *     EVERY customer flow: a correct staff password through a customer
+   *     endpoint never yields a session and records a security event directing
+   *     staff to the staff login. This closes the phone-login/OAuth paths that
+   *     previously minted staff sessions outside the dedicated admin entry
+   *     point.
+   *   * 'STAFF' — set ONLY by adminLogin() (which has already verified
+   *     AccountType === STAFF). RolesGuard requires this kind for every
+   *     ADMIN/SUPER_ADMIN route, so a customer session can never authenticate
+   *     an admin API call (CUSTOMER_SESSION ≠ STAFF_SESSION).
+   */
+  private async completeLogin(
+    userId: string,
+    userRoles: { role: { name: string } }[],
+    ip?: string,
+    userAgent?: string,
+    kind: 'CUSTOMER' | 'STAFF' = 'CUSTOMER',
+    accountType?: string,
+  ): Promise<TokenPair & { user: PublicUser }> {
+    const roles = userRoles.map((ur) => ur.role.name);
+
+    if (kind === 'CUSTOMER') {
+      const isStaffRole = roles.includes('ADMIN') || roles.includes('SUPER_ADMIN');
+      if (isStaffRole || accountType === 'STAFF') {
+        await this.recordSecurityEvent(userId, 'LOGIN_FAILURE', ip, userAgent, {
+          method: 'customer-login',
+          reason: 'staff-account',
+        });
+        throw new ForbiddenException('Staff accounts must sign in at the staff login.');
+      }
+    }
+
+    const session = await this.prisma.session.create({
+      data: {
+        userId,
+        tokenHash: sha256(randomToken(32)),
+        ip,
+        userAgent,
+        expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+        kind,
+      },
+    });
+
+    await this.recordSecurityEvent(userId, 'LOGIN_SUCCESS', ip, userAgent);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { lastLoginAt: new Date() },
+    });
+
+    const tokens = await this.issueTokens(userId, session.id, roles);
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    return { ...tokens, user: toPublicUser(user!) };
+  }
+
+  /** Creates the PHONE identity row if it does not already exist. */
+  private async ensurePhoneIdentity(userId: string, phone: string): Promise<void> {
+    const existing = await this.prisma.authIdentity.findUnique({
+      where: { provider_providerAccountId: { provider: 'PHONE', providerAccountId: phone } },
+    });
+    if (!existing) {
+      await this.prisma.authIdentity.create({
+        data: { provider: 'PHONE', providerAccountId: phone, userId },
+      });
+    }
+  }
+
+  /**
+   * Best-effort referral attribution for an OAuth signup. The referral code is
+   * recorded once at account creation and immutable afterwards; an invalid,
+   * disabled or unknown code simply leaves the user unattributed, and a
+   * failure can never break the OAuth flow.
+   */
+  async attributeReferral(userId: string, ref?: string): Promise<void> {
+    await this.referrals
+      ?.attributeRegistration(userId, ref ?? undefined)
+      .catch(() => undefined);
+  }
+
+  /**
+   * Phase 11 — issues an application session (JWT + refresh token) for an
+   * already-authenticated principal (e.g. a validated OAuth identity).
+   * Uses exactly the same session/token machinery as password login.
+   */
+  async issueSession(userId: string, ip?: string, userAgent?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { userRoles: { include: { role: true } } },
+    });
+    if (!user) throw new UnauthorizedException('User not found');
+    if (isBlockedAccountStatus(user.status)) {
+      throw new ForbiddenException('Account is not permitted to sign in');
+    }
+    return this.completeLogin(user.id, user.userRoles, ip, userAgent, 'CUSTOMER', user.accountType);
+  }
+
+  // --------------------------------------------------------------------------
+  // Email verification
+  // --------------------------------------------------------------------------
+
+  async verifyEmail(token: string): Promise<{ emailVerified: boolean }> {
+    const record = await this.consumeAuthToken(token, 'EMAIL_VERIFICATION');
+    await this.prisma.user.update({
+      where: { id: record.userId },
+      data: { emailVerified: true, status: 'ACTIVE' },
+    });
+    return { emailVerified: true };
+  }
+
+  async resendVerificationEmail(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.email) throw new BadRequestException('Add an email address first');
+    await this.createAuthToken(userId, 'EMAIL_VERIFICATION', EMAIL_TOKEN_TTL_MS, user.email);
+  }
+
+  // --------------------------------------------------------------------------
+  // Password reset
+  // --------------------------------------------------------------------------
+
+  /** Always succeeds — never reveals whether the email exists. */
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    // Only accounts with a verified email receive a reset link. Any other
+    // outcome stays silent to avoid user enumeration.
+    if (
+      user &&
+      user.email &&
+      user.emailVerified &&
+      !isBlockedAccountStatus(user.status)
+    ) {
+      await this.createAuthToken(
+        user.id,
+        'PASSWORD_RESET',
+        RESET_TOKEN_TTL_MS,
+        user.email,
+      );
+      await this.recordSecurityEvent(user.id, 'PASSWORD_RESET_REQUESTED');
+    }
+  }
+
+  async resetPassword(
+    token: string,
+    newPassword: string,
+    ip?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    const record = await this.consumeAuthToken(token, 'PASSWORD_RESET');
+    const passwordHash = await argon2.hash(newPassword, { type: argon2.argon2id });
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: record.userId },
+        data: { passwordHash, passwordSetAt: new Date() },
+      }),
+      this.prisma.session.updateMany({
+        where: { userId: record.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+      this.prisma.auditLog.create({
+        data: {
+          actorId: record.userId,
+          actorType: 'USER',
+          action: 'AUTH_PASSWORD_RESET',
+          entityType: 'User',
+          entityId: record.userId,
+          ip,
+          userAgent,
+        },
+      }),
+    ]);
+    await this.recordSecurityEvent(record.userId, 'PASSWORD_RESET_SUCCESS', ip, userAgent);
+  }
+
+  // --------------------------------------------------------------------------
+  // Phase 12 — phone-based password recovery
+  // --------------------------------------------------------------------------
+
+  /**
+   * Starts phone recovery: sends a PHONE_RECOVERY OTP to a phone bound to an
+   * existing, verified, active account. Always succeeds so an attacker cannot
+   * enumerate which phone numbers are registered.
+   */
+  async startPhoneRecovery(phone: string): Promise<{ message: string }> {
+    // Canonical before lookup: recovery must find the same account the signup
+    // created, whether the customer types the local or the E.164 form.
+    const canonical = normalizePhone(phone);
+    const user = await this.prisma.user.findUnique({ where: { phone: canonical } });
+    if (
+      user &&
+      user.phoneVerified &&
+      !isBlockedAccountStatus(user.status)
+    ) {
+      await this.otpService.issue(canonical, 'PHONE_RECOVERY', 'sms');
+    }
+    return { message: 'If the phone number is valid, a recovery code has been sent.' };
+  }
+
+  /**
+   * Completes phone recovery: verifies the OTP, sets a new password and revokes
+   * every existing session/refresh token so a lost device cannot keep access.
+   */
+  async completePhoneRecovery(
+    phone: string,
+    code: string,
+    newPassword: string,
+    ip?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    // Same canonical value step 1 issued the code for — a reset can never be
+    // completed against a different representation of the same number.
+    const canonical = normalizePhone(phone);
+    const user = await this.prisma.user.findUnique({ where: { phone: canonical } });
+    if (!user || !user.phoneVerified) {
+      throw new UnauthorizedException('Invalid or expired code');
+    }
+
+    try {
+      await this.otpService.verify(canonical, 'PHONE_RECOVERY', code);
+    } catch (error) {
+      await this.recordSecurityEvent(user.id, 'RECOVERY_FAILURE', ip, userAgent, {
+        reason: error instanceof Error ? error.message : 'invalid_code',
+      });
+      throw error;
+    }
+
+    const passwordHash = await argon2.hash(newPassword, { type: argon2.argon2id });
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash, passwordSetAt: new Date() },
+      }),
+      this.prisma.session.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+      this.prisma.auditLog.create({
+        data: {
+          actorId: user.id,
+          actorType: 'USER',
+          action: 'AUTH_PHONE_RECOVERY',
+          entityType: 'User',
+          entityId: user.id,
+          ip,
+          userAgent,
+        },
+      }),
+    ]);
+    await this.recordSecurityEvent(user.id, 'RECOVERY_SUCCESS', ip, userAgent);
+  }
+
+  // --------------------------------------------------------------------------
+  // Current user
+  // --------------------------------------------------------------------------
+
+  async getMe(auth: AuthenticatedUser): Promise<PublicUser> {
+    const session = await this.prisma.session.findUnique({ where: { id: auth.sessionId } });
+    if (!session || session.revokedAt || session.expiresAt < new Date()) {
+      throw new UnauthorizedException('Session is no longer valid');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: auth.id } });
+    if (!user) throw new UnauthorizedException('User not found');
+    return toPublicUser(user);
+  }
+
+  // --------------------------------------------------------------------------
+  // Internals
+  // --------------------------------------------------------------------------
+
+  private async issueTokens(
+    userId: string,
+    sessionId: string,
+    roles: string[],
+  ): Promise<TokenPair> {
+    const accessToken = await this.jwtService.signAsync(
+      { sub: userId, sid: sessionId, roles },
+      { expiresIn: `${ACCESS_TOKEN_TTL_SECONDS}s` },
+    );
+
+    // Opaque refresh token; its sha256 is bound to the session row.
+    const refreshToken = randomToken();
+    await this.prisma.session.update({
+      where: { id: sessionId },
+      data: { refreshTokenHash: sha256(refreshToken) },
+    });
+
+    return { accessToken, accessTokenExpiresIn: ACCESS_TOKEN_TTL_SECONDS, refreshToken };
+  }
+
+  private async assertNotLocked(userId: string, ip?: string, userAgent?: string): Promise<void> {
+    const windowStart = new Date(Date.now() - LOCKOUT_WINDOW_MS);
+    const failures = await this.prisma.securityEvent.count({
+      where: { userId, type: 'LOGIN_FAILURE', createdAt: { gte: windowStart } },
+    });
+    if (failures >= LOCKOUT_THRESHOLD) {
+      await this.recordSecurityEvent(userId, 'LOCKOUT', ip, userAgent, {
+        failures,
+        windowMs: LOCKOUT_WINDOW_MS,
+      });
+      throw new HttpException('Too many failed attempts. Try again later.', 423);
+    }
+  }
+
+  private async createAuthToken(
+    userId: string,
+    type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET',
+    ttlMs: number,
+    to: string,
+  ): Promise<string> {
+    // Resolve the email sender FIRST. In production an unconfigured provider
+    // fails safely here — no token is ever created that could never be
+    // delivered, and nothing pretends a message was sent.
+    const sender = getEmailSender();
+
+    const token = randomToken(32);
+    const record = await this.prisma.authToken.create({
+      data: { userId, type, tokenHash: sha256(token), expiresAt: new Date(Date.now() + ttlMs) },
+    });
+
+    try {
+      await sender.send({
+        to,
+        subject: type === 'PASSWORD_RESET' ? 'Reset your password' : 'Verify your email address',
+        body: `Your one-time link: ${process.env.APP_URL ?? ''}/${
+          type === 'PASSWORD_RESET' ? 'reset-password' : 'verify-email'
+        }?token=${token}`,
+      });
+    } catch (error) {
+      // Delivery failed — burn the token and surface a safe error.
+      if (record?.id) {
+        await this.prisma.authToken.update({
+          where: { id: record.id },
+          data: { usedAt: new Date() },
+        });
+      }
+      if (error instanceof ServiceUnavailableException) throw error;
+      this.logger.error(
+        `Auth token delivery failed (${type}): ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      throw new ServiceUnavailableException('Message delivery is not configured');
+    }
+    return token;
+  }
+
+  private async consumeAuthToken(
+    token: string,
+    type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET',
+  ): Promise<{ userId: string }> {
+    const record = await this.prisma.authToken.findUnique({ where: { tokenHash: sha256(token) } });
+    if (!record || record.type !== type || record.usedAt || record.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    await this.prisma.authToken.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    });
+    return { userId: record.userId };
+  }
+
+  private async recordSecurityEvent(
+    userId: string,
+    type: string,
+    ip?: string,
+    userAgent?: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
+    try {
+      await this.prisma.securityEvent.create({
+        data: {
+          userId,
+          type,
+          ip,
+          userAgent,
+          metadata: metadata as Prisma.InputJsonValue | undefined,
+        },
+      });
+    } catch (error) {
+      // Security-event persistence must never break the auth flow itself.
+      this.logger.warn(
+        `Failed to record security event ${type}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+}
+

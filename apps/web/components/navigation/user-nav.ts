@@ -240,7 +240,6 @@ const USER_PANEL_PREFIXES = [
   '/live',
   '/events',
   '/wallet',
-  '/profile',
   '/settings',
   '/verification',
   '/support',

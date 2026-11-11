@@ -15,7 +15,7 @@ const NAV_LINKS = [
   { href: '/', label: 'Home' },
   { href: '/sports', label: 'Sports' },
   { href: '/games', label: 'Games' },
-  { href: '/trading', label: 'Trading', external: true },
+  { href: '/trading/home', label: 'Trading', external: true },
   { href: '/live', label: 'Live' },
   { href: '/promotions', label: 'Promotions' },
   { href: '/my-bets', label: 'My Bets' },

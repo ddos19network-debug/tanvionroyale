@@ -69,7 +69,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <BetSlipProvider>
             <div className='flex min-h-screen lg:h-screen lg:overflow-hidden'>
               <HideOnGamePlay>
-                <UserSidebar />
+                <Suspense fallback={null}>
+                  <UserSidebar />
+                </Suspense>
               </HideOnGamePlay>
               <div className='flex min-w-0 flex-1 flex-col lg:overflow-y-auto lg:overscroll-contain pt-[var(--header-height,0)] lg:pt-[var(--header-height-lg,0)]'>
                 {children}

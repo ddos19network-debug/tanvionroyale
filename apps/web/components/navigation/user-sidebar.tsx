@@ -40,9 +40,16 @@ export function UserSidebar() {
   const studioProduct = studioProductFromQuery(product);
   const currentStudio = normalizeStudio(searchParams.get('provider'));
 
-  // Not a user-panel route (admin/auth/landing/static) → render nothing so
-  // the existing single-column layout (and the Admin shell) is untouched.
-  if (!isUserPanelRoute(pathname)) return null;
+  // Hide main user sidebar on profile, trading, and non-user-panel routes
+  if (
+    !pathname ||
+    pathname === '/profile' ||
+    pathname.startsWith('/profile/') ||
+    pathname.startsWith('/trading') ||
+    !isUserPanelRoute(pathname)
+  ) {
+    return null;
+  }
 
   return (
     <aside

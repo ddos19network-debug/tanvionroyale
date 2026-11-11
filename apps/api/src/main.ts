@@ -4,7 +4,7 @@ import { ValidationPipe, VersioningType, Logger } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import helmet from "helmet";
 import { json, urlencoded } from "express";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { AppModule } from "./app.module";
 import { captureRawBody } from "./common/middleware/raw-body.middleware";
@@ -57,7 +57,46 @@ function pinPrismaQueryEngine(): void {
   process.env.PRISMA_QUERY_ENGINE_LIBRARY = join(engineDir, engine);
 }
 
+/**
+ * Automatically loads .env from the workspace root or apps/api if not already loaded,
+ * ensuring DATABASE_URL, JWT_SECRET, etc. are available before Prisma initializes.
+ */
+function loadLocalEnv(): void {
+  const candidates = [
+    resolve(process.cwd(), '.env'),
+    resolve(__dirname, '..', '.env'),
+    resolve(__dirname, '..', '..', '.env'),
+    resolve(__dirname, '..', '..', '..', '.env'),
+  ];
+  for (const envFile of candidates) {
+    if (!existsSync(envFile)) continue;
+    try {
+      const lines = readFileSync(envFile, 'utf8').split(/\r?\n/);
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith('#')) continue;
+        const eqIdx = line.indexOf('=');
+        if (eqIdx <= 0) continue;
+        const key = line.slice(0, eqIdx).trim();
+        let val = line.slice(eqIdx + 1).trim();
+        if (
+          (val.startsWith('"') && val.endsWith('"')) ||
+          (val.startsWith("'") && val.endsWith("'"))
+        ) {
+          val = val.slice(1, -1);
+        }
+        if (key && process.env[key] === undefined) {
+          process.env[key] = val;
+        }
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+  }
+}
+
 async function bootstrap(): Promise<void> {
+  loadLocalEnv();
   pinPrismaQueryEngine();
   const env = readNodeEnv();
   const logger = new Logger("Bootstrap");

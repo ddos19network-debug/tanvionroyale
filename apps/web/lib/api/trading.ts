@@ -81,6 +81,44 @@ export async function getTradingLeaderboard(limit = 10): Promise<TradingLeaderbo
 }
 
 // ----------------------------------------------------------------------------
+// Market Data Proxy (forex rates + stock quotes via backend)
+// ----------------------------------------------------------------------------
+
+export interface MarketRatesResponse {
+  base: string;
+  date: string;
+  rates: Record<string, number>;
+  dataSource: 'LIVE' | 'DELAYED' | 'DEMO';
+  stale: boolean;
+  upstreamStatus: number | null;
+}
+
+export interface MarketQuotesResponse {
+  quotes: Record<string, unknown>;
+  dataSource: 'LIVE' | 'DELAYED' | 'DEMO';
+  stale: boolean;
+  upstreamStatus: number | null;
+}
+
+/**
+ * Fetch forex exchange rates from the backend market-data proxy.
+ * The backend fetches from Frankfurter (ECB) server-side.
+ */
+export async function getMarketRates(): Promise<MarketRatesResponse> {
+  return apiFetch<MarketRatesResponse>('/market/rates');
+}
+
+/**
+ * Fetch stock quotes from the backend market-data proxy.
+ * The backend fetches from Yahoo Finance server-side.
+ * Optionally pass a comma-separated list of symbols to filter.
+ */
+export async function getMarketQuotes(symbols?: string): Promise<MarketQuotesResponse> {
+  const qs = symbols ? `?symbols=${encodeURIComponent(symbols)}` : '';
+  return apiFetch<MarketQuotesResponse>(`/market/quotes${qs}`);
+}
+
+// ----------------------------------------------------------------------------
 // Authenticated User Endpoints (requires sign-in)
 // ----------------------------------------------------------------------------
 

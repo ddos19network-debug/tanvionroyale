@@ -1,0 +1,182 @@
+﻿'use client';
+
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { AppFooter } from '@/components/layout/app-footer';
+import { SearchOverlay } from '@/components/home/SearchOverlay';
+import { LogoMark } from '@/components/brand/logo';
+import { claimTradingFaucet, formatMinor, formatPrice, formatPercent } from '@/lib/api/trading';
+import { useAuth } from '@/src/lib/auth';
+
+const TOP_MENU = [
+  { href: '/trading/home', label: 'Home' },
+  { href: '/trading/market', label: 'Market' },
+  { href: '/trading/buy-crypto', label: 'Buy Crypto' },
+  { href: '/trading', label: 'Trade' },
+  { href: '/trading/earn', label: 'Earn' },
+  { href: '/trading/deposit', label: 'Deposit' },
+  { href: '/trading/notification', label: 'Notification' },
+  { href: '/trading/profile', label: 'Profile' },
+];
+
+const MAIN_NAV = [
+  { href: '/trading/home', label: 'Home' },
+  { href: '/trading/market', label: 'Market' },
+  { href: '/trading/buy-crypto', label: 'Buy Crypto' },
+  { href: '/trading', label: 'Trade' },
+  { href: '/trading/earn', label: 'Earn' },
+];
+
+const SEARCHABLE_PAIRS = [
+  { symbol: 'BTCUSD', name: 'Bitcoin', price: 7586000, change: 320, type: 'CRYPTO' },
+  { symbol: 'ETHUSD', name: 'Ethereum', price: 384000, change: 185, type: 'CRYPTO' },
+  { symbol: 'SOLUSD', name: 'Solana', price: 19850, change: -85, type: 'CRYPTO' },
+  { symbol: 'BNBUSD', name: 'BNB', price: 61500, change: 120, type: 'CRYPTO' },
+  { symbol: 'NVDA', name: 'NVIDIA Corp', price: 14200, change: 450, type: 'STOCK' },
+  { symbol: 'AAPL', name: 'Apple Inc', price: 22800, change: 65, type: 'STOCK' },
+  { symbol: 'XAUUSD', name: 'Gold Spot', price: 274000, change: 42, type: 'COMMODITY' },
+  { symbol: 'TSLA', name: 'Tesla Inc', price: 21800, change: -120, type: 'STOCK' },
+];
+
+const ICON_MAP: Record<string, string> = {
+  Home: 'M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1v-9z',
+  Market: 'M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h5v5H7V7zm12 12H9V9h10v10z',
+  'Buy Crypto': 'M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h10v3H7V7zm0 5h10v5H7v-5z',
+  Trade: 'M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h5v5H7V7zm12 12H9V9h10v10z',
+  Earn: 'M3 3v18h18V3H3zm2 16V9h2v10H5zm10 0V9h2v10h-2z',
+  Deposit: 'M12 2L2 7l10 5 10-5-10-5zm0 9l10-5v13H2V6z',
+  Notification: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9',
+  Profile: 'M12 12c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 4zm0 2c-2.6 0-5 1.3-5 3v3h10v-3c0-1.7-2.4-3-5-3zm0-10c-4.4 0-8 3.6-8 8v3h16v-3c0-4.4-3.6-8-8-8z',
+};
+
+export function TradingShell({
+  children,
+  fullWidth = false,
+  onBalanceUpdated,
+}: {
+  children: React.ReactNode;
+  fullWidth?: boolean;
+  onBalanceUpdated?: () => void;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
+
+  const [mounted, setMounted] = useState(false);
+  const [faucetLoading, setFaucetLoading] = useState(false);
+  const [faucetMessage, setFaucetMessage] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Search box state in menu
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Profile dropdown menu state
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Keyboard shortcut Ctrl+K to focus search box or open search
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (window.innerWidth >= 1280) {
+          searchInputRef.current?.focus();
+          setSearchDropdownOpen(true);
+        } else {
+          setSearchOpen(true);
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(e.target as Node)
+      ) {
+        setSearchDropdownOpen(false);
+      }
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
+        setProfileDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  async function handleFaucet(amountMinor = 1_000_000, reset = false) {
+    setFaucetLoading(true);
+    try {
+      const acc = await claimTradingFaucet(amountMinor, reset);
+      setFaucetMessage(
+        reset
+          ? `Balance reset to ${formatMinor(acc.virtualBalance, acc.currency)}.`
+          : `Claimed ${formatMinor(amountMinor, acc.currency)} demo funds!`,
+      );
+      onBalanceUpdated?.();
+      setTimeout(() => setFaucetMessage(null), 4000);
+    } catch {
+      setFaucetMessage('Could not claim faucet. Please ensure you are logged in.');
+      setTimeout(() => setFaucetMessage(null), 4000);
+    } finally {
+      setFaucetLoading(false);
+    }
+  }
+
+  const isDepositActive =
+    pathname.startsWith('/trading/deposit') || pathname.startsWith('/wallet/deposit');
+  const isNotificationActive =
+    pathname.startsWith('/trading/notification') || pathname.startsWith('/notifications');
+  const isProfileActive =
+    pathname.startsWith('/trading/profile') || pathname.startsWith('/profile');
+
+  const filteredPairs = SEARCHABLE_PAIRS.filter(
+    (p) =>
+      p.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  // Hydration-safe UID & display name
+  const uid = mounted && user?.id
+    ? String(Math.abs(hashString(user.id))).padStart(10, '0').slice(0, 10)
+    : '1147705039';
+
+  const displayName = mounted && user?.username
+    ? user.username
+    : mounted && user?.firstName
+    ? `${user.firstName} ${user.lastName ?? ''}`.trim()
+    : 'user';
+
+  function hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash;
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-ink-950 text-slate-100">
+      {faucetMessage && (
+        <div className="bg-brand/20 border-b border-brand/30 px-4 py-2 text-center text-xs font-semibold text-brand transition-all">
+          {faucetMessage}
+        </div>
+      )}
+
