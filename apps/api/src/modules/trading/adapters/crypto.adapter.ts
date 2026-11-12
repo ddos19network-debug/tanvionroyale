@@ -23,6 +23,26 @@ export class CryptoAdapter {
   }
 
   async getLatestPrice(instrument: { id: string; symbol: string; basePrice: number }): Promise<MarketPrice> {
+    try {
+      const sym = instrument.symbol.toUpperCase().replace('/', '');
+      const binanceSym = sym.endsWith('USDT') ? sym : sym.endsWith('USD') ? `${sym.slice(0, -3)}USDT` : `${sym}USDT`;
+      const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSym}`);
+      if (res.ok) {
+        const data: any = await res.json();
+        const p = parseFloat(data.price);
+        if (p > 0) {
+          return {
+            price: Math.round(p * 100),
+            dataSource: 'LIVE',
+            asOf: new Date().toISOString(),
+            label: `Binance Live: $${p.toFixed(2)}`,
+          };
+        }
+      }
+    } catch {
+      // fallback to configured base price
+    }
+
     return {
       price: instrument.basePrice,
       dataSource: 'LIVE',

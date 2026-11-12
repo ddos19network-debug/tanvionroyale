@@ -33,7 +33,13 @@ export function BettingTab() {
       setHasMore(res.length === PAGE_SIZE);
       setPage(p);
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Unable to load betting history.');
+      if (err instanceof ApiClientError && err.status === 401) {
+        // Not signed in — show empty list silently
+        setItems([]);
+        setHasMore(false);
+      } else {
+        setError(err instanceof ApiClientError ? err.message : 'Unable to load betting history.');
+      }
     } finally {
       setLoading(false);
       setLoadingMore(false);

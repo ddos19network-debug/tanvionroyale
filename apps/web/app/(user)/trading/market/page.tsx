@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TradingShell } from '@/components/trading/trading-shell';
+import { getLiveMarketQuotes, type LiveMarketQuote } from '@/lib/api/live-rates';
 
 interface CoinItem {
   symbol: string;
@@ -56,12 +57,49 @@ export default function TradingMarketPage() {
   const [category, setCategory] = useState<string>('All');
   const [search, setSearch] = useState('');
   const [timeframe, setTimeframe] = useState<'24h' | '7d' | '30d'>('24h');
+  const [liveQuotes, setLiveQuotes] = useState<Record<string, LiveMarketQuote>>({});
+
+  useEffect(() => {
+    let mounted = true;
+    async function sync() {
+      try {
+        const q = await getLiveMarketQuotes();
+        if (mounted && q && Object.keys(q).length > 0) setLiveQuotes(q);
+      } catch {}
+    }
+    void sync();
+    const interval = setInterval(() => void sync(), 3000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const getCoinPrice = (sym: string, fallback: string) => {
+    const cleanSym = sym.replace(/-[A-Z]$/, ''); // e.g. NVDA-S -> NVDA
+    const q = liveQuotes[cleanSym + 'USD'] || liveQuotes[cleanSym + 'USDT'] || liveQuotes[cleanSym] || liveQuotes[sym];
+    if (q && q.currentPrice > 0) {
+      const p = q.currentPrice / 100;
+      if (p >= 1000) return `$${p.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      if (p >= 1) return `$${p.toFixed(2)}`;
+      if (p > 0.001) return `$${p.toFixed(4)}`;
+      return `$${p.toFixed(7)}`;
+    }
+    return fallback;
+  };
+
+  const getCoinChange = (sym: string, fallback: number) => {
+    const cleanSym = sym.replace(/-[A-Z]$/, '');
+    const q = liveQuotes[cleanSym + 'USD'] || liveQuotes[cleanSym + 'USDT'] || liveQuotes[cleanSym] || liveQuotes[sym];
+    if (q) return q.change24h / 100;
+    return fallback;
+  };
 
   // Top 4 card categories
   const topCoins = [
-    { symbol: 'BNB', price: '$686.25', change: 1.56, iconBg: 'bg-amber-400 text-black' },
-    { symbol: 'BTC', price: '$74.53K', change: 1.02, iconBg: 'bg-orange-500 text-white' },
-    { symbol: 'ETH', price: '$2.08K', change: 1.10, iconBg: 'bg-indigo-500 text-white' },
+    { symbol: 'BNB', price: getCoinPrice('BNB', '$686.25'), change: getCoinChange('BNB', 1.56), iconBg: 'bg-amber-400 text-black' },
+    { symbol: 'BTC', price: getCoinPrice('BTC', '$74.53K'), change: getCoinChange('BTC', 1.02), iconBg: 'bg-orange-500 text-white' },
+    { symbol: 'ETH', price: getCoinPrice('ETH', '$2.08K'), change: getCoinChange('ETH', 1.10), iconBg: 'bg-indigo-500 text-white' },
   ];
 
   const newCoins = [
@@ -77,9 +115,9 @@ export default function TradingMarketPage() {
   ];
 
   const volumeCoins = [
-    { symbol: 'BTC', price: '$74.53K', change: 1.02, iconBg: 'bg-orange-500 text-white' },
-    { symbol: 'ETH', price: '$2.08K', change: 1.10, iconBg: 'bg-indigo-500 text-white' },
-    { symbol: 'SOL', price: '$84.97', change: 1.91, iconBg: 'bg-violet-600 text-white' },
+    { symbol: 'BTC', price: getCoinPrice('BTC', '$74.53K'), change: getCoinChange('BTC', 1.02), iconBg: 'bg-orange-500 text-white' },
+    { symbol: 'ETH', price: getCoinPrice('ETH', '$2.08K'), change: getCoinChange('ETH', 1.10), iconBg: 'bg-indigo-500 text-white' },
+    { symbol: 'SOL', price: getCoinPrice('SOL', '$84.97'), change: getCoinChange('SOL', 1.91), iconBg: 'bg-violet-600 text-white' },
   ];
 
   const categories = [
@@ -111,7 +149,11 @@ export default function TradingMarketPage() {
     { id: 'Zones', label: 'Zones' },
   ];
 
-  const filteredCoins = ALL_COINS.filter((c) => {
+  const filteredCoins = ALL_COINS.map((c) => ({
+    ...c,
+    price: getCoinPrice(c.symbol, c.price),
+    change: getCoinChange(c.symbol, c.change),
+  })).filter((c) => {
     const matchSearch =
       c.symbol.toLowerCase().includes(search.toLowerCase()) ||
       c.name.toLowerCase().includes(search.toLowerCase());

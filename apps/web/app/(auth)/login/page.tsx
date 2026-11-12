@@ -8,6 +8,7 @@ import { sanitizeNextPath } from '@tanvion-royale/validation';
 import { loginWithIdentifier, getOAuthRedirectUrl } from '@/lib/api/auth';
 import { saveSession } from '@/lib/auth/session';
 import { friendlyAuthError } from '@/lib/auth/errors';
+import { ApiClientError } from '@/lib/api/client';
 
 /**
  * Login (unified customer sign-in: email OR phone number + password — one
@@ -49,12 +50,21 @@ function LoginPageInner() {
     }
   }
 
+  const [oauthUnavailable, setOauthUnavailable] = useState<string | null>(null);
+
   async function continueWith(provider: 'google' | 'facebook') {
     setError(null);
+    setOauthUnavailable(null);
     try {
       const url = await getOAuthRedirectUrl(provider);
       window.location.href = url;
     } catch (err) {
+      // 503 = OAuth credentials not configured on the server
+      if (err instanceof ApiClientError && err.status === 503) {
+        const name = provider.charAt(0).toUpperCase() + provider.slice(1);
+        setOauthUnavailable(`${name} login is not configured on this server. Please use email/password login instead.`);
+        return;
+      }
       setError(friendlyAuthError(err, 'oauth'));
     }
   }
@@ -113,6 +123,11 @@ function LoginPageInner() {
           <span className="h-px flex-1 bg-ink-600" />
         </div>
         <div className="flex flex-col gap-2">
+          {oauthUnavailable && (
+            <p role="alert" className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/30 rounded px-3 py-2">
+              ⚠️ {oauthUnavailable}
+            </p>
+          )}
           <Button type="button" variant="outline" disabled={loading} onClick={() => continueWith('google')}>
             Continue with Google
           </Button>

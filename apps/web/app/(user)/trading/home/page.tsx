@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { TradingShell, Sparkline } from '@/components/trading/trading-shell';
 import { listTradingInstruments, claimTradingFaucet, formatPrice, formatPercent, formatMinor } from '@/lib/api/trading';
 import type { TradingInstrumentView } from '@/lib/api/trading';
+import { getLiveMarketQuotes, type LiveMarketQuote } from '@/lib/api/live-rates';
 
 interface FeatureCoin {
   symbol: string;
@@ -100,6 +101,23 @@ export default function TradingHomePage() {
   const [activeMarketTab, setActiveMarketTab] = useState<'hot' | 'gainers' | 'volume' | 'new'>('hot');
   const [faucetLoading, setFaucetLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [liveQuotes, setLiveQuotes] = useState<Record<string, LiveMarketQuote>>({});
+
+  useEffect(() => {
+    let mounted = true;
+    async function sync() {
+      try {
+        const q = await getLiveMarketQuotes();
+        if (mounted && q && Object.keys(q).length > 0) setLiveQuotes(q);
+      } catch {}
+    }
+    void sync();
+    const interval = setInterval(() => void sync(), 3000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   async function handleClaimDemoFunds() {
     setFaucetLoading(true);
@@ -138,23 +156,39 @@ export default function TradingHomePage() {
           <div className="flex items-center gap-6 overflow-x-auto scrollbar-none px-4">
             <div className="flex items-center gap-1.5 whitespace-nowrap">
               <span className="font-bold text-amber-400">BTC/USD</span>
-              <span className="font-mono">$75,860.00</span>
-              <span className="text-emerald-400 font-mono font-semibold">+3.20%</span>
+              <span className="font-mono">
+                {liveQuotes['BTCUSD'] ? `$${(liveQuotes['BTCUSD'].currentPrice / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '$74,584.57'}
+              </span>
+              <span className={`font-mono font-semibold ${(liveQuotes['BTCUSD']?.change24h ?? 102) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {(liveQuotes['BTCUSD']?.change24h ?? 102) >= 0 ? '+' : ''}{((liveQuotes['BTCUSD']?.change24h ?? 102) / 100).toFixed(2)}%
+              </span>
             </div>
             <div className="flex items-center gap-1.5 whitespace-nowrap">
               <span className="font-bold text-blue-400">ETH/USD</span>
-              <span className="font-mono">$3,840.00</span>
-              <span className="text-emerald-400 font-mono font-semibold">+1.85%</span>
+              <span className="font-mono">
+                {liveQuotes['ETHUSD'] ? `$${(liveQuotes['ETHUSD'].currentPrice / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '$2,084.50'}
+              </span>
+              <span className={`font-mono font-semibold ${(liveQuotes['ETHUSD']?.change24h ?? 110) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {(liveQuotes['ETHUSD']?.change24h ?? 110) >= 0 ? '+' : ''}{((liveQuotes['ETHUSD']?.change24h ?? 110) / 100).toFixed(2)}%
+              </span>
             </div>
             <div className="flex items-center gap-1.5 whitespace-nowrap">
               <span className="font-bold text-purple-400">SOL/USD</span>
-              <span className="font-mono">$198.50</span>
-              <span className="text-rose-400 font-mono font-semibold">-0.85%</span>
+              <span className="font-mono">
+                {liveQuotes['SOLUSD'] ? `$${(liveQuotes['SOLUSD'].currentPrice / 100).toFixed(2)}` : '$84.97'}
+              </span>
+              <span className={`font-mono font-semibold ${(liveQuotes['SOLUSD']?.change24h ?? 191) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {(liveQuotes['SOLUSD']?.change24h ?? 191) >= 0 ? '+' : ''}{((liveQuotes['SOLUSD']?.change24h ?? 191) / 100).toFixed(2)}%
+              </span>
             </div>
             <div className="flex items-center gap-1.5 whitespace-nowrap">
-              <span className="font-bold text-emerald-400">NVDA</span>
-              <span className="font-mono">$142.00</span>
-              <span className="text-emerald-400 font-mono font-semibold">+4.50%</span>
+              <span className="font-bold text-amber-300">XAU/USD (Gold)</span>
+              <span className="font-mono">
+                {liveQuotes['XAUUSD'] ? `$${(liveQuotes['XAUUSD'].currentPrice / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '$2,740.00'}
+              </span>
+              <span className={`font-mono font-semibold ${(liveQuotes['XAUUSD']?.change24h ?? 42) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {(liveQuotes['XAUUSD']?.change24h ?? 42) >= 0 ? '+' : ''}{((liveQuotes['XAUUSD']?.change24h ?? 42) / 100).toFixed(2)}%
+              </span>
             </div>
             <div className="flex items-center gap-1.5 whitespace-nowrap text-brand font-semibold">
               <span>★ 0% Maker Fees on Top Crypto Pairs</span>

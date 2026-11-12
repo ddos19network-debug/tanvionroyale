@@ -42,7 +42,13 @@ export function BetSlipTab() {
       const res = await listMyBets({ status: 'ALL', result: 'ALL', limit: RECENT_LIMIT, page: 1 });
       setItems(res);
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Unable to load your bet slip history.');
+      if (err instanceof ApiClientError && err.status === 401) {
+        // User is not signed in — show nothing, don't retry
+        setItems([]);
+        setError(null);
+      } else {
+        setError(err instanceof ApiClientError ? err.message : 'Unable to load your bet slip history.');
+      }
     } finally {
       setLoading(false);
     }

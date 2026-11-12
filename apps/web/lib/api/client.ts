@@ -82,6 +82,42 @@ export function getApiBaseUrl(): string {
   return 'http://localhost:3000/api/v1';
 }
 
+// ---------------------------------------------------------------------------
+// Backend Offline Circuit Breaker (prevents console spam when backend is down)
+// ---------------------------------------------------------------------------
+let backendOfflineUntil = 0;
+if (typeof window !== 'undefined') {
+  try {
+    const saved = sessionStorage.getItem('tr_backend_offline_until');
+    if (saved) {
+      backendOfflineUntil = parseInt(saved, 10) || 0;
+    }
+  } catch {}
+}
+
+export function isBackendOffline(): boolean {
+  if (typeof window === 'undefined') return false;
+  return Date.now() < backendOfflineUntil;
+}
+
+export function markBackendOffline(cooldownMs = 60_000): void {
+  backendOfflineUntil = Date.now() + cooldownMs;
+  if (typeof window !== 'undefined') {
+    try {
+      sessionStorage.setItem('tr_backend_offline_until', String(backendOfflineUntil));
+    } catch {}
+  }
+}
+
+export function resetBackendOffline(): void {
+  backendOfflineUntil = 0;
+  if (typeof window !== 'undefined') {
+    try {
+      sessionStorage.removeItem('tr_backend_offline_until');
+    } catch {}
+  }
+}
+
 export class ApiClientError extends Error {
   constructor(
     message: string,
@@ -228,16 +264,30 @@ export async function apiFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
+  if (isBackendOffline()) {
+    throw new ApiClientError('Backend service is currently offline', 503, 'BACKEND_OFFLINE', undefined, true);
+  }
+
   const url = buildApiUrl(path);
 
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
-    cache: 'no-store',
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(init?.headers ?? {}),
+      },
+      cache: 'no-store',
+    });
+  } catch (err) {
+    // Connection refused / Network failure -> mark backend offline for 60s
+    markBackendOffline(60_000);
+    throw err;
+  }
+
+  // Succeeded network request -> clear offline status
+  resetBackendOffline();
 
   const body = (await res.json().catch(() => ({}))) as ApiErrorEnvelope;
 
@@ -299,6 +349,10 @@ export async function authFetch<T>(
   init?: RequestInit,
 ): Promise<T> {
   const token = getAccessToken() ?? undefined;
+
+  if (!token) {
+    throw new ApiClientError('Missing access token', 401);
+  }
 
   try {
     return await apiFetch<T>(path, withAuth(init, token));

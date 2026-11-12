@@ -29,9 +29,9 @@ export function BinanceOverview({
   const btcBalance = (balanceMinor / btcPrice).toFixed(8);
   const fiatBalanceFormatted = formatMinor(balanceMinor);
 
-  // Filter instruments for the tabs
+  // Filter instruments for the tabs — use only valid crypto pairs in the popular list
   const popularList = instruments.filter((i) =>
-    ['BTCUSD', 'ETHUSD', 'BNBUSD', 'NVDA', 'SOLUSD', 'AAPL'].includes(i.symbol),
+    ['BTCUSD', 'ETHUSD', 'BNBUSD', 'XRPUSD', 'SOLUSD', 'DOGEUSD'].includes(i.symbol),
   );
   const stocksList = instruments.filter((i) => i.type === 'STOCK');
   const commoditiesList = instruments.filter((i) => i.type === 'COMMODITY');

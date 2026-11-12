@@ -4,7 +4,11 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ChartTerminal } from './chart-terminal';
 import { getLiveMarketQuotes } from '@/lib/api/live-rates';
+import { fetchBinanceKlines, fetchBinanceTicker, getBinanceSymbol } from '@/lib/api/binance-live';
 import { getAccessToken } from '@/lib/auth/session';
+import { isBackendOffline } from '@/lib/api/client';
+import { calculateFloatingPnl, calculateRequiredMargin, getContractSpec } from '@/lib/api/trading-contracts';
+import { playTradingSound } from '@/lib/trading/audio-synthesizer';
 import {
   listTradingInstruments,
   getTradingPortfolio,
@@ -40,15 +44,52 @@ interface EconomicEvent {
   previous?: string;
 }
 
+// Default sample instruments covering Top Crypto, Forex, Stocks, and Commodities
+export const DEFAULT_INSTRUMENTS: TradingInstrumentView[] = [
+  // Crypto
+  { id: '1', symbol: 'BTCUSD', name: 'Bitcoin', type: 'CRYPTO', currentPrice: 7458457, basePrice: 7450000, change24h: 102, high24h: 7470000, low24h: 7410000, volume24h: 32000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$74,584.57' } as unknown as TradingInstrumentView,
+  { id: '2', symbol: 'ETHUSD', name: 'Ethereum', type: 'CRYPTO', currentPrice: 208450, basePrice: 206000, change24h: 110, high24h: 211000, low24h: 205000, volume24h: 18000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$2,084.50' } as unknown as TradingInstrumentView,
+  { id: '3', symbol: 'SOLUSD', name: 'Solana', type: 'CRYPTO', currentPrice: 8497, basePrice: 8300, change24h: 191, high24h: 8650, low24h: 8250, volume24h: 14000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$84.97' } as unknown as TradingInstrumentView,
+  { id: '4', symbol: 'BNBUSD', name: 'BNB', type: 'CRYPTO', currentPrice: 68625, basePrice: 67500, change24h: 156, high24h: 69200, low24h: 67000, volume24h: 9200, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$686.25' } as unknown as TradingInstrumentView,
+  { id: '5', symbol: 'DOGEUSD', name: 'Dogecoin', type: 'CRYPTO', currentPrice: 18, basePrice: 17, change24h: 580, high24h: 19, low24h: 16, volume24h: 21000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$0.18' } as unknown as TradingInstrumentView,
+  { id: '6', symbol: 'XRPUSD', name: 'XRP', type: 'CRYPTO', currentPrice: 58, basePrice: 57, change24h: 85, high24h: 60, low24h: 56, volume24h: 15000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$0.58' } as unknown as TradingInstrumentView,
+  // Stocks
+  { id: '7', symbol: 'AAPL', name: 'Apple Inc.', type: 'STOCK', currentPrice: 22850, basePrice: 22600, change24h: 65, high24h: 22980, low24h: 22540, volume24h: 45000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$228.50' } as unknown as TradingInstrumentView,
+  { id: '8', symbol: 'TSLA', name: 'Tesla Inc.', type: 'STOCK', currentPrice: 21800, basePrice: 22000, change24h: -120, high24h: 22200, low24h: 21500, volume24h: 62000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$218.00' } as unknown as TradingInstrumentView,
+  { id: '9', symbol: 'NVDA', name: 'NVIDIA Corp.', type: 'STOCK', currentPrice: 14200, basePrice: 13800, change24h: 450, high24h: 14450, low24h: 13700, volume24h: 85000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$142.00' } as unknown as TradingInstrumentView,
+  { id: '10', symbol: 'AMZN', name: 'Amazon.com Inc.', type: 'STOCK', currentPrice: 18800, basePrice: 18600, change24h: 90, high24h: 18950, low24h: 18500, volume24h: 38000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$188.00' } as unknown as TradingInstrumentView,
+  // Forex
+  { id: '11', symbol: 'EURUSD', name: 'EUR/USD', type: 'FOREX', currentPrice: 108420, basePrice: 108300, change24h: 15, high24h: 108600, low24h: 108200, volume24h: 88000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '1.08420' } as unknown as TradingInstrumentView,
+  { id: '12', symbol: 'GBPUSD', name: 'GBP/USD', type: 'FOREX', currentPrice: 130250, basePrice: 130000, change24h: 20, high24h: 130500, low24h: 129800, volume24h: 76000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '1.30250' } as unknown as TradingInstrumentView,
+  { id: '13', symbol: 'USDJPY', name: 'USD/JPY', type: 'FOREX', currentPrice: 152450, basePrice: 152000, change24h: 30, high24h: 152800, low24h: 151900, volume24h: 65000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '152.450' } as unknown as TradingInstrumentView,
+  { id: '14', symbol: 'AUDCAD', name: 'AUD/CAD', type: 'FOREX', currentPrice: 97598, basePrice: 97500, change24h: 12, high24h: 97800, low24h: 97200, volume24h: 8400, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '0.97598' } as unknown as TradingInstrumentView,
+  { id: '15', symbol: 'AUDCHF', name: 'AUD/CHF', type: 'FOREX', currentPrice: 57060, basePrice: 57000, change24h: 8, high24h: 57200, low24h: 56900, volume24h: 6200, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '0.57060' } as unknown as TradingInstrumentView,
+  { id: '16', symbol: 'AUDJPY', name: 'AUD/JPY', type: 'FOREX', currentPrice: 109473, basePrice: 109600, change24h: -15, high24h: 109800, low24h: 109200, volume24h: 11000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '109.473' } as unknown as TradingInstrumentView,
+  { id: '17', symbol: 'AUDNZD', name: 'AUD/NZD', type: 'FOREX', currentPrice: 123088, basePrice: 123000, change24h: 14, high24h: 123300, low24h: 122800, volume24h: 5400, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '1.23088' } as unknown as TradingInstrumentView,
+  { id: '18', symbol: 'AUDUSD', name: 'AUD/USD', type: 'FOREX', currentPrice: 68488, basePrice: 68600, change24h: -12, high24h: 68800, low24h: 68200, volume24h: 18000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '0.68488' } as unknown as TradingInstrumentView,
+  { id: '19', symbol: 'CADJPY', name: 'CAD/JPY', type: 'FOREX', currentPrice: 112168, basePrice: 112300, change24h: -18, high24h: 112500, low24h: 111900, volume24h: 7200, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '112.168' } as unknown as TradingInstrumentView,
+  // Commodities
+  { id: '20', symbol: 'XAUUSD', name: 'Gold / US Dollar', type: 'COMMODITY', currentPrice: 274000, basePrice: 273500, change24h: 42, high24h: 275000, low24h: 272000, volume24h: 140000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$2,740.00' } as unknown as TradingInstrumentView,
+  { id: '21', symbol: 'XAGUSD', name: 'Silver / US Dollar', type: 'COMMODITY', currentPrice: 3250, basePrice: 3280, change24h: -80, high24h: 3310, low24h: 3220, volume24h: 48000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$32.50' } as unknown as TradingInstrumentView,
+  { id: '22', symbol: 'USOIL', name: 'Crude Oil', type: 'COMMODITY', currentPrice: 7250, basePrice: 7180, change24h: 95, high24h: 7320, low24h: 7140, volume24h: 52000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$72.50' } as unknown as TradingInstrumentView,
+];
+
 export function TradingTerminal() {
   const searchParams = useSearchParams();
   const urlSymbol = searchParams.get('symbol');
 
-  const [instruments, setInstruments] = useState<TradingInstrumentView[]>([]);
-  const [selectedInstrument, setSelectedInstrument] = useState<TradingInstrumentView | null>(null);
+  const [instruments, setInstruments] = useState<TradingInstrumentView[]>(DEFAULT_INSTRUMENTS);
+  const [selectedInstrument, setSelectedInstrument] = useState<TradingInstrumentView | null>(() => {
+    // No auto-select: only pre-select if URL contains ?symbol=
+    if (urlSymbol) {
+      const found = DEFAULT_INSTRUMENTS.find((i) => i.symbol.toLowerCase() === urlSymbol.toLowerCase());
+      if (found) return found;
+    }
+    return null; // Show empty state until user picks a market
+  });
 
-  // Exness Multi-Chart Tabs Bar: BTC, XAU/USD, EUR/USD, etc.
-  const [openTabs, setOpenTabs] = useState<string[]>(['BTCUSD', 'XAUUSD', 'EURUSD']);
+  // Exness Multi-Chart Tabs Bar: BTC, XAU/USD, AUD/USD (Matching Image 1)
+  const [openTabs, setOpenTabs] = useState<string[]>(['BTCUSD', 'XAUUSD', 'AUDUSD']);
 
   // Left sidebar navigation tools (matching Exness image 1, 2, 3, 4):
   // 0: Instruments (list icon)
@@ -161,38 +202,65 @@ def Main(self):
   const [openOrders, setOpenOrders] = useState<TradingOrderView[]>([]);
   const [history, setHistory] = useState<TradingTransactionView[]>([]);
 
-  // Default sample instruments if catalog is loading
+  // Default sample instruments covering Top Crypto, Forex, Stocks, and Commodities
   const defaultInstruments: TradingInstrumentView[] = [
-    { id: '1', symbol: 'BTCUSD', name: 'Bitcoin', type: 'CRYPTO', currentPrice: 7458457, basePrice: 7450000, change24h: 35, high24h: 7470000, low24h: 7410000, volume24h: 32000, isEnabled: true, dataSource: 'SIMULATED', priceAsOf: new Date().toISOString(), priceLabel: '$74,584.57' } as unknown as TradingInstrumentView,
-    { id: '2', symbol: 'XAUUSD', name: 'Gold / US Dollar', type: 'COMMODITY', currentPrice: 274000, basePrice: 273500, change24h: 18, high24h: 275000, low24h: 272000, volume24h: 14000, isEnabled: true, dataSource: 'SIMULATED', priceAsOf: new Date().toISOString(), priceLabel: '$2,740.00' } as unknown as TradingInstrumentView,
-    { id: '3', symbol: 'EURUSD', name: 'EUR/USD', type: 'FOREX', currentPrice: 108420, basePrice: 108300, change24h: 15, high24h: 108600, low24h: 108200, volume24h: 88000, isEnabled: true, dataSource: 'SIMULATED', priceAsOf: new Date().toISOString(), priceLabel: '1.08420' } as unknown as TradingInstrumentView,
-    { id: '4', symbol: 'AUDCAD', name: 'AUD/CAD', type: 'FOREX', currentPrice: 97598, basePrice: 97500, change24h: 12, high24h: 97800, low24h: 97200, volume24h: 8400, isEnabled: true, dataSource: 'SIMULATED', priceAsOf: new Date().toISOString(), priceLabel: '0.97598' } as unknown as TradingInstrumentView,
-    { id: '5', symbol: 'AUDCHF', name: 'AUD/CHF', type: 'FOREX', currentPrice: 57060, basePrice: 57000, change24h: 8, high24h: 57200, low24h: 56900, volume24h: 6200, isEnabled: true, dataSource: 'SIMULATED', priceAsOf: new Date().toISOString(), priceLabel: '0.57060' } as unknown as TradingInstrumentView,
-    { id: '6', symbol: 'AUDJPY', name: 'AUD/JPY', type: 'FOREX', currentPrice: 109473, basePrice: 109600, change24h: -15, high24h: 109800, low24h: 109200, volume24h: 11000, isEnabled: true, dataSource: 'SIMULATED', priceAsOf: new Date().toISOString(), priceLabel: '109.473' } as unknown as TradingInstrumentView,
-    { id: '7', symbol: 'AUDNZD', name: 'AUD/NZD', type: 'FOREX', currentPrice: 123088, basePrice: 123000, change24h: 14, high24h: 123300, low24h: 122800, volume24h: 5400, isEnabled: true, dataSource: 'SIMULATED', priceAsOf: new Date().toISOString(), priceLabel: '1.23088' } as unknown as TradingInstrumentView,
-    { id: '8', symbol: 'AUDUSD', name: 'AUD/USD', type: 'FOREX', currentPrice: 68488, basePrice: 68600, change24h: -12, high24h: 68800, low24h: 68200, volume24h: 18000, isEnabled: true, dataSource: 'SIMULATED', priceAsOf: new Date().toISOString(), priceLabel: '0.68488' } as unknown as TradingInstrumentView,
-    { id: '9', symbol: 'BTCUSDT', name: 'BTC/USDT', type: 'CRYPTO', currentPrice: 7460660, basePrice: 7450000, change24h: 22, high24h: 7480000, low24h: 7420000, volume24h: 45000, isEnabled: true, dataSource: 'SIMULATED', priceAsOf: new Date().toISOString(), priceLabel: '$74,606.60' } as unknown as TradingInstrumentView,
-    { id: '10', symbol: 'CADJPY', name: 'CAD/JPY', type: 'FOREX', currentPrice: 112168, basePrice: 112300, change24h: -18, high24h: 112500, low24h: 111900, volume24h: 7200, isEnabled: true, dataSource: 'SIMULATED', priceAsOf: new Date().toISOString(), priceLabel: '112.168' } as unknown as TradingInstrumentView,
+    // Crypto
+    { id: '1', symbol: 'BTCUSD', name: 'Bitcoin', type: 'CRYPTO', currentPrice: 7458457, basePrice: 7450000, change24h: 102, high24h: 7470000, low24h: 7410000, volume24h: 32000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$74,584.57' } as unknown as TradingInstrumentView,
+    { id: '2', symbol: 'ETHUSD', name: 'Ethereum', type: 'CRYPTO', currentPrice: 208450, basePrice: 206000, change24h: 110, high24h: 211000, low24h: 205000, volume24h: 18000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$2,084.50' } as unknown as TradingInstrumentView,
+    { id: '3', symbol: 'SOLUSD', name: 'Solana', type: 'CRYPTO', currentPrice: 8497, basePrice: 8300, change24h: 191, high24h: 8650, low24h: 8250, volume24h: 14000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$84.97' } as unknown as TradingInstrumentView,
+    { id: '4', symbol: 'BNBUSD', name: 'BNB', type: 'CRYPTO', currentPrice: 68625, basePrice: 67500, change24h: 156, high24h: 69200, low24h: 67000, volume24h: 9200, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$686.25' } as unknown as TradingInstrumentView,
+    { id: '5', symbol: 'DOGEUSD', name: 'Dogecoin', type: 'CRYPTO', currentPrice: 18, basePrice: 17, change24h: 580, high24h: 19, low24h: 16, volume24h: 21000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$0.18' } as unknown as TradingInstrumentView,
+    { id: '6', symbol: 'XRPUSD', name: 'XRP', type: 'CRYPTO', currentPrice: 58, basePrice: 57, change24h: 85, high24h: 60, low24h: 56, volume24h: 15000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$0.58' } as unknown as TradingInstrumentView,
+    // Stocks
+    { id: '7', symbol: 'AAPL', name: 'Apple Inc.', type: 'STOCK', currentPrice: 22850, basePrice: 22600, change24h: 65, high24h: 22980, low24h: 22540, volume24h: 45000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$228.50' } as unknown as TradingInstrumentView,
+    { id: '8', symbol: 'TSLA', name: 'Tesla Inc.', type: 'STOCK', currentPrice: 21800, basePrice: 22000, change24h: -120, high24h: 22200, low24h: 21500, volume24h: 62000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$218.00' } as unknown as TradingInstrumentView,
+    { id: '9', symbol: 'NVDA', name: 'NVIDIA Corp.', type: 'STOCK', currentPrice: 14200, basePrice: 13800, change24h: 450, high24h: 14450, low24h: 13700, volume24h: 85000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$142.00' } as unknown as TradingInstrumentView,
+    { id: '10', symbol: 'AMZN', name: 'Amazon.com Inc.', type: 'STOCK', currentPrice: 18800, basePrice: 18600, change24h: 90, high24h: 18950, low24h: 18500, volume24h: 38000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$188.00' } as unknown as TradingInstrumentView,
+    // Forex
+    { id: '11', symbol: 'EURUSD', name: 'EUR/USD', type: 'FOREX', currentPrice: 108420, basePrice: 108300, change24h: 15, high24h: 108600, low24h: 108200, volume24h: 88000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '1.08420' } as unknown as TradingInstrumentView,
+    { id: '12', symbol: 'GBPUSD', name: 'GBP/USD', type: 'FOREX', currentPrice: 130250, basePrice: 130000, change24h: 20, high24h: 130500, low24h: 129800, volume24h: 76000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '1.30250' } as unknown as TradingInstrumentView,
+    { id: '13', symbol: 'USDJPY', name: 'USD/JPY', type: 'FOREX', currentPrice: 152450, basePrice: 152000, change24h: 30, high24h: 152800, low24h: 151900, volume24h: 65000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '152.450' } as unknown as TradingInstrumentView,
+    { id: '14', symbol: 'AUDCAD', name: 'AUD/CAD', type: 'FOREX', currentPrice: 97598, basePrice: 97500, change24h: 12, high24h: 97800, low24h: 97200, volume24h: 8400, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '0.97598' } as unknown as TradingInstrumentView,
+    { id: '15', symbol: 'AUDCHF', name: 'AUD/CHF', type: 'FOREX', currentPrice: 57060, basePrice: 57000, change24h: 8, high24h: 57200, low24h: 56900, volume24h: 6200, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '0.57060' } as unknown as TradingInstrumentView,
+    { id: '16', symbol: 'AUDJPY', name: 'AUD/JPY', type: 'FOREX', currentPrice: 109473, basePrice: 109600, change24h: -15, high24h: 109800, low24h: 109200, volume24h: 11000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '109.473' } as unknown as TradingInstrumentView,
+    { id: '17', symbol: 'AUDNZD', name: 'AUD/NZD', type: 'FOREX', currentPrice: 123088, basePrice: 123000, change24h: 14, high24h: 123300, low24h: 122800, volume24h: 5400, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '1.23088' } as unknown as TradingInstrumentView,
+    { id: '18', symbol: 'AUDUSD', name: 'AUD/USD', type: 'FOREX', currentPrice: 68488, basePrice: 68600, change24h: -12, high24h: 68800, low24h: 68200, volume24h: 18000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '0.68488' } as unknown as TradingInstrumentView,
+    { id: '19', symbol: 'CADJPY', name: 'CAD/JPY', type: 'FOREX', currentPrice: 112168, basePrice: 112300, change24h: -18, high24h: 112500, low24h: 111900, volume24h: 7200, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '112.168' } as unknown as TradingInstrumentView,
+    // Commodities
+    { id: '20', symbol: 'XAUUSD', name: 'Gold / US Dollar', type: 'COMMODITY', currentPrice: 274000, basePrice: 273500, change24h: 42, high24h: 275000, low24h: 272000, volume24h: 140000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$2,740.00' } as unknown as TradingInstrumentView,
+    { id: '21', symbol: 'XAGUSD', name: 'Silver / US Dollar', type: 'COMMODITY', currentPrice: 3250, basePrice: 3280, change24h: -80, high24h: 3310, low24h: 3220, volume24h: 48000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$32.50' } as unknown as TradingInstrumentView,
+    { id: '22', symbol: 'USOIL', name: 'Crude Oil', type: 'COMMODITY', currentPrice: 7250, basePrice: 7180, change24h: 95, high24h: 7320, low24h: 7140, volume24h: 52000, isEnabled: true, dataSource: 'LIVE', priceAsOf: new Date().toISOString(), priceLabel: '$72.50' } as unknown as TradingInstrumentView,
   ];
 
   const loadData = useCallback(async () => {
-    try {
-      const instList = await listTradingInstruments();
-      const finalInst = instList.length > 0 ? instList : defaultInstruments;
-      setInstruments(finalInst);
+    if (!isBackendOffline()) {
+      try {
+        const instList = await listTradingInstruments();
+        const finalInst = instList.length > 0 ? instList : defaultInstruments;
+        setInstruments(finalInst);
 
-      let matched = finalInst[0];
-      if (urlSymbol) {
-        const found = finalInst.find((i) => i.symbol.toLowerCase() === urlSymbol.toLowerCase());
-        if (found) matched = found;
+        // Only pre-select if URL has a specific symbol
+        if (urlSymbol) {
+          const found = finalInst.find((i) => i.symbol.toLowerCase() === urlSymbol.toLowerCase());
+          if (found) setSelectedInstrument(found);
+        }
+        // Otherwise leave selectedInstrument as null → show empty state
+      } catch {
+        setInstruments(defaultInstruments);
+        if (urlSymbol) {
+          const found = defaultInstruments.find((i) => i.symbol.toLowerCase() === urlSymbol.toLowerCase());
+          if (found) setSelectedInstrument(found);
+        }
       }
-      setSelectedInstrument(matched);
-    } catch {
+    } else {
       setInstruments(defaultInstruments);
-      setSelectedInstrument(defaultInstruments[0]);
+      if (urlSymbol) {
+        const found = defaultInstruments.find((i) => i.symbol.toLowerCase() === urlSymbol.toLowerCase());
+        if (found) setSelectedInstrument(found);
+      }
     }
 
-    if (getAccessToken()) {
+    if (getAccessToken() && !isBackendOffline()) {
       try {
         const [port, ordList, openOrdList, histList] = await Promise.all([
           getTradingPortfolio(),
@@ -236,8 +304,12 @@ def Main(self):
         // ignore
       }
     }
+    // Initial immediate sync, then every 2000ms
+    void sync();
     const timer = setInterval(() => void sync(), 2000);
-    return () => {
+
+
+  return () => {
       mounted = false;
       clearInterval(timer);
     };
@@ -268,7 +340,9 @@ def Main(self):
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     }
-    return () => {
+
+
+  return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
@@ -305,37 +379,88 @@ def Main(self):
 
   const activeInstrument = selectedInstrument || defaultInstruments[0];
 
-  // Synthesize realistic candle series with proper price scale
+  // Load real historical candles from Binance or fallback with timeframe-aware intervals
   useEffect(() => {
-    const rawP = activeInstrument.currentPrice;
-    if (!rawP) return;
-
-    // Convert to display price
-    const isFx = activeInstrument.type === 'FOREX';
-    const displayBase = isFx ? rawP / 100000 : rawP / 100;
-    if (displayBase <= 0) return;
-
-    const generated: TradingCandle[] = [];
-    const now = Date.now();
-    // Start slightly below current price
-    let current = displayBase * (0.995 + Math.random() * 0.005);
-
-    for (let i = 60; i >= 0; i--) {
-      const t = Math.floor((now - i * 60 * 1000) / 1000);
-      // Volatility proportional to price — FOREX small moves, CRYPTO bigger
-      const volatility = isFx ? current * 0.0006 : current * 0.0015;
-      const delta = (Math.random() - 0.49) * volatility;
-      const open = +current.toFixed(isFx ? 5 : 2);
-      const close = +Math.max(0.0001, current + delta).toFixed(isFx ? 5 : 2);
-      const high = +(Math.max(open, close) + Math.random() * Math.abs(volatility) * 0.5).toFixed(isFx ? 5 : 2);
-      const low = +(Math.min(open, close) - Math.random() * Math.abs(volatility) * 0.5).toFixed(isFx ? 5 : 2);
-      const volume = Math.floor(Math.random() * 500) + 100;
-
-      generated.push({ time: t, open, high, low, close, volume });
-      current = close;
+    if (!selectedInstrument) {
+      setCandles([]);
+      return;
     }
-    setCandles(generated);
-  }, [activeInstrument.symbol, activeInstrument.type]);
+    let active = true;
+    async function loadCandles() {
+      if (!selectedInstrument) return;
+      // Try Binance for crypto pairs
+      const isCrypto = getBinanceSymbol(selectedInstrument.symbol) !== null;
+
+      if (isCrypto) {
+        try {
+          const binanceCandles = await fetchBinanceKlines(selectedInstrument.symbol, timeframe, 300);
+          if (active && binanceCandles && binanceCandles.length > 0) {
+            setCandles(binanceCandles);
+            return;
+          }
+        } catch {
+          // fallback to synthesized timeframe candles
+        }
+      }
+
+      // Timeframe-scaled historical bar synthesis (for Forex, Stocks, Commodities)
+      const rawP = selectedInstrument.currentPrice;
+      if (!rawP || !active) return;
+      const isFx = selectedInstrument.type === 'FOREX';
+      const displayBase = isFx ? (rawP > 1000 ? rawP / 100000 : rawP) : (rawP > 500 ? rawP / 100 : rawP);
+      if (displayBase <= 0) return;
+
+      const generated: TradingCandle[] = [];
+      const now = Date.now();
+      let current = displayBase * (0.995 + Math.random() * 0.005);
+
+      const tfMinutes =
+        timeframe === '1s' ? 0.016
+        : timeframe === '1m' ? 1
+        : timeframe === '2m' ? 2
+        : timeframe === '3m' ? 3
+        : timeframe === '5m' ? 5
+        : timeframe === '10m' ? 10
+        : timeframe === '15m' ? 15
+        : timeframe === '20m' ? 20
+        : timeframe === '30m' ? 30
+        : timeframe === '45m' ? 45
+        : timeframe === '1h' ? 60
+        : timeframe === '2h' ? 120
+        : timeframe === '3h' ? 180
+        : timeframe === '4h' ? 240
+        : timeframe === '6h' ? 360
+        : timeframe === '8h' ? 480
+        : timeframe === '12h' ? 720
+        : timeframe === '1w' ? 10080
+        : 1440; // 1D default
+      const stepMs = tfMinutes * 60 * 1000;
+      const decimals = isFx ? (selectedInstrument.symbol.includes('JPY') ? 3 : 5) : displayBase >= 10 ? 2 : 4;
+
+      for (let i = 300; i >= 0; i--) {
+        const t = Math.floor((now - i * stepMs) / 1000);
+        const volatility = isFx
+          ? current * 0.0006 * Math.sqrt(tfMinutes)
+          : current * 0.0012 * Math.sqrt(tfMinutes);
+        const delta = (Math.random() - 0.49) * volatility;
+        const open = +current.toFixed(decimals);
+        const close = +Math.max(0.0001, current + delta).toFixed(decimals);
+        const high = +(Math.max(open, close) + Math.random() * Math.abs(volatility) * 0.5).toFixed(decimals);
+        const low = +(Math.min(open, close) - Math.random() * Math.abs(volatility) * 0.5).toFixed(decimals);
+        const volume = Math.floor(Math.random() * 500 * Math.max(1, tfMinutes)) + 100;
+
+        generated.push({ time: t, open, high, low, close, volume });
+        current = close;
+      }
+      if (active) setCandles(generated);
+    }
+
+    void loadCandles();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedInstrument?.symbol, selectedInstrument?.type, selectedInstrument?.currentPrice, timeframe]);
 
   // Handle Order Placement (Exness 1-click or confirmed)
   const handleOrder = async (side: TradingOrderSide) => {
@@ -347,6 +472,21 @@ def Main(self):
       const requestedPrice = orderType === 'LIMIT' && pendingPrice
         ? Math.round(parseFloat(pendingPrice) * 100)
         : activeInstrument.currentPrice;
+
+      const isOrdFx = activeInstrument.symbol.includes('/') || activeInstrument.type === 'FOREX';
+      const div = isOrdFx ? 100000 : 100;
+      const reqMargin = calculateRequiredMargin(requestedPrice / div, qty, 100, activeInstrument.symbol);
+
+      if (reqMargin > freeMargin) {
+        playTradingSound('marginWarning');
+        setTradeToast({
+          message: `Insufficient margin! Required: $${reqMargin.toFixed(2)}, Free: $${freeMargin.toFixed(2)}`,
+          type: 'error',
+        });
+        setOrderSubmitting(false);
+        setTimeout(() => setTradeToast(null), 4000);
+        return;
+      }
 
       await placeTradingOrder(
         activeInstrument.id,
@@ -370,6 +510,7 @@ def Main(self):
         createdAt: new Date().toISOString(),
       } as unknown as TradingOrderView;
 
+      playTradingSound('orderExecution');
       setTradeToast({
         message: `${orderTab} ${side} order placed for ${qty} Lots @ $${(requestedPrice / 100).toFixed(2)}`,
         type: 'success',
@@ -394,6 +535,7 @@ def Main(self):
         createdAt: new Date().toISOString(),
       } as unknown as TradingOrderView;
 
+      playTradingSound('orderExecution');
       setOpenOrders((prev) => [simOrder, ...prev]);
       setTradeToast({
         message: `${side} order filled: ${qty} Lots ${activeInstrument.symbol} @ $${(activeInstrument.currentPrice / 100).toFixed(2)}`,
@@ -407,6 +549,15 @@ def Main(self):
 
   // Close Order Action
   const handleCloseOrder = (orderId: string) => {
+    const target = openOrders.find((o) => o.id === orderId);
+    if (target) {
+      const isOrdFx = (target.instrumentId || activeInstrument.symbol).includes('/') || activeInstrument.type === 'FOREX';
+      const div = isOrdFx ? 100000 : 100;
+      const openPriceVal = (target.priceFilled ?? (target as any).price ?? 0) / div;
+      const pnl = calculateFloatingPnl(target.side, openPriceVal, rawPrice, target.quantity || 1, target.instrumentId || activeInstrument.symbol);
+      if (pnl >= 0) playTradingSound('takeProfit');
+      else playTradingSound('stopLoss');
+    }
     setOpenOrders((prev) => prev.filter((o) => o.id !== orderId));
     setTradeToast({ message: 'Position closed successfully', type: 'success' });
     setTimeout(() => setTradeToast(null), 3000);
@@ -415,6 +566,7 @@ def Main(self):
   // Close All Positions Action (Exness Mass Close)
   const handleCloseAllPositions = () => {
     if (openOrders.length === 0) return;
+    playTradingSound('takeProfit');
     setOpenOrders([]);
     setTradeToast({ message: 'All open positions closed', type: 'success' });
     setTimeout(() => setTradeToast(null), 3000);
@@ -444,26 +596,43 @@ def Main(self):
   const rawPrice = (() => {
     const p = activeInstrument.currentPrice;
     if (!p || p === 0) return 0;
-    // If price looks like it's already in display units (e.g. 1.084 for EURUSD)
-    // it was stored as 108420 minor units → divide by 100000 for 5-decimal forex
-    // or as 7458457 minor units → divide by 100 for crypto
-    if (activeInstrument.type === 'FOREX') return p / 100000;
-    return p / 100;
+    if (activeInstrument.type === 'FOREX') {
+      return p > 1000 ? p / 100000 : p;
+    }
+    return p > 500 ? p / 100 : p;
   })();
 
   const isForex = activeInstrument.type === 'FOREX';
   const isCrypto = activeInstrument.type === 'CRYPTO';
   const isCommodity = activeInstrument.type === 'COMMODITY';
 
-  const spreadDelta = isForex ? rawPrice * 0.0002 : isCrypto ? rawPrice * 0.0004 : rawPrice * 0.001;
+  const spreadDelta = isForex ? rawPrice * 0.0002 : isCrypto ? rawPrice * 0.0004 : rawPrice * 0.0008;
   const sellPriceNumber = Math.max(0.00001, rawPrice - spreadDelta / 2);
   const buyPriceNumber = rawPrice + spreadDelta / 2;
 
   const formatNum = (n: number) => {
     if (!n || n === 0) return '—';
-    if (isForex) return n.toFixed(5);
-    if (n > 1000) return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (isForex) {
+      if (activeInstrument.symbol.includes('JPY')) return n.toFixed(3);
+      return n.toFixed(5);
+    }
+    if (n >= 1000) return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (n >= 1) return n.toFixed(2);
     return n.toFixed(4);
+  };
+
+  const formatInstPrice = (inst: TradingInstrumentView) => {
+    const p = inst.currentPrice;
+    if (!p) return '—';
+    if (inst.type === 'FOREX') {
+      const v = p > 1000 ? p / 100000 : p;
+      if (inst.symbol.includes('JPY')) return v.toFixed(3);
+      return v.toFixed(5);
+    }
+    const v = p > 500 ? p / 100 : p;
+    if (v >= 1000) return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (v >= 1) return v.toFixed(2);
+    return v.toFixed(4);
   };
 
   // Filter instruments by search & category
@@ -476,6 +645,25 @@ def Main(self):
     if (instrumentCategory === 'Commodities') return inst.type === 'COMMODITY';
     return true;
   });
+
+  // Dynamic calculation of equity, used margin, and free margin using institutional contract specifications
+  const totalBalance = (portfolio?.account?.virtualBalance ?? 1000000) / 100;
+  const unrealizedPnl = openOrders.reduce((sum, ord) => {
+    const isOrdFx = (ord.instrumentId || activeInstrument.symbol).includes('/') || activeInstrument.type === 'FOREX';
+    const div = isOrdFx ? 100000 : 100;
+    const openPriceVal = (ord.priceFilled ?? (ord as any).price ?? 0) / div;
+    const curPriceVal = rawPrice;
+    return sum + calculateFloatingPnl(ord.side, openPriceVal, curPriceVal, ord.quantity || 1, ord.instrumentId || activeInstrument.symbol);
+  }, 0);
+  const equity = Math.max(0, totalBalance + unrealizedPnl);
+  const usedMargin = openOrders.reduce((sum, ord) => {
+    const isOrdFx = (ord.instrumentId || activeInstrument.symbol).includes('/') || activeInstrument.type === 'FOREX';
+    const div = isOrdFx ? 100000 : 100;
+    const openPriceVal = (ord.priceFilled ?? (ord as any).price ?? 0) / div;
+    return sum + calculateRequiredMargin(openPriceVal, ord.quantity || 1, 100, ord.instrumentId || activeInstrument.symbol);
+  }, 0);
+  const freeMargin = Math.max(0, equity - usedMargin);
+  const marginLevel = usedMargin > 0 ? ((equity / usedMargin) * 100).toFixed(1) + '%' : '-';
 
   return (
     <div className="flex h-screen w-full flex-col bg-ink-950 text-slate-200 select-none overflow-hidden font-sans">
@@ -503,7 +691,9 @@ def Main(self):
             const isBtc = tabSym.includes('BTC');
             const isGold = tabSym.includes('XAU');
 
-            return (
+        
+
+  return (
               <div
                 key={tabSym}
                 onClick={() => {
@@ -519,13 +709,16 @@ def Main(self):
                 <span className="flex items-center justify-center text-xs">
                   {isBtc && <span className="h-4 w-4 rounded-full bg-amber-500 text-[10px] flex items-center justify-center text-ink-950 font-bold">₿</span>}
                   {isGold && <span className="text-sm">🪙</span>}
-                  {!isBtc && !isGold && <span className="text-sm">💱</span>}
+                  {tabSym.includes('AUD') && <span className="text-sm">🇦🇺</span>}
+                  {tabSym.includes('EUR') && <span className="text-sm">🇪🇺</span>}
+                  {tabSym.includes('GBP') && <span className="text-sm">🇬🇧</span>}
+                  {!isBtc && !isGold && !tabSym.includes('AUD') && !tabSym.includes('EUR') && !tabSym.includes('GBP') && <span className="text-sm">💱</span>}
                 </span>
 
                 {/* Tab Label */}
                 <span>{tabSym.replace('USD', '')}{tabSym.includes('USD') && !isBtc ? '/USD' : ''}</span>
 
-                {/* Close Tab Button (Exness style) */}
+                {/* Close Tab Button (Exness style - Image 1) */}
                 {openTabs.length > 1 && (
                   <button
                     onClick={(e) => {
@@ -537,7 +730,9 @@ def Main(self):
                         if (nextInst) setSelectedInstrument(nextInst);
                       }
                     }}
-                    className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 text-xs px-1"
+                    className={`text-xs px-1 hover:text-rose-400 transition ${
+                      isActive ? 'text-slate-400' : 'opacity-0 group-hover:opacity-100 text-slate-500'
+                    }`}
                   >
                     ✕
                   </button>
@@ -856,7 +1051,9 @@ def Main(self):
                     const isSelected = activeInstrument.symbol === inst.symbol;
                     const change = inst.change24h ?? 0;
                     const isUp = change >= 0;
-                    return (
+                
+
+  return (
                       <div
                         key={inst.symbol}
                         onClick={() => {
@@ -871,7 +1068,9 @@ def Main(self):
                       >
                         {/* Symbol Name & icon */}
                         <div className="col-span-6 flex items-center gap-2 truncate">
-                          <span className="text-xs">{inst.symbol.includes('BTC') ? '🪙' : inst.symbol.includes('AUD') ? '🇦🇺' : inst.symbol.includes('CAD') ? '🇨🇦' : '📈'}</span>
+                          <span className="text-xs">
+                            {inst.symbol.includes('BTC') ? '₿' : inst.symbol.includes('ETH') ? 'Ξ' : inst.symbol.includes('SOL') ? '◎' : inst.symbol.includes('XAU') ? '🪙' : inst.symbol.includes('AUD') ? '🇦🇺' : inst.symbol.includes('CAD') ? '🇨🇦' : inst.symbol.includes('EUR') ? '🇪🇺' : inst.symbol.includes('GBP') ? '🇬🇧' : inst.symbol.includes('JPY') ? '🇯🇵' : '📈'}
+                          </span>
                           <span className="font-semibold truncate">{inst.symbol}</span>
                         </div>
 
@@ -884,7 +1083,7 @@ def Main(self):
 
                         {/* Bid price */}
                         <div className="col-span-3 text-right font-mono text-[11px] font-semibold text-slate-200">
-                          {(inst.currentPrice / 100).toFixed(inst.type === 'FOREX' ? 4 : 1)}
+                          {formatInstPrice(inst)}
                         </div>
                       </div>
                     );
@@ -1113,14 +1312,16 @@ def Main(self):
         {leftSidebarOpen && (
           <div
             onMouseDown={(e) => {
-              e.preventDefault();
+              if (e.cancelable) e.preventDefault();
               setIsResizingLeft(true);
             }}
-            className={`w-1 hover:w-1.5 cursor-col-resize bg-ink-800 hover:bg-brand/60 active:bg-brand transition-all shrink-0 z-20 ${
-              isResizingLeft ? 'bg-brand w-1.5' : ''
+            className={`group relative w-2.5 cursor-col-resize bg-ink-900 hover:bg-amber-400/20 active:bg-amber-400/30 border-x border-ink-800 transition-colors shrink-0 z-30 flex flex-col items-center justify-center ${
+              isResizingLeft ? 'bg-amber-400/30 border-amber-400' : ''
             }`}
-            title="Drag to resize panel"
-          />
+            title="Drag to resize instruments sidebar"
+          >
+            <div className="h-8 w-1 rounded-full bg-slate-600 group-hover:bg-amber-400 transition" />
+          </div>
         )}
 
         {/* 3. CENTER: CHART + BOTTOM POSITIONS DOCK */}
@@ -1128,6 +1329,38 @@ def Main(self):
           
           {/* Chart Workspace (Single, Dual, or 4-Chart Grid) */}
           <div className="flex-1 min-h-0 relative">
+
+            {/* ── EMPTY STATE: No instrument selected ── */}
+            {!selectedInstrument && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 text-slate-400 bg-ink-950 z-10">
+                <div className="text-7xl opacity-30">📊</div>
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-black text-white tracking-widest uppercase">Select a Market to Start Trading</h2>
+                  <p className="text-sm text-slate-500">Choose an instrument from the sidebar or use search below</p>
+                </div>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {['BTCUSD', 'ETHUSD', 'XAUUSD', 'EURUSD', 'SOLUSD'].map((sym) => {
+                    const inst = instruments.find((i) => i.symbol === sym) || DEFAULT_INSTRUMENTS.find((i) => i.symbol === sym);
+                    if (!inst) return null;
+                    return (
+                      <button
+                        key={sym}
+                        onClick={() => setSelectedInstrument(inst)}
+                        className="px-4 py-2 rounded-lg bg-ink-800 hover:bg-amber-400/20 hover:border-amber-400 border border-ink-700 text-white text-sm font-semibold transition"
+                      >
+                        {inst.name} <span className="text-slate-400 text-xs ml-1">{sym}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={() => setLeftNavTool('instruments')}
+                  className="px-6 py-2.5 rounded-xl bg-amber-400 text-ink-950 font-black text-sm hover:bg-amber-300 transition"
+                >
+                  Browse All Instruments →
+                </button>
+              </div>
+            )}
             {multiChartCount === 1 && (
               <ChartTerminal
                 symbol={activeInstrument.symbol}
@@ -1137,7 +1370,7 @@ def Main(self):
                 timeframe={timeframe}
                 onTimeframeChange={(tf) => setTimeframe(tf)}
                 onTickPrice={(price) => {
-                  setSelectedInstrument((prev) => (prev ? { ...prev, currentPrice: price } : null));
+                  setSelectedInstrument((prev) => (prev ? { ...prev, currentPrice: price } : prev));
                 }}
                 showSignals={settingsShowSignals}
                 showPositionsOnChart={settingsOpenPositions}
@@ -1210,14 +1443,16 @@ def Main(self):
           {/* Bottom Dock Vertical Resize Handle */}
           <div
             onMouseDown={(e) => {
-              e.preventDefault();
+              if (e.cancelable) e.preventDefault();
               setIsResizingBottom(true);
             }}
-            className={`h-1 hover:h-1.5 cursor-row-resize bg-ink-800 hover:bg-brand/60 active:bg-brand transition-all shrink-0 z-20 ${
-              isResizingBottom ? 'bg-brand h-1.5' : ''
+            className={`group relative h-2.5 cursor-row-resize bg-ink-900 hover:bg-amber-400/20 active:bg-amber-400/30 border-y border-ink-800 transition-colors shrink-0 z-30 flex items-center justify-center ${
+              isResizingBottom ? 'bg-amber-400/30 border-amber-400' : ''
             }`}
             title="Drag to resize positions panel"
-          />
+          >
+            <div className="w-10 h-1 rounded-full bg-slate-600 group-hover:bg-amber-400 transition" />
+          </div>
 
           {/* Bottom Dock: Open | Pending | Closed positions (matching Exness image 1) */}
           <div
@@ -1248,8 +1483,13 @@ def Main(self):
                     Close All Positions
                   </button>
                 )}
-                <button className="hover:text-white">⋮</button>
-                <button className="hover:text-white">✕</button>
+                <button
+                  onClick={() => setBottomDockHeight((prev) => (prev > 40 ? 32 : 176))}
+                  className="hover:text-white p-1 text-slate-400 font-bold transition text-sm"
+                  title="Collapse/Expand Positions Dock"
+                >
+                  {bottomDockHeight > 40 ? '⌃' : '⌄'}
+                </button>
               </div>
             </div>
 
@@ -1285,11 +1525,12 @@ def Main(self):
                         const openPriceVal = (ord.priceFilled ?? (ord as any).price ?? 0) / div;
                         const curPriceVal = rawPrice;
                         const isBuy = ord.side === 'BUY';
-                        const diff = isBuy ? (curPriceVal - openPriceVal) : (openPriceVal - curPriceVal);
-                        const profitVal = diff * (ord.quantity || 1) * (isOrdFx ? 1000 : 1);
+                        const profitVal = calculateFloatingPnl(ord.side, openPriceVal, curPriceVal, ord.quantity || 1, ord.instrumentId || activeInstrument.symbol);
                         const isProf = profitVal >= 0;
 
-                        return (
+                    
+
+  return (
                           <tr key={ord.id} className="border-b border-ink-800 hover:bg-ink-800/40">
                             <td className="font-bold text-white py-1.5">{ord.instrumentId || activeInstrument.symbol}</td>
                             <td className={isBuy ? 'text-blue-400 font-bold' : 'text-rose-400 font-bold'}>{ord.side}</td>
@@ -1322,14 +1563,14 @@ def Main(self):
           {/* Account Footer Bar (matching Exness image 1: Equity, Free Margin, Balance, Margin Level) */}
           <div className="h-7 border-t border-ink-700 bg-ink-950 px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0">
             <div className="flex items-center gap-4">
-              <span>Equity: <strong className="text-white">0.00 USC</strong></span>
-              <span>Free Margin: <strong className="text-white">0.00 USC</strong></span>
-              <span>Balance: <strong className="text-white">{((portfolio?.account?.virtualBalance ?? 1000000) / 100).toFixed(2)} USD</strong></span>
-              <span>Margin: <strong className="text-white">0.00 USC</strong></span>
-              <span>Margin level: <strong className="text-white">-</strong></span>
+              <span>Equity: <strong className="text-white">{equity.toFixed(2)} {accountType === 'REAL' ? 'USC' : 'USD'}</strong></span>
+              <span>Free Margin: <strong className="text-white">{freeMargin.toFixed(2)} {accountType === 'REAL' ? 'USC' : 'USD'}</strong></span>
+              <span>Balance: <strong className="text-white">{totalBalance.toFixed(2)} {accountType === 'REAL' ? 'USC' : 'USD'}</strong></span>
+              <span>Margin: <strong className="text-white">{usedMargin.toFixed(2)} {accountType === 'REAL' ? 'USC' : 'USD'}</strong></span>
+              <span>Margin level: <strong className="text-white">{marginLevel}</strong></span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-brand font-bold">📶 6.13.0 [TE 1.4.0]</span>
+              <span className="text-emerald-400 font-bold">📶 6.13.0 [TE 1.4.0]</span>
             </div>
           </div>
 
@@ -1339,14 +1580,16 @@ def Main(self):
         {rightPanelOpen && (
           <div
             onMouseDown={(e) => {
-              e.preventDefault();
+              if (e.cancelable) e.preventDefault();
               setIsResizingRight(true);
             }}
-            className={`w-1 hover:w-1.5 cursor-col-resize bg-ink-800 hover:bg-brand/60 active:bg-brand transition-all shrink-0 z-20 ${
-              isResizingRight ? 'bg-brand w-1.5' : ''
+            className={`group relative w-2.5 cursor-col-resize bg-ink-900 hover:bg-amber-400/20 active:bg-amber-400/30 border-x border-ink-800 transition-colors shrink-0 z-30 flex flex-col items-center justify-center ${
+              isResizingRight ? 'bg-amber-400/30 border-amber-400' : ''
             }`}
-            title="Drag to resize order panel"
-          />
+            title="Drag to resize order execution panel"
+          >
+            <div className="h-8 w-1 rounded-full bg-slate-600 group-hover:bg-amber-400 transition" />
+          </div>
         )}
 
         {/* 4. RIGHT SIDEBAR: EXNESS-STYLE ORDER EXECUTION PANEL (Matches Image 1, 2, 3, 4) */}

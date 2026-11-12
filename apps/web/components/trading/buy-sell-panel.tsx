@@ -14,6 +14,8 @@ import {
   claimTradingFaucet,
 } from '@/lib/api/trading';
 import { ApiClientError } from '@/lib/api/client';
+import { getContractSpec } from '@/lib/api/trading-contracts';
+import { playTradingSound } from '@/lib/trading/audio-synthesizer';
 
 interface BuySellPanelProps {
   instrument: TradingInstrumentView;
@@ -68,9 +70,9 @@ export function BuySellPanel({
       : selectedPrice ?? activePriceMinor;
 
   const parsedLots = Number.parseFloat(lots) || 0.01;
-  // In our engine, 1 lot = 1 unit (or scaled)
+  const spec = getContractSpec(instrument.symbol);
   const quantity = Math.max(1, Math.round(parsedLots));
-  const notionalMinor = quantity * effectivePriceMinor;
+  const notionalMinor = Math.round(parsedLots * spec.contractSize * (effectivePriceMinor / (spec.assetClass === 'FOREX' ? 1000 : 1)));
   const marginRequiredMinor = Math.round(notionalMinor / leverage);
   const estimatedFeeMinor = Math.round(notionalMinor * 0.0005); // 0.05%
 
@@ -81,23 +83,7 @@ export function BuySellPanel({
 
   // Audio chime feedback
   function playSuccessSound() {
-    try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.12, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.35);
-    } catch {
-      // Audio not permitted or supported
-    }
+    playTradingSound('orderExecution');
   }
 
   function adjustLots(delta: number) {
