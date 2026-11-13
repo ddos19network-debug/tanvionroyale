@@ -4,6 +4,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import type { MarketDataSource } from './market-data.provider';
+import type { Candle, Timeframe } from './candle-aggregator/candle-aggregator';;
 
 /** Cache entry: data + timestamp + upstream status. */
 interface CacheEntry<T> {
@@ -26,6 +27,8 @@ export class MarketDataService implements OnModuleInit {
 
   private forexCache: CacheEntry<Record<string, unknown>> | null = null;
   private stockCache: CacheEntry<Record<string, unknown>> | null = null;
+  private readonly CANDLE_TTL_MS = 60_000;
+  private candleCache: Map<Timeframe, Candle[]> = new Map();
 
   private readonly CACHE_TTL_MS = 30_000;
 
