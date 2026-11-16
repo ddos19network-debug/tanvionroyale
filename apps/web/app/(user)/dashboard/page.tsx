@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, Fragment } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, Button, Skeleton } from '@tanvion-royale/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from '@tanvion-royale/ui';
 import { useAuth } from '@/src/lib/auth';
-import { getMe } from '@/lib/api/users';
+import { getDashboardOverview } from '@/lib/api/dashboard';
 import { ApiClientError } from '@/lib/api/client';
-import type { PublicUser } from '@tanvion-royale/types';
+import { currencySymbol, formatWalletAmount } from '@/lib/api/wallet';
 
 const KYC_LABEL: Record<string, string> = {
   NOT_STARTED: 'Not started',
@@ -18,141 +18,145 @@ const KYC_LABEL: Record<string, string> = {
   MANUAL_REVIEW: 'Manual review',
 };
 
-/** Customer dashboard — the home of the single TANVIONROYALE account. */
+const STATUS_LABEL: Record<string, string> = {
+  ACTIVE: 'Active',
+  SUSPENDED: 'Suspended',
+  LOCKED: 'Locked',
+  PENDING: 'Pending',
+  CLOSED: 'Closed',
+  BANNED: 'Banned',
+};
+
+function formatNumber(n: number): string {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatPercent(n: number): string {
+  const sign = n >= 0 ? '+' : '-';
+  return '\$' + sign + '\$' + Math.abs(n).toFixed(2) + '%';
+}
+
 export default function DashboardPage() {
   const router = useRouter();
-  const { ready, isAuthenticated, fetchUser } = useAuth();
-  
-  const [user, setUser] = useState<PublicUser | null>(null);
+  const { ready, isAuthenticated } = useAuth();
+
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [hideBalances, setHideBalances] = useState(false);
 
-  useEffect(() => {
-    // Wait for auth to be ready before checking
-    if (!ready) {
-      return;
-    }
-
-    // If not authenticated after auth check, redirect to login
+  const load = useCallback(async () => {
+    if (!ready) return;
     if (!isAuthenticated) {
       router.replace('/login');
       return;
     }
-
     let cancelled = false;
     setLoading(true);
-
-    // Fetch user data. A DEFINITIVE 401/403 (invalid/revoked session, suspended
-    // account) sends the user to login; a transient failure (502/503/504,
-    // network) never kicks an authenticated user out of the dashboard.
-    getMe()
-      .then((me) => {
-        if (!cancelled) setUser(me);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        if (err instanceof ApiClientError && (err.status === 401 || err.status === 403)) {
-          router.replace('/login');
-          return;
-        }
-        setLoadError('Could not reach the server. Please try again.');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [router, ready, isAuthenticated]);
-
-  // Also fetch user when auth state changes
-  useEffect(() => {
-    if (ready && isAuthenticated && !user) {
-      fetchUser();
+    setLoadError(null);
+    try {
+      const overview = await getDashboardOverview();
+      if (!cancelled) setData(overview);
+    } catch (err) {
+      if (cancelled) return;
+      if (err instanceof ApiClientError && (err.status === 401 || err.status === 403)) {
+        router.replace('/login');
+        return;
+      }
+      setLoadError('Could not reach the server. Please try again.');
+    } finally {
+      if (!cancelled) setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, isAuthenticated, fetchUser]);
+  }, [ready, isAuthenticated, router]);
 
-  return (
-    <>
+  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (ready && isAuthenticated && !data && !loading) { void load(); }
+  }, [ready, isAuthenticated, data, loading, load]);
+
+  if (loadError) {
+    return (
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <h1 className="text-2xl font-bold">Account overview</h1>
-        <p className="mt-1 text-sm text-slate-300">
-          Your TANVIONROYALE account — one place for profile, wallet, bets and support.
-        </p>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="mt-4 rounded-md border border-red-500/40 bg-red-950/50 px-4 py-3" role="status">
+          <p className="text-sm font-medium text-red-300">{loadError}</p>
+          <button onClick={() => { setLoadError(null); void load(); }} className="mt-3 text-sm text-teal-400 underline underline-offset-4 hover:text-teal-300">Try again</button>
+        </div>
+      </main>
+    );
+  }
 
-        {loadError && (
-          <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-950/50 px-4 py-3" role="status">
-            <p className="text-sm font-medium text-amber-300">{loadError}</p>
+  const profile = data?.profile;
+  const wallet = data?.wallet;
+  const trading = data?.trading;
+  const betting = data?.betting;
+  const referral = data?.referral;
+  const activity = data?.activity ?? [];
+  return (
+    <main className="mx-auto max-w-7xl px-4 py-8">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-400">Your TANVIONROYALE account - profile, wallet, trading, betting and activity at a glance.</p>
+        </div>
+        {!loading && !loadError && (
+          <div className="flex items-center gap-3">
+            <button onClick={() => setHideBalances((prev) => !prev)} className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-slate-300 hover:bg-white/5 transition">
+              {hideBalances ? 'Show balances' : 'Hide balances'}
+            </button>
           </div>
         )}
+      </div>
 
-        {loading ? (
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <Skeleton className="h-40" />
-            <Skeleton className="h-40" />
-          </div>
-        ) : user ? (
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Welcome, {user.username}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <p>
-                  <span className="text-slate-500">Email:</span> {user.email}
-                  {!user.emailVerified && (
-                    <span className="ml-2 rounded bg-amber-500/15 px-2 py-0.5 text-xs text-amber-300">
-                      Unverified
-                    </span>
+      {data ? (
+        <Fragment>
+          <section className="mb-8">
+            <div className="rounded-2xl border border-white/10 bg-ink-800 p-6">
+              <div className="flex flex-col md:flex-row md:items-center gap-6">
+                <div className="flex items-center gap-4">
+                  {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Profile" className="w-16 h-16 rounded-full bg-ink-700 object-cover border border-white/10" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500/20 to-blue-500/20 flex items-center justify-center">
+                      <span className="text-xl font-bold text-teal-300">{profile?.username?.charAt(0)?.toUpperCase() ?? 'U'}</span>
+                    </div>
                   )}
-                </p>
-                <p>
-                  <span className="text-slate-500">Account status:</span> {user.status}
-                </p>
-                <p>
-                  <span className="text-slate-500">KYC status:</span>{' '}
-                  {KYC_LABEL[user.kycStatus] ?? user.kycStatus}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick actions</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                <Link href="/wallet">
-                  <Button variant="outline" size="sm">
-                    Wallet
-                  </Button>
-                </Link>
-                <Link href="/sports">
-                  <Button variant="outline" size="sm">
-                    Sports
-                  </Button>
-                </Link>
-                <Link href="/my-bets">
-                  <Button variant="outline" size="sm">
-                    My Bets
-                  </Button>
-                </Link>
-                <Link href="/profile">
-                  <Button variant="outline" size="sm">
-                    Profile
-                  </Button>
-                </Link>
-                <Link href="/settings">
-                  <Button variant="outline" size="sm">
-                    Settings
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        ) : null}
-      </main>
-    </>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">{profile?.username ?? 'User'}</h2>
+                    <p className="text-xs text-slate-400 font-mono">UID: {profile?.uid ?? '—'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right hidden md:block">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider">Account status</p>
+                    <p className="text-sm font-medium text-white">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${profile?.status === 'ACTIVE' ? 'bg-emerald-500/15 text-emerald-400' : profile?.status === 'SUSPENDED' || profile?.status === 'LOCKED' ? 'bg-red-500/15 text-red-400' : 'bg-slate-500/10 text-slate-400'}`}>
+                      {STATUS_LABEL[profile?.status ?? ''] ?? profile?.status}
+                    </span>
+                    </p>
+                  </div>
+                  <div className="text-right hidden md:block">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider">VIP status</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-amber-400">{profile?.vipTitle ?? 'Regular'}</span>
+                      <span className="text-xs text-slate-400 bg-white/[0.05] px-2 py-0.5 rounded">Level {profile?.vipLevel ?? 1}</span>
+                    </div>
+                  </div>
+                  <div className="md:hidden w-full flex justify-end">
+                    <Button variant="outline" size="sm" onClick={() => router.replace('/profile')}>View Profile</Button>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-white/10 pt-6">
+                <div className="p-4 rounded-xl bg-white/[0.02]"><p className="text-xs text-slate-500 uppercase tracking-wider">Email</p><p className="text-sm font-medium text-slate-200 truncate">{profile?.email ?? 'Not set'}</p></div>
+                <div className="p-4 rounded-xl bg-white/[0.02]"><p className="text-xs text-slate-500 uppercase tracking-wider">Verification</p><p className="text-sm font-medium text-slate-200">{KYC_LABEL[profile?.kycStatus ?? 'NOT_STARTED'] ?? profile?.kycStatus}</p></div>
+                <div className="p-4 rounded-xl bg-white/[0.02]"><p className="text-xs text-slate-500 uppercase tracking-wider">Social links</p><p className="text-sm font-medium text-slate-200">{profile?.socialLinked ? 'Connected' : 'Not connected'}</p></div>
+                <div className="p-4 rounded-xl bg-white/[0.02]"><p className="text-xs text-slate-500 uppercase tracking-wider">Member since</p><p className="text-sm font-medium text-slate-200">{new Date(profile?.createdAt ?? Date.now()).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</p></div>
+              </div>
+            </div>
+          </section>
+        </Fragment>
+      ) : null}
+    </main>
   );
 }

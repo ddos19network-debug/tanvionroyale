@@ -5,7 +5,7 @@ import { UnifiedProfile } from '@/components/profile/unified-profile';
 
 export default function TradingProfilePage() {
   return (
-    <TradingShell fullWidth>
+    <TradingShell fullWidth hideHeader>
       <UnifiedProfile />
     </TradingShell>
   );

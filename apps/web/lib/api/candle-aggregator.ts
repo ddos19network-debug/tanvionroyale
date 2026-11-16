@@ -43,10 +43,15 @@ export const ALL_SUPPORTED_TIMEFRAMES: { label: string; value: SupportedTimefram
 ];
 
 /**
- * Return timeframe interval duration in seconds
+ * Return timeframe interval duration in seconds (nominal for calendar intervals).
  */
 export function getTimeframeSeconds(tf: string): number {
-  const clean = tf.toLowerCase().trim();
+  const trimmed = tf.trim();
+  // Preserve case for '1M' (1 Month) vs '1m' (1 Minute)
+  if (trimmed === '1M' || trimmed.toLowerCase() === '1month') {
+    return 2592000; // 30-day nominal seconds
+  }
+  const clean = trimmed.toLowerCase();
   switch (clean) {
     case '1s': return 1;
     case '5s': return 5;
@@ -70,10 +75,31 @@ export function getTimeframeSeconds(tf: string): number {
     case '12h': return 43200;
     case '1d': return 86400;
     case '1w': return 604800;
-    case '1m':
-    case '1month': return 2592000;
     default: return 60;
   }
+}
+
+/**
+ * Align a Unix timestamp (seconds) strictly to calendar and interval boundaries in UTC.
+ */
+export function getCandleBucketTimestamp(timeSec: number, targetTimeframe: string): number {
+  const trimmed = targetTimeframe.trim();
+  if (trimmed === '1M' || trimmed.toLowerCase() === '1month') {
+    const d = new Date(timeSec * 1000);
+    return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) / 1000);
+  }
+  const clean = trimmed.toLowerCase();
+  if (clean === '1w') {
+    const d = new Date(timeSec * 1000);
+    const day = d.getUTCDay(); // 0 = Sun, 1 = Mon ...
+    const diff = (day === 0 ? -6 : 1) - day;
+    return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + diff) / 1000);
+  }
+  if (clean === '1d') {
+    return Math.floor(timeSec / 86400) * 86400;
+  }
+  const intervalSec = getTimeframeSeconds(targetTimeframe);
+  return Math.floor(timeSec / intervalSec) * intervalSec;
 }
 
 /**
@@ -85,8 +111,13 @@ export function aggregateCandles(
 ): TradingCandle[] {
   if (!baseCandles || baseCandles.length === 0) return [];
 
+  const trimmed = targetTimeframe.trim();
+  const isMonth = trimmed === '1M' || trimmed.toLowerCase() === '1month';
+  const isWeek = trimmed.toLowerCase() === '1w';
+  const isDay = trimmed.toLowerCase() === '1d';
   const intervalSec = getTimeframeSeconds(targetTimeframe);
-  if (intervalSec <= 60 && targetTimeframe !== '1s' && targetTimeframe !== '5s' && targetTimeframe !== '15s' && targetTimeframe !== '30s') {
+
+  if (!isMonth && !isWeek && !isDay && intervalSec <= 60 && !['1s', '5s', '15s', '30s'].includes(trimmed.toLowerCase())) {
     // 1m or lower already standard
     return baseCandles;
   }
@@ -96,8 +127,8 @@ export function aggregateCandles(
   const buckets = new Map<number, TradingCandle[]>();
 
   for (const c of sorted) {
-    // Quantize timestamp to bucket boundary
-    const bucketTime = Math.floor(c.time / intervalSec) * intervalSec;
+    // Quantize timestamp to accurate UTC calendar or interval bucket boundary
+    const bucketTime = getCandleBucketTimestamp(c.time, targetTimeframe);
     if (!buckets.has(bucketTime)) {
       buckets.set(bucketTime, []);
     }

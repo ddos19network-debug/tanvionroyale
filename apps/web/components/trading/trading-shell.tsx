@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { useMobileNavVisibility } from '@/components/navigation/use-mobile-nav-visibility';
 import { AppFooter } from '@/components/layout/app-footer';
 import { SearchOverlay } from '@/components/home/SearchOverlay';
 import { LogoMark } from '@/components/brand/logo';
@@ -53,10 +54,12 @@ const ICON_MAP: Record<string, string> = {
 export function TradingShell({
   children,
   fullWidth = false,
+  hideHeader = false,
   onBalanceUpdated,
 }: {
   children: React.ReactNode;
   fullWidth?: boolean;
+  hideHeader?: boolean;
   onBalanceUpdated?: () => void;
 }) {
   const pathname = usePathname();
@@ -67,6 +70,7 @@ export function TradingShell({
   const [faucetLoading, setFaucetLoading] = useState(false);
   const [faucetMessage, setFaucetMessage] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useMobileNavVisibility();
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Search box state in menu
@@ -75,9 +79,7 @@ export function TradingShell({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+
 
   // Keyboard shortcut Ctrl+K to focus search box or open search
   useEffect(() => {
@@ -174,7 +176,10 @@ export function TradingShell({
           TRADING HEADER  —  3 zones: [LEFT: logo+back] [CENTER: nav] [RIGHT: actions]
           All zones are flex-shrink-safe. Zero overlap at any screen width.
           ═══════════════════════════════════════════════════════════════════ */}
-      <header className="border-b border-ink-700/80 bg-ink-900/95 backdrop-blur sticky top-0 z-30 shadow-md">
+      {!hideHeader && (
+        <header
+          className="border-b border-ink-700/80 bg-ink-900/95 backdrop-blur sticky top-0 z-30 shadow-md translate-y-0 md:translate-y-0"
+        >
         <div className="mx-auto flex max-w-[1400px] items-center px-2 sm:px-3 py-2 gap-2">
 
           {/* ── ZONE 1: Back button + Logo (always visible, shrink-0) ── */}
@@ -409,6 +414,7 @@ export function TradingShell({
 
         </div>
       </header>
+      )}
 
       {/* ── Mobile Full-screen Drawer ── */}
       {mobileMenuOpen && (
@@ -552,3 +558,4 @@ export function Sparkline({
     </svg>
   );
 }
+

@@ -6,6 +6,7 @@ import { TradingShell, Sparkline } from '@/components/trading/trading-shell';
 import { listTradingInstruments, claimTradingFaucet, formatPrice, formatPercent, formatMinor } from '@/lib/api/trading';
 import type { TradingInstrumentView } from '@/lib/api/trading';
 import { getLiveMarketQuotes, type LiveMarketQuote } from '@/lib/api/live-rates';
+import { isBackendOffline } from '@/lib/api/client';
 
 interface FeatureCoin {
   symbol: string;
@@ -19,7 +20,31 @@ interface FeatureCoin {
   type: string;
 }
 
-const FEATURED_TICKERS: FeatureCoin[] = [
+/**
+ * Maps a TradingInstrumentView from the backend into a FeatureCoin for display.
+ * Prices are stored as integer minor units (cents) on the backend.
+ */
+function instrumentToFeatureCoin(inst: TradingInstrumentView): FeatureCoin {
+  const price = inst.currentPrice / 100;
+  const change = inst.change24h ?? 0;
+  return {
+    symbol: inst.symbol,
+    name: inst.name,
+    price,
+    change,
+    high: inst.high24h ?? inst.currentPrice,
+    low: inst.low24h ?? inst.currentPrice,
+    volume: inst.volume24h ? `$${(inst.volume24h / 1e6).toFixed(2)}B` : '$0.00B',
+    sparkline: [Math.round((inst.currentPrice / 100) * 0.98), Math.round((inst.currentPrice / 100) * 1.02)],
+    type: inst.type,
+  };
+}
+
+/**
+ * Fallback featured tickers used only when the backend is unreachable.
+ * These are clearly sample/demo data — never represented as live prices.
+ */
+const FALLBACK_FEATURED: FeatureCoin[] = [
   {
     symbol: 'BTCUSD',
     name: 'Bitcoin',
@@ -66,42 +91,62 @@ const FEATURED_TICKERS: FeatureCoin[] = [
   },
 ];
 
-const TABLE_COINS: Record<string, FeatureCoin[]> = {
-  hot: [
-    { symbol: 'BTCUSD', name: 'Bitcoin', price: 7586000, change: 320, high: 7650000, low: 7420000, volume: '$18.45B', sparkline: [74200, 75000, 75860], type: 'CRYPTO' },
-    { symbol: 'ETHUSD', name: 'Ethereum', price: 384000, change: 185, high: 391000, low: 375000, volume: '$9.23B', sparkline: [3750, 3800, 3840], type: 'CRYPTO' },
-    { symbol: 'SOLUSD', name: 'Solana', price: 19850, change: -85, high: 20500, low: 19200, volume: '$4.12B', sparkline: [2050, 2000, 1985], type: 'CRYPTO' },
-    { symbol: 'BNBUSD', name: 'BNB', price: 61500, change: 120, high: 62400, low: 60200, volume: '$3.10B', sparkline: [6020, 6100, 6150], type: 'CRYPTO' },
-    { symbol: 'NVDA', name: 'NVIDIA Corp', price: 14200, change: 450, high: 14500, low: 13900, volume: '$5.21B', sparkline: [1390, 1410, 1420], type: 'STOCK' },
-    { symbol: 'XAUUSD', name: 'Gold Spot', price: 274000, change: 42, high: 275500, low: 272800, volume: '$12.8B', sparkline: [2728, 2735, 2740], type: 'COMMODITY' },
-  ],
+const FALLBACK_TABLE: Record<string, FeatureCoin[]> = {
+  hot: FALLBACK_FEATURED,
   gainers: [
-    { symbol: 'PEPEUSD', name: 'Pepe', price: 1, change: 1250, high: 1.2, low: 0.9, volume: '$1.42B', sparkline: [0.9, 1.0, 1.2], type: 'CRYPTO' },
-    { symbol: 'SUIUSD', name: 'Sui', price: 320, change: 840, high: 345, low: 290, volume: '$920M', sparkline: [290, 310, 320], type: 'CRYPTO' },
-    { symbol: 'NVDA', name: 'NVIDIA Corp', price: 14200, change: 450, high: 14500, low: 13900, volume: '$5.21B', sparkline: [1390, 1410, 1420], type: 'STOCK' },
-    { symbol: 'BTCUSD', name: 'Bitcoin', price: 7586000, change: 320, high: 7650000, low: 7420000, volume: '$18.45B', sparkline: [74200, 75000, 75860], type: 'CRYPTO' },
-    { symbol: 'TIAUSD', name: 'Celestia', price: 620, change: 210, high: 645, low: 595, volume: '$410M', sparkline: [595, 610, 620], type: 'CRYPTO' },
+    { symbol: 'PEPEUSD', name: 'Pepe', price: 1, change: 1250, high: 1.2, low: 0.9, volume: '.42B', sparkline: [0.9, 1.0, 1.2], type: 'CRYPTO' },
+    { symbol: 'SUIUSD', name: 'Sui', price: 320, change: 840, high: 345, low: 290, volume: '', sparkline: [290, 310, 320], type: 'CRYPTO' },
+    { symbol: 'NVDA', name: 'NVIDIA Corp', price: 14200, change: 450, high: 14500, low: 13900, volume: '.21B', sparkline: [1390, 1410, 1420], type: 'STOCK' },
+    { symbol: 'BTCUSD', name: 'Bitcoin', price: 7586000, change: 320, high: 7650000, low: 7420000, volume: '.45B', sparkline: [74200, 75000, 75860], type: 'CRYPTO' },
+    { symbol: 'TIAUSD', name: 'Celestia', price: 620, change: 210, high: 645, low: 595, volume: '', sparkline: [595, 610, 620], type: 'CRYPTO' },
   ],
   volume: [
-    { symbol: 'BTCUSD', name: 'Bitcoin', price: 7586000, change: 320, high: 7650000, low: 7420000, volume: '$18.45B', sparkline: [74200, 75000, 75860], type: 'CRYPTO' },
-    { symbol: 'ETHUSD', name: 'Ethereum', price: 384000, change: 185, high: 391000, low: 375000, volume: '$9.23B', sparkline: [3750, 3800, 3840], type: 'CRYPTO' },
-    { symbol: 'NVDA', name: 'NVIDIA Corp', price: 14200, change: 450, high: 14500, low: 13900, volume: '$5.21B', sparkline: [1390, 1410, 1420], type: 'STOCK' },
-    { symbol: 'SOLUSD', name: 'Solana', price: 19850, change: -85, high: 20500, low: 19200, volume: '$4.12B', sparkline: [2050, 2000, 1985], type: 'CRYPTO' },
-    { symbol: 'XAUUSD', name: 'Gold Spot', price: 274000, change: 42, high: 275500, low: 272800, volume: '$12.8B', sparkline: [2728, 2735, 2740], type: 'COMMODITY' },
+    { symbol: 'BTCUSD', name: 'Bitcoin', price: 7586000, change: 320, high: 7650000, low: 7420000, volume: '.45B', sparkline: [74200, 75000, 75860], type: 'CRYPTO' },
+    { symbol: 'ETHUSD', name: 'Ethereum', price: 384000, change: 185, high: 391000, low: 375000, volume: '.23B', sparkline: [3750, 3800, 3840], type: 'CRYPTO' },
+    { symbol: 'SOLUSD', name: 'Solana', price: 19850, change: -85, high: 20500, low: 19200, volume: '.12B', sparkline: [2050, 2000, 1985], type: 'CRYPTO' },
+    { symbol: 'XAUUSD', name: 'Gold Spot', price: 274000, change: 42, high: 275500, low: 272800, volume: '.8B', sparkline: [2728, 2735, 2740], type: 'COMMODITY' },
   ],
   new: [
-    { symbol: 'SUIUSD', name: 'Sui', price: 320, change: 840, high: 345, low: 290, volume: '$920M', sparkline: [290, 310, 320], type: 'CRYPTO' },
-    { symbol: 'TIAUSD', name: 'Celestia', price: 620, change: 210, high: 645, low: 595, volume: '$410M', sparkline: [595, 610, 620], type: 'CRYPTO' },
-    { symbol: 'APTUSD', name: 'Aptos', price: 980, change: -140, high: 1040, low: 960, volume: '$380M', sparkline: [1040, 990, 980], type: 'CRYPTO' },
-    { symbol: 'PEPEUSD', name: 'Pepe', price: 1, change: 1250, high: 1.2, low: 0.9, volume: '$1.42B', sparkline: [0.9, 1.0, 1.2], type: 'CRYPTO' },
+    { symbol: 'SUIUSD', name: 'Sui', price: 320, change: 840, high: 345, low: 290, volume: '', sparkline: [290, 310, 320], type: 'CRYPTO' },
+    { symbol: 'TIAUSD', name: 'Celestia', price: 620, change: 210, high: 645, low: 595, volume: '', sparkline: [595, 610, 620], type: 'CRYPTO' },
+    { symbol: 'APTUSD', name: 'Aptos', price: 980, change: -140, high: 1040, low: 960, volume: '', sparkline: [1040, 990, 980], type: 'CRYPTO' },
+    { symbol: 'PEPEUSD', name: 'Pepe', price: 1, change: 1250, high: 1.2, low: 0.9, volume: '.42B', sparkline: [0.9, 1.0, 1.2], type: 'CRYPTO' },
   ],
 };
-
 export default function TradingHomePage() {
   const [activeMarketTab, setActiveMarketTab] = useState<'hot' | 'gainers' | 'volume' | 'new'>('hot');
   const [faucetLoading, setFaucetLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [liveQuotes, setLiveQuotes] = useState<Record<string, LiveMarketQuote>>({});
+  const [featuredInstruments, setFeaturedInstruments] = useState<FeatureCoin[] | null>(null);
+  const [tableInstruments, setTableInstruments] = useState<Record<string, FeatureCoin[]> | null>(null);
+  const [instrumentsLoading, setInstrumentsLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    async function sync() {
+      try {
+        if (!isBackendOffline()) {
+          const instList = await listTradingInstruments();
+          if (mounted && instList.length > 0) {
+            const mapped = instList.map(instrumentToFeatureCoin);
+            setFeaturedInstruments(mapped.slice(0, 4));
+            setTableInstruments({
+              hot: mapped.slice(0, 12),
+              gainers: mapped.slice(0, 12),
+              volume: mapped.slice(0, 12),
+              new: mapped.slice(0, 12),
+            });
+          }
+        }
+      } catch {
+        // Backend error — fallbacks will be used
+      } finally {
+        if (mounted) setInstrumentsLoading(false);
+      }
+    }
+    void sync();
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -133,7 +178,8 @@ export default function TradingHomePage() {
     }
   }
 
-  const tableData = TABLE_COINS[activeMarketTab] ?? TABLE_COINS.hot;
+  const featured = featuredInstruments ?? FALLBACK_FEATURED;
+  const tableData = tableInstruments?.[activeMarketTab] ?? FALLBACK_TABLE[activeMarketTab] ?? FALLBACK_TABLE.hot;
 
   return (
     <TradingShell>
@@ -248,7 +294,7 @@ export default function TradingHomePage() {
 
           {/* 4 FEATURED TICKER CARDS (Binance-style) */}
           <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-8 sm:mt-12">
-            {FEATURED_TICKERS.map((coin) => {
+            {featured.map((coin) => {
               const isUp = coin.change >= 0;
               return (
                 <Link
@@ -521,3 +567,4 @@ export default function TradingHomePage() {
     </TradingShell>
   );
 }
+

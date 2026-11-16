@@ -23,6 +23,31 @@ export interface Candle {
 }
 
 /**
+ * Gets aligned UTC timestamp for interval/calendar bucket boundaries.
+ *
+ * Calendar boundaries (1D, 1W, 1M) use actual calendar transitions — NOT
+ * arbitrary fixed periods (e.g. 1M is the first day of the month, not 30 days).
+ * Non-calendar intervals use getBaseIntervalSeconds for uniform bucketing.
+ */
+export function getCandleBucketTimestamp(timeSec: number, timeframe: Timeframe): number {
+  if (timeframe === '1M') {
+    const d = new Date(timeSec * 1000);
+    return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) / 1000);
+  }
+  if (timeframe === '1W') {
+    const d = new Date(timeSec * 1000);
+    const day = d.getUTCDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + diff) / 1000);
+  }
+  if (timeframe === '1D') {
+    return Math.floor(timeSec / 86400) * 86400;
+  }
+  const baseSeconds = getBaseIntervalSeconds(timeframe);
+  return Math.floor(timeSec / baseSeconds) * baseSeconds;
+}
+
+/**
  * Aggregates an array of base candles into the specified timeframe.
  * Base candles are expected to have: time, open, high, low, close, volume
  * 
@@ -35,16 +60,13 @@ export function aggregateCandles(
   timeframe: Timeframe
 ): Candle[] {
   if (candles.length === 0) return [];
-
-  // Determine the base interval in seconds
-  const baseSeconds = getBaseIntervalSeconds(timeframe);
   
   // Group candles into timeframe buckets
   const buckets = new Map<number, Candle[]>();
   
   for (const candle of candles) {
-    // Calculate the bucket key based on aligned timestamp
-    const bucketKey = Math.floor(candle.time / baseSeconds) * baseSeconds;
+    // Calculate the bucket key based on aligned UTC calendar/interval timestamp
+    const bucketKey = getCandleBucketTimestamp(candle.time, timeframe);
     if (!buckets.has(bucketKey)) {
       buckets.set(bucketKey, []);
     }
@@ -104,7 +126,10 @@ function getBaseIntervalSeconds(timeframe: Timeframe): number {
     '12h': 43200,
     '1D': 86400,
     '1W': 604800,
-    '1M': 2592000, // 30 days
+    // NOTE: '1M' is intentionally listed here for Record<Timeframe, number>
+    // completeness but is NOT used by getCandleBucketTimestamp — monthly
+    // buckets use calendar month boundaries (first day of month), not 30 days.
+    '1M': 2592000,
   };
   
   return intervals[timeframe];
@@ -142,9 +167,3 @@ export function getTimeframeDisplayName(timeframe: Timeframe): string {
   
   return names[timeframe];
 }
-
-;
-
-
-// Named export for backward compatibility
-export const aggregateCandlesNamed = aggregateCandles;

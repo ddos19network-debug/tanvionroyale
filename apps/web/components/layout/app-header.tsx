@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import { useMobileNavVisibility } from '@/components/navigation/use-mobile-nav-visibility';
 import { useAuth } from '@/src/lib/auth';
 import { SearchOverlay } from '@/components/home/SearchOverlay';
 import { LogoMark } from '@/components/brand/logo';
@@ -10,6 +11,7 @@ import { NavIcon } from '@/components/navigation/nav-icon';
 import { UnreadBadge } from '@/components/notifications/unread-badge';
 import { userNavSections } from '@/components/navigation/user-nav';
 import type { UserNavItem } from '@/components/navigation/user-nav';
+import { MobileNavDrawer } from '@/components/navigation/mobile-nav-drawer';
 
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
@@ -31,7 +33,7 @@ const NAV_LINKS = [
  * rendered through <NavIcon> so they inherit the row's text colour.
  *
  *   PROFILE_ICON is the EXACT path the mobile bottom nav already uses for
- *   "Profile" (bottom-nav.tsx ITEMS) — reusing it verbatim keeps one icon for
+ *   "Profile" (bottom-nav.tsx ITEMS) â€” reusing it verbatim keeps one icon for
  *   one destination instead of inventing a second look-alike.
  *
  *   LOGOUT_ICON is the sign-out glyph (door + outgoing arrow). There is no
@@ -71,28 +73,7 @@ export function AppHeader() {
    * 5. Desktop/tablet:
    *      Header is always visible.
    */
-  const [mobileHeaderHidden, setMobileHeaderHidden] =
-    useState(false);
-
-  /*
-   * Keep the latest mobile menu state available to the
-   * scroll listener without recreating the listener.
-   */
-  const mobileMenuOpenRef =
-    useRef(false);
-
-  /*
-   * Scroll-stop fallback timer.
-   */
-  const scrollStopTimerRef =
-    useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  /*
-   * requestAnimationFrame prevents excessive React
-   * state updates during high-frequency scrolling.
-   */
-  const scrollFrameRef =
-    useRef<number | null>(null);
+  useMobileNavVisibility();
 
   // Two-back exit confirmation state
   const [showExitConfirm, setShowExitConfirm] =
@@ -107,7 +88,7 @@ export function AppHeader() {
    * `loggingOut` closure (React batches state updates), so `if (loggingOut)`
    * would still let every one of them through. The ref is updated
    * synchronously, so the guard is correct even for a burst. `loggingOut`
-   * state is kept purely to drive `disabled` / the "Logging out…" label.
+   * state is kept purely to drive `disabled` / the "Logging outâ€¦" label.
    */
   const [loggingOut, setLoggingOut] = useState(false);
   const loggingOutRef = useRef(false);
@@ -119,22 +100,6 @@ export function AppHeader() {
     useState<number | null>(null);
 
   /*
-   * Keep the mobile-menu ref synchronized.
-   */
-  useEffect(() => {
-    mobileMenuOpenRef.current =
-      mobileMenuOpen;
-
-    /*
-     * The header must stay visible while the mobile
-     * navigation drawer/menu is open.
-     */
-    if (mobileMenuOpen) {
-      setMobileHeaderHidden(false);
-    }
-  }, [mobileMenuOpen]);
-
-  /*
    * Sync auth state.
    */
   useEffect(() => {
@@ -144,235 +109,10 @@ export function AppHeader() {
     }
   }, [ready, user]);
 
-  /*
-   * MOBILE TOP NAVIGATION SCROLL CONTROL
-   * ====================================
-   *
-   * IMPORTANT:
-   *
-   * The header itself is fixed to the viewport.
-   *
-   * This avoids the unreliable combination of:
-   *
-   *      position: sticky
-   *      +
-   *      transform
-   *
-   * that can behave differently on Android Chrome.
-   *
-   * We keep a spacer in the document where the header
-   * normally occupies its space.
-   *
-   * Scroll behaviour:
-   *
-   *      scroll starts
-   *          ↓
-   *      header hides
-   *          ↓
-   *      momentum scrolling continues
-   *          ↓
-   *      header stays hidden
-   *          ↓
-   *      scroll stops
-   *          ↓
-   *      header shows
-   */
-  useEffect(() => {
-    /*
-     * Clear pending fallback timer.
-     */
-    const clearScrollStopTimer = () => {
-      if (
-        scrollStopTimerRef.current !== null
-      ) {
-        clearTimeout(
-          scrollStopTimerRef.current,
-        );
 
-        scrollStopTimerRef.current = null;
-      }
-    };
 
-    /*
-     * Show header.
-     */
-    const showHeader = () => {
-      clearScrollStopTimer();
 
-      setMobileHeaderHidden(false);
-    };
 
-    /*
-     * Hide header immediately and schedule its return.
-     */
-    const handleScrolling = () => {
-      /*
-       * Desktop/tablet never uses auto-hide.
-       */
-      if (window.innerWidth >= 768) {
-        showHeader();
-        return;
-      }
-
-      /*
-       * Keep header visible while mobile menu is open.
-       */
-      if (mobileMenuOpenRef.current) {
-        showHeader();
-        return;
-      }
-
-      /*
-       * At the very top, header must be visible.
-       */
-      if (window.scrollY <= 2) {
-        showHeader();
-        return;
-      }
-
-      /*
-       * Page is currently being scrolled.
-       */
-      setMobileHeaderHidden(true);
-
-      /*
-       * Every new scroll event resets the timer.
-       *
-       * Therefore, as long as Android Chrome keeps
-       * generating momentum scroll events, the header
-       * cannot reappear.
-       */
-      clearScrollStopTimer();
-
-      scrollStopTimerRef.current =
-        setTimeout(() => {
-          scrollStopTimerRef.current =
-            null;
-
-          /*
-           * Only show after the page has actually stopped
-           * moving and the menu isn't open.
-           */
-          if (
-            window.innerWidth < 768 &&
-            !mobileMenuOpenRef.current
-          ) {
-            setMobileHeaderHidden(false);
-          }
-        }, 600);
-    };
-
-    /*
-     * Throttle scroll processing to animation frames.
-     */
-    const handleScroll = () => {
-      if (
-        scrollFrameRef.current !== null
-      ) {
-        return;
-      }
-
-      scrollFrameRef.current =
-        window.requestAnimationFrame(() => {
-          scrollFrameRef.current = null;
-
-          handleScrolling();
-        });
-    };
-
-    /*
-     * Modern browsers, including current Chromium,
-     * provide scrollend.
-     *
-     * This fires after scrolling/momentum has ended.
-     */
-    const handleScrollEnd = () => {
-      if (
-        window.innerWidth < 768 &&
-        !mobileMenuOpenRef.current
-      ) {
-        showHeader();
-      }
-    };
-
-    /*
-     * Restore header after responsive viewport changes.
-     */
-    const handleResize = () => {
-      if (
-        window.innerWidth >= 768 ||
-        window.scrollY <= 2
-      ) {
-        showHeader();
-      }
-    };
-
-    /*
-     * Listen to the real document/window scroll.
-     */
-    window.addEventListener(
-      'scroll',
-      handleScroll,
-      {
-        passive: true,
-      },
-    );
-
-    /*
-     * Listen for actual end of scrolling.
-     */
-    window.addEventListener(
-      'scrollend',
-      handleScrollEnd as EventListener,
-    );
-
-    /*
-     * Handle screen rotation / viewport resize.
-     */
-    window.addEventListener(
-      'resize',
-      handleResize,
-    );
-
-    /*
-     * Initial state.
-     */
-    if (
-      window.innerWidth >= 768 ||
-      window.scrollY <= 2
-    ) {
-      setMobileHeaderHidden(false);
-    }
-
-    return () => {
-      window.removeEventListener(
-        'scroll',
-        handleScroll,
-      );
-
-      window.removeEventListener(
-        'scrollend',
-        handleScrollEnd as EventListener,
-      );
-
-      window.removeEventListener(
-        'resize',
-        handleResize,
-      );
-
-      clearScrollStopTimer();
-
-      if (
-        scrollFrameRef.current !== null
-      ) {
-        window.cancelAnimationFrame(
-          scrollFrameRef.current,
-        );
-
-        scrollFrameRef.current = null;
-      }
-    };
-  }, []);
 
   /*
    * Handle two-back exit logic.
@@ -451,14 +191,14 @@ export function AppHeader() {
    * `logout()` is the single source of truth and it already:
    *   1. POSTs /auth/logout so the server-side Session row is revoked
    *      (the API's JwtAuthGuard re-checks the Session row on every request,
-   *      so revoking it is what actually ends the session — not just the token);
+   *      so revoking it is what actually ends the session â€” not just the token);
    *   2. swallows a failed/expired request on purpose, so a session that is
    *      ALREADY invalid still transitions to logged-out instead of stranding
    *      the user, and no raw API error is ever surfaced;
    *   3. calls clearSession('logout') -> removes ng.access / ng.refresh /
    *      ng.user and dispatches `ng:session-changed` ('cleared'), which the
    *      provider itself listens for, so `user` becomes null everywhere;
-   *   4. router.replace('/login') — the canonical logged-out destination.
+   *   4. router.replace('/login') â€” the canonical logged-out destination.
    *
    * So all that is left here is the UI sequencing:
    *   - single-flight guard, so a double tap cannot double-POST or
@@ -565,11 +305,7 @@ export function AppHeader() {
        * the mobile scroll state.
        */}
       <header
-        className={`fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-ink-950/95 backdrop-blur transition-transform duration-200 ease-out md:translate-y-0 ${
-          mobileHeaderHidden
-            ? '-translate-y-full'
-            : 'translate-y-0'
-        }`}
+        className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-ink-950/95 backdrop-blur translate-y-0 md:translate-y-0"
       >
         <div className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-8">
           <div className="flex min-h-14 items-center justify-between gap-2 py-2 sm:min-h-16 sm:gap-3">
@@ -662,7 +398,7 @@ export function AppHeader() {
                   onFocus={() =>
                     setSearchOpen(true)
                   }
-                  placeholder="Search games…"
+                  placeholder="Search gamesâ€¦"
                   aria-label="Search games by title, provider, or category"
                   className="h-9 w-48 rounded-full border border-white/10 bg-ink-800 pl-9 pr-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand xl:w-56"
                 />
@@ -722,7 +458,7 @@ export function AppHeader() {
                       className="rounded-lg px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
                     >
                       {loggingOut
-                        ? 'Logging out…'
+                        ? 'Logging outâ€¦'
                         : 'Log out'}
                     </button>
                   </>
@@ -761,7 +497,7 @@ export function AppHeader() {
                 aria-expanded={
                   mobileMenuOpen
                 }
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-200 transition hover:bg-white/10 hover:text-white md:hidden"
+                className="inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-200 transition hover:bg-white/10 hover:text-white md:hidden"
               >
                 {mobileMenuOpen ? (
                   <svg
@@ -770,6 +506,7 @@ export function AppHeader() {
                     viewBox="0 0 24 24"
                     fill="none"
                     aria-hidden
+                    className="w-5 h-5 shrink-0"
                   >
                     <path
                       d="M6 6l12 12M18 6L6 18"
@@ -785,6 +522,7 @@ export function AppHeader() {
                     viewBox="0 0 24 24"
                     fill="none"
                     aria-hidden
+                    className="w-5 h-5 shrink-0"
                   >
                     <path
                       d="M4 7h16M4 12h16M4 17h16"
@@ -805,7 +543,7 @@ export function AppHeader() {
             carries four sections (MAIN / ACCOUNT / SERVICE / PERSONAL), and
             the header this panel lives in is `position: fixed`:
 
-                <header className="fixed inset-x-0 top-0 …">
+                <header className="fixed inset-x-0 top-0 â€¦">
 
             A fixed box does not travel with the document, so once the menu is
             taller than the viewport its tail is pushed past the bottom edge of
@@ -818,7 +556,7 @@ export function AppHeader() {
             scroll container, so every section stays reachable. The reserved
             space keeps the two fixed bars clear:
 
-                3.5rem  the header bar itself (h-14) — logo + close X stay usable
+                3.5rem  the header bar itself (h-14) â€” logo + close X stay usable
                 ~3.5rem the mobile bottom nav (fixed bottom-0, ~50px)
                 ~2rem   breathing room / safe-area
 
@@ -832,113 +570,19 @@ export function AppHeader() {
             straight from `userNavSections`, unchanged, and the desktop
             `UserSidebar` is not affected.
           */}
-          {mobileMenuOpen && (
-            <div className="max-h-[calc(100vh-9rem)] supports-[height:0dvh]:max-h-[calc(100dvh-9rem)] overflow-y-auto overscroll-contain border-t border-white/10 py-3 md:hidden">
-
-              {/* Same user-panel items + routes as the desktop sidebar */}
-              {userNavSections.map(
-                (section) => (
-                  <div
-                    key={section.title}
-                    className="mb-1.5"
-                  >
-                    <p className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                      {section.title}
-                    </p>
-
-                    <nav
-                      aria-label={`Mobile ${section.title} navigation`}
-                      className="grid grid-cols-2 gap-1.5"
-                    >
-                      {section.items.map(
-                        (item) => (
-                          <MobileNavItem
-                            key={item.key}
-                            item={item}
-                            onNavigate={
-                              closeMobileMenu
-                            }
-                          />
-                        ),
-                      )}
-                    </nav>
-                  </div>
-                ),
-              )}
-
-              {/*
-                SESSION ACTIONS — the last block of the menu, below a rule so it
-                can never be mistaken for a navigation section.
-
-                Deliberately NOT part of `userNavSections`: that array is a list
-                of real ROUTES consumed by BOTH the mobile menu and the desktop
-                sidebar, and logout is not a destination. There is no /logout
-                page and none was added — the button runs the same canonical
-                `onLogout()` the desktop header button runs, which delegates to
-                <AuthProvider>'s `logout()`.
-
-                Signed in  -> Profile (unchanged styling) + a full-width Logout
-                              row built like every other menu row (icon + label),
-                              so it is as easy to hit as a navigation item and
-                              is unmistakably an action.
-                Signed out -> the existing Login / Register pair, untouched.
-              */}
-              <div className="mt-3 border-t border-white/10 pt-3">
-                {localReady &&
-                displayUser ? (
-                  <div className="flex flex-col gap-1.5">
-                    <Link
-                      href="/profile"
-                      onClick={
-                        closeMobileMenu
-                      }
-                      className="rounded-lg border border-brand/30 bg-brand/10 px-3 py-2.5 text-center text-sm font-semibold text-brand"
-                    >
-                      Profile
-                    </Link>
-
-                    <button
-                      type="button"
-                      onClick={onLogout}
-                      disabled={loggingOut}
-                      aria-busy={loggingOut}
-                      className="flex min-w-0 items-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
-                    >
-                      <NavIcon d={LOGOUT_ICON} />
-
-                      <span className="min-w-0 flex-1 truncate text-left">
-                        {loggingOut
-                          ? 'Logging out…'
-                          : 'Logout'}
-                      </span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Link
-                      href="/login"
-                      onClick={
-                        closeMobileMenu
-                      }
-                      className="rounded-lg border border-white/10 px-3 py-2.5 text-center text-sm font-medium text-slate-200"
-                    >
-                      Login
-                    </Link>
-
-                    <Link
-                      href="/register"
-                      onClick={
-                        closeMobileMenu
-                      }
-                      className="rounded-lg bg-brand px-3 py-2.5 text-center text-sm font-semibold text-ink-950"
-                    >
-                      Register
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/*
+            MOBILE NAVIGATION DRAWER (< 768px):
+            Off-canvas drawer sliding in from the left matching the responsive UI spec.
+            Consumes userNavSections so routes and labels stay identical across desktop and mobile.
+          */}
+          <MobileNavDrawer
+            open={mobileMenuOpen}
+            onClose={closeMobileMenu}
+            isAuthenticated={isAuthenticated}
+            user={displayUser}
+            onLogout={onLogout}
+            loggingOut={loggingOut}
+          />
         </div>
       </header>
 
@@ -1001,7 +645,7 @@ export function AppHeader() {
 }
 
 /**
- * Mobile hamburger entry —
+ * Mobile hamburger entry â€”
  * same item/route as the desktop sidebar.
  */
 function MobileNavItem({
@@ -1012,7 +656,7 @@ function MobileNavItem({
   onNavigate: () => void;
 }) {
   /*
-   * Feature does not exist on the platform yet —
+   * Feature does not exist on the platform yet â€”
    * keep an honest disabled entry.
    */
   if (item.href === null) {
@@ -1050,3 +694,6 @@ function MobileNavItem({
     </Link>
   );
 }
+
+
+

@@ -9,7 +9,7 @@ import { BetSlip } from '@/components/betting';
 import { BottomNav } from '@/components/navigation/bottom-nav';
 import { UserSidebar } from '@/components/navigation/user-sidebar';
 import { BetSlipVisibility, HideOnAdmin } from '@/components/admin/public-chrome';
-import { HideOnGamePlay } from '@/components/use-pathname';
+import { HideOnGamePlay, HideOnGamePlayOnly } from '@/components/use-pathname';
 import { siteConfig, siteUrl } from '@/config/site';
 import { BET_SLIP_ENABLED } from '@/config/features';
 
@@ -51,6 +51,11 @@ export const metadata: Metadata = {
   other: {
     'mobile-web-app-capable': 'yes',
   },
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/favicon.ico',
+    apple: '/apple-icon.png',
+  },
   category: 'entertainment',
 };
 
@@ -83,9 +88,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <BetSlip />
                 </BetSlipVisibility>
               ) : null}
-              <HideOnGamePlay>
+              <HideOnGamePlayOnly>
                 <BottomNav />
-              </HideOnGamePlay>
+              </HideOnGamePlayOnly>
             </HideOnAdmin>
           </BetSlipProvider>
         </AuthProvider>

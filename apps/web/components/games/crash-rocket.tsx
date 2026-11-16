@@ -878,6 +878,7 @@ export function CrashRocketScene({
   const isRunning = phase === 'RUNNING';
   const isCrashed = phase === 'CRASHED';
   const isBetting = phase === 'BETTING';
+  const pos = rocketPosition(displayMultiplier);
 
   return (
     <div
@@ -889,6 +890,33 @@ export function CrashRocketScene({
         ref={canvasRef}
         className="absolute inset-0 w-full h-full pointer-events-none"
       />
+
+      {/* ── Flight Position & Vehicle Layer for Deterministic Spatial Tracking ── */}
+      {!isCrashed && (
+        <div
+          className="pointer-events-none absolute inset-0 z-30"
+          style={{ transform: `translate3d(${pos.left}%, ${pos.top}%, 0)` }}
+          data-flight-position
+        >
+          <div className="sr-ship">
+            <svg
+              className="w-12 h-8 -translate-x-1/2 -translate-y-1/2 text-rose-500 opacity-0"
+              viewBox="0 0 64 32"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M2 16 L48 4 L62 16 L48 28 Z" />
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {/* SVG Flight Trail Arc */}
+      {isRunning && (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-0" aria-hidden="true">
+          <path d={`M 16 80 Q 50 78 ${pos.left} ${pos.top}`} fill="none" />
+        </svg>
+      )}
 
       {/* ── Right-Side Live Multiplier HUD (Matches User's Marked Red Box) ── */}
       {isRunning && (
@@ -936,12 +964,14 @@ export function CrashRocketScene({
           <div className="flex flex-col items-center gap-3">
             {/* Royale Fly Official Game Watermark */}
             <div className="flex flex-col items-center opacity-45 select-none pointer-events-none mb-1">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/assets/image/royale-fly-logo.png"
-                alt="Royale Fly"
+              <svg
                 className="h-10 sm:h-12 w-auto object-contain drop-shadow mb-1"
-              />
+                viewBox="0 0 48 48"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path d="M6 36L42 12L24 42L18 28L6 36Z" fill="#e11d48"/>
+              </svg>
               <span className="text-xl sm:text-2xl font-black italic tracking-tighter text-white">
                 ROYALE <span className="text-[#e11d48]">FLY</span>
               </span>

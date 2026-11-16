@@ -15,6 +15,10 @@ export interface TradingChartProps {
     isUp: boolean;
     lastPrice: number;
   };
+  showIndicators?: boolean;
+  smaPeriods?: number[];
+  emaPeriods?: number[];
+  rsiPeriod?: number;
 }
 
 /**
@@ -69,20 +73,8 @@ export default function TradingChart({ selectedAsset }: TradingChartProps) {
       </div>
     </div>
   );
-export interface TradingChartProps {
-  selectedAsset: {
-    symbol: string;
-    price: string;
-    change: string;
-    isUp: boolean;
-    lastPrice: number;
-  };
-  showIndicators?: boolean;
-  smaPeriods?: number[];
-  emaPeriods?: number[];
-  rsiPeriod?: number;
 }
-}
+
 const calculateSMA = (prices: number[], period: number): number[] => {
   const sma: number[] = [];
   for (let i = 0; i < prices.length; i++) {

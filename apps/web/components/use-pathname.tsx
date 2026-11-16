@@ -22,3 +22,14 @@ export function HideOnGamePlay({ children }: { children: ReactNode }) {
   if (isGamePlay || isTrading || isProfile) return null;
   return <>{children}</>;
 }
+
+/**
+ * Client component that hides children only on full-screen game-play pages
+ * (`/games/play/*`). Used for BottomNav which should remain visible on
+ * trading and profile pages but hidden during full-screen game play.
+ */
+export function HideOnGamePlayOnly({ children }: { children: ReactNode }) {
+  const { isGamePlay } = usePathnameComponent();
+  if (isGamePlay) return null;
+  return <>{children}</>;
+}

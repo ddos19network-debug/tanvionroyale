@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useMobileNavVisibility } from '@/components/navigation/use-mobile-nav-visibility';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/lib/auth';
 import { getMe, updateProfile } from '@/lib/api/users';
 import { getProfileSummary, type ProfileSummary } from '@/lib/api/profile';
@@ -81,8 +83,24 @@ type ProfileTab =
   | 'account-statement'
   | 'account-reports';
 
-export function UnifiedProfile() {
+const MOBILE_TABS: { key: string; label: string; icon: string }[] = [
+  { key: 'dashboard', label: 'Dashboard', icon: '📊' },
+  { key: 'assets', label: 'Assets', icon: '📈' },
+  { key: 'betting', label: 'Betting', icon: '🎫' },
+  { key: 'games', label: 'Games', icon: '⚽' },
+  { key: 'casino', label: 'Casino', icon: '🃏' },
+  { key: 'deposits', label: 'Deposits', icon: '💳' },
+  { key: 'withdrawals', label: 'Withdrawals', icon: '🏧' },
+  { key: 'wallet', label: 'Wallet', icon: '💰' },
+  { key: 'orders', label: 'Orders', icon: '📋' },
+  { key: 'rewards', label: 'Rewards', icon: '🎁' },
+  { key: 'referral', label: 'Referral', icon: '👥' },
+  { key: 'account', label: 'Account', icon: '⚙️' },
+];
+
+export function UnifiedProfile({ isMobileMenuOpen, onMenuToggle, onMenuItemClick, selectedMobileTab }: { isMobileMenuOpen?: boolean; onMenuToggle?: () => void; onMenuItemClick?: (tab: string) => void; selectedMobileTab?: string; }) {
   const { user: authUser, logout } = useAuth();
+  const router = useRouter();
   const [user, setUser] = useState<PublicUser | null>(authUser);
   const [summary, setSummary] = useState<ProfileSummary | null>(null);
 
@@ -90,6 +108,80 @@ export function UnifiedProfile() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [assetsOpen, setAssetsOpen] = useState(false);
   const [ordersOpen, setOrdersOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { topVisible } = useMobileNavVisibility();
+  const [mobileSelectedTab, setSelectedMobileTab] = useState('dashboard');
+
+  // Dynamic page title based on active tab
+  const PAGE_TITLES: Record<string, string> = {
+    dashboard: 'Dashboard',
+    assets: 'Assets',
+    betting: 'Betting',
+    games: 'Games',
+    casino: 'Casino',
+    deposits: 'Deposits',
+    withdrawals: 'Withdrawals',
+    wallet: 'Wallet',
+    orders: 'Orders',
+    rewards: 'Rewards',
+    referral: 'Referral',
+    account: 'Account',
+    subaccounts: 'Subaccounts',
+    royalepay: 'RoyalePay',
+    activity: 'Activity',
+    settings: 'Settings',
+    'account-identification': 'Identification',
+    'account-security': 'Security',
+    'account-payment': 'Payment Methods',
+    'account-api': 'API',
+    'account-statement': 'Statement',
+    'account-reports': 'Reports',
+  };
+
+  const pageTitle = PAGE_TITLES[activeTab] ?? PAGE_TITLES[mobileSelectedTab] ?? 'Dashboard';
+
+  // Sync mobileSelectedTab with activeTab so hamburger drawer shows correct highlight
+  useEffect(() => {
+    setSelectedMobileTab(activeTab);
+  }, [activeTab]);
+
+  // Close mobile menu on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (mobileMenuOpen) {
+        const header = document.querySelector('.md\\:hidden.flex.items-center.justify-between.px-4.py-3');
+        const panel = document.querySelector('.md\\:hidden.fixed.inset-0.z-40');
+        if (header && !header.contains(e.target as Node) && panel && !panel.contains(e.target as Node)) {
+          setMobileMenuOpen(false);
+        }
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [mobileMenuOpen]);
+
+  // Close mobile menu on Escape key
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
+
+  // Prevent body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
 
   const [activeMarketTab, setActiveMarketTab] = useState<
     'holding' | 'hot' | 'new' | 'favorite' | 'gainers' | 'volume'
@@ -137,6 +229,13 @@ export function UnifiedProfile() {
       mounted = false;
     };
   }, []);
+
+  // Scroll to top when active tab changes (mobile only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [activeTab]);
 
   const uid = isClient && user?.id ? String(Math.abs(hashString(user.id))).padStart(10, '0').slice(0, 10) : '1147705039';
   const displayName = isClient && user?.username
@@ -269,7 +368,7 @@ export function UnifiedProfile() {
       {/* ══════════════════════════════════════════════════════════
           LEFT SIDEBAR — Full menu as specified
           ══════════════════════════════════════════════════════════ */}
-      <aside className="w-full md:w-60 lg:w-64 border-b md:border-b-0 md:border-r border-white/10 bg-[#0e121a] flex-shrink-0">
+      <aside className="hidden md:flex md:w-60 lg:w-64 border-b md:border-b-0 md:border-r border-white/10 bg-[#0e121a] flex-shrink-0">
         <div className="p-3 space-y-0.5 overflow-y-auto max-h-screen">
 
           {/* Dashboard */}
@@ -353,7 +452,7 @@ export function UnifiedProfile() {
           <div className="h-px bg-white/10 my-1.5" />
 
           {/* Account (expandable with sub-items) */}
-          <NavItem tab="account" label="Account" hasChevron isOpen={accountOpen} onToggle={() => setAccountOpen(o => !o)} icon={
+          <NavItem tab="account" label="Account" hasChevron isOpen={accountOpen} onToggle={() => { setAccountOpen(o => !o); setActiveTab('account'); }} icon={
             <svg className="h-4 w-4 shrink-0 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
             </svg>
@@ -407,7 +506,118 @@ export function UnifiedProfile() {
       {/* ══════════════════════════════════════════════════════════
           MAIN CONTENT AREA
           ══════════════════════════════════════════════════════════ */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto max-w-7xl">
+      <main className="flex-1 w-full min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto max-w-7xl">
+
+        {/* PROFILE HEADER — Back | Dynamic Title | Hamburger */}
+        <div
+          className={`md:hidden flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#0e121a]/50 backdrop-blur-sm sticky top-0 z-40 transition-transform duration-200 ease-out ${!topVisible ? '-translate-y-full md:translate-y-0' : 'translate-y-0'}`}
+        >
+          {/* Back Button */}
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="flex items-center gap-1.5 text-slate-300 hover:text-white text-sm font-medium"
+            aria-label="Back to Trading"
+          >
+            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span className="hidden sm:inline">Back</span>
+          </button>
+
+          {/* Dynamic Page Title */}
+          <span className="text-sm font-semibold text-white">{pageTitle}</span>
+
+          {/* Hamburger Menu */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="flex items-center gap-2 text-white font-semibold text-sm"
+            aria-expanded={mobileMenuOpen}
+            aria-label="Open navigation menu"
+          >
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {mobileMenuOpen ? (
+                <>
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </>
+              ) : (
+                <>
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </>
+              )}
+            </svg>
+          </button>
+        </div>
+
+        {/* MOBILE MENU PANEL — slides in when open */}
+        {mobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-40 flex flex-col bg-[#0b0e14] text-slate-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 z-50 bg-[#0e121a] sticky top-0">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Menu</h3>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6l-12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-1">
+              {MOBILE_TABS.map((item) => {
+                const active = item.key === mobileSelectedTab;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => {
+                      if (onMenuItemClick) onMenuItemClick(item.key);
+                      setActiveTab(item.key as ProfileTab);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition ${
+                      active
+                        ? 'bg-white/10 text-white font-bold'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <span>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </span>
+                    {active && (
+                      <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="p-4 border-t border-white/10">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-3">Account</p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onMenuItemClick) onMenuItemClick('account');
+                  setActiveTab('account');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition"
+              >
+                <span>Account Settings</span>
+                <svg className="h-4 w-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H9a2 2 0 01-2-2v-6a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── TOP USER BANNER ─────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
@@ -907,3 +1117,4 @@ export function UnifiedProfile() {
     </div>
   );
 }
+
