@@ -58,8 +58,9 @@ const ITEMS: readonly BottomNavItem[] = [
  * Mobile-only bottom navigation (hidden from 768px up, same breakpoint as the
  * hamburger menus).
  *
- * Visibility comes from the shared mobile navigation controller:
- * hidden while scrolling, revealed by a short finger swipe DOWN.
+ * Visibility comes from the shared mobile navigation controller (same rule as
+ * every top bar): hides while scrolling down, comes back on scroll up, at the
+ * top / end of the page, and while the keyboard is closed.
  */
 export function BottomNav() {
   const pathname = usePathname() || '';

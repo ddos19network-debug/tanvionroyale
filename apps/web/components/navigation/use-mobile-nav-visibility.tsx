@@ -4,32 +4,30 @@ import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 
 /**
- * Shared mobile navigation visibility controller.
+ * Shared mobile navigation visibility controller ("headroom" behaviour).
  *
- * ONE store is shared by every consumer (main AppHeader, TradingShell header,
- * UnifiedProfile mobile header and the BottomNav), so the top and bottom bars
- * can never disagree with each other.
+ * ONE store is shared by EVERY mobile top bar (AppHeader, TradingShell header,
+ * UnifiedProfile header) and the BottomNav, so all of them always follow the
+ * exact same rule and can never disagree with each other.
  *
- * Behaviour (mobile only, viewport < 768px):
+ * Mobile only (viewport < 768px). Desktop: the controller is inert.
  *
- *   Top and Bottom are independent: showing one does NOT hide the other.
- *   Both hide only on a real scroll (more than ~80px of travel); a small
- *   scroll/nudge never hides a bar that is already visible.
+ *   - Page load / route change          -> Top + Bottom visible
+ *   - Scroll DOWN (real scrolling)      -> Top + Bottom slide away
+ *   - Scroll UP (even a little)         -> Top + Bottom slide back
+ *   - Tiny scroll / jitter / bounce     -> nothing changes (no flicker)
+ *   - At the very top / very bottom     -> Top + Bottom visible
+ *   - Swipe down on a page that cannot
+ *     scroll any further                -> Top + Bottom visible
+ *   - Typing (input focused)            -> Bottom hides so the keyboard
+ *                                          never pushes it over the field
  *
- *   - At the very top of the page   -> Top menu visible, Bottom hidden
- *   - While the page is scrolling   -> Top + Bottom menu both hidden
- *   - Scrolling stops               -> both stay hidden (no auto-reveal)
- *   - Short finger swipe UP         -> Top menu appears   (Bottom stays hidden)
- *   - Short finger swipe DOWN       -> Bottom menu appears (Top stays hidden)
- *   - LONG finger swipe DOWN        -> both hide while moving, then the Bottom
- *                                      menu appears as soon as scrolling settles
- *                                      (unless the page ended at the very top)
- *   - Route change                  -> Top menu visible, Bottom hidden
- *   - Desktop (>= 768px)            -> controller is inert, bars use their own CSS
- *
- * A "nudge" is a very gentle push: 4px..80px of finger travel. Anything bigger is a normal scroll gesture and hides both.
- * Nudges are detected from touch events (works even at the very end of the
- * page where nothing can scroll) AND from small scroll bursts as a fallback.
+ * While a finger is on the screen the direction comes from the finger itself
+ * (works on EVERY page: window scroll, inner scroll containers, pages that
+ * cannot scroll). Without a finger (momentum, wheel, keyboard, scripts) it
+ * comes from the real scroll position of whatever element scrolled.
+ * Touches that start on a chart/canvas/slider/[data-nav-ignore] never move the
+ * bars, so trading charts can be dragged freely.
  */
 
 interface NavVisibilityState {
@@ -38,39 +36,34 @@ interface NavVisibilityState {
 }
 
 const MOBILE_MAX_WIDTH = 768;
-/** Minimum finger travel (px) to count as a nudge (smaller = a tap). */
-const SWIPE_THRESHOLD = 4;
-/** Maximum travel (px) for a gesture to still be a gentle nudge. */
-const MAX_SWIPE_DISTANCE = 80;
-/** Maximum duration (ms) for a gesture to still be a gentle nudge. */
-const MAX_SWIPE_DURATION = 1500;
-/** Scroll is considered "stopped" after this many ms without scroll events. */
-const SCROLL_IDLE_MS = 140;
-/** Page is considered "at the top" when scrollY is within this many px. */
-const TOP_EDGE_PX = 8;
+/** Scrolling DOWN this many px (in one direction) hides the bars. */
+const HIDE_DISTANCE = 28;
+/** Scrolling UP this many px (in one direction) shows the bars. */
+const SHOW_DISTANCE = 12;
+/** Never hide while the page is still this close to the top (header height). */
+const MIN_Y_TO_HIDE = 64;
+/** Within this many px of the top / bottom edge the bars are always shown. */
+const EDGE_PX = 8;
+/** Inner scroll containers only count when they are at least this tall (ratio of viewport). */
+const MIN_CONTAINER_RATIO = 0.5;
 
-const INITIAL_STATE: NavVisibilityState = { top: true, bottom: false };
+const ALL_VISIBLE: NavVisibilityState = { top: true, bottom: true };
 
-let state: NavVisibilityState = INITIAL_STATE;
+let state: NavVisibilityState = ALL_VISIBLE;
 const listeners = new Set<() => void>();
 
-/* Gesture bookkeeping (module level: there is exactly one controller). */
+/* Scroll bookkeeping (module level: there is exactly one controller). */
+let lastYBySource = new WeakMap<object, number>();
+let accumulated = 0; // signed: > 0 scrolling down, < 0 scrolling up
+let keyboardOpen = false;
+let keyboardTimer: ReturnType<typeof setTimeout> | null = null;
+
+/* Touch bookkeeping. */
 let touchActive = false;
-let touchStartY = 0;
 let touchLastY = 0;
-let touchStartTime = 0;
-/** Scroll-burst tracking (fallback / non-touch scrolling). */
-let burstActive = false;
-let burstStartY = 0;
-let burstLastY = 0;
-let burstTimer: ReturnType<typeof setTimeout> | null = null;
-/** After a deliberate reveal, momentum scrolling must not hide the bar again. */
-let revealLocked = false;
-/** A long finger-DOWN swipe ended: reveal the Bottom menu once scrolling settles. */
-let pendingBottomReveal = false;
-let settleTimer: ReturnType<typeof setTimeout> | null = null;
-/** Last scroll position seen (window OR inner scroll container). */
-let lastScrollY: number | null = null;
+let touchIgnored = false;
+/** The element that scrolls for the current touch (null = the window). */
+let touchScroller: Element | null = null;
 
 function isMobileViewport(): boolean {
   return typeof window !== 'undefined' && window.innerWidth < MOBILE_MAX_WIDTH;
@@ -82,212 +75,179 @@ function setState(next: NavVisibilityState) {
   listeners.forEach((listener) => listener());
 }
 
-/** Default resting state: top bar only. Two bars are never shown together. */
-function showDefault() {
-  setState({ top: true, bottom: false });
+function showBoth() {
+  setState({ top: true, bottom: !keyboardOpen });
 }
 
 function hideBoth() {
   setState({ top: false, bottom: false });
 }
 
-/** Showing one bar NEVER hides the other: they are independent. */
 function showTopOnly() {
   setState({ top: true, bottom: state.bottom });
 }
 
 function showBottomOnly() {
-  setState({ top: state.top, bottom: true });
+  setState({ top: state.top, bottom: !keyboardOpen });
 }
 
-/** Reset to the default "everything visible" state (used on route change). */
-function clearBurst() {
-  burstActive = false;
-  if (burstTimer !== null) {
-    clearTimeout(burstTimer);
-    burstTimer = null;
+/** Back to the resting state (used on route change). */
+export function resetMobileNavVisibility() {
+  lastYBySource = new WeakMap<object, number>();
+  accumulated = 0;
+  touchActive = false;
+  showBoth();
+}
+
+function isEditable(el: Element | null): boolean {
+  if (!el) return false;
+  const tag = el.tagName;
+  if (tag === 'TEXTAREA' || tag === 'SELECT') return true;
+  if (tag === 'INPUT') {
+    const type = (el as HTMLInputElement).type;
+    return !['button', 'checkbox', 'radio', 'submit', 'reset', 'range', 'file', 'image', 'color'].includes(type);
   }
+  return (el as HTMLElement).isContentEditable === true;
 }
 
-function clearSettle() {
-  if (settleTimer !== null) {
-    clearTimeout(settleTimer);
-    settleTimer = null;
+function onFocusIn(e: FocusEvent) {
+  if (!isMobileViewport()) return;
+  if (!isEditable(e.target as Element | null)) return;
+  if (keyboardTimer !== null) {
+    clearTimeout(keyboardTimer);
+    keyboardTimer = null;
   }
+  keyboardOpen = true;
+  setState({ top: state.top, bottom: false });
 }
 
-/** Restarts the "scrolling has settled" timer (momentum scroll keeps pushing it back). */
-function scheduleSettle() {
-  clearSettle();
-  settleTimer = setTimeout(onSettle, SCROLL_IDLE_MS + 60);
+function onFocusOut() {
+  if (!keyboardOpen) return;
+  if (keyboardTimer !== null) clearTimeout(keyboardTimer);
+  // Focus often hops between two fields: wait a beat before bringing the bar back.
+  keyboardTimer = setTimeout(() => {
+    keyboardTimer = null;
+    if (isEditable(document.activeElement)) return;
+    keyboardOpen = false;
+    setState({ top: state.top, bottom: true });
+  }, 120);
 }
 
-function onSettle() {
-  settleTimer = null;
-  if (touchActive || !pendingBottomReveal || !isMobileViewport()) return;
-  pendingBottomReveal = false;
-
-  const y = lastScrollY ?? window.scrollY;
-  if (y <= TOP_EDGE_PX) {
-    // The swipe brought the page back to the very top: make sure Top is shown.
-    showTopOnly();
+/** Shared decision: `accumulated` > 0 = scrolling down, < 0 = scrolling up. */
+function evaluate(y: number, maxY: number) {
+  // Edges: nothing more to reveal / hide.
+  if (y <= EDGE_PX || y >= maxY - EDGE_PX) {
+    showBoth();
     return;
   }
-  revealLocked = true;
-  showBottomOnly();
+  if (accumulated >= HIDE_DISTANCE && y > MIN_Y_TO_HIDE) {
+    hideBoth();
+  } else if (accumulated <= -SHOW_DISTANCE) {
+    showBoth();
+  }
 }
 
-export function resetMobileNavVisibility() {
-  revealLocked = false;
-  touchActive = false;
-  pendingBottomReveal = false;
-  lastScrollY = null;
-  clearSettle();
-  clearBurst();
-  showDefault();
+function addToAccumulator(delta: number) {
+  // New direction: restart the distance counter (kills jitter).
+  if ((delta > 0 && accumulated < 0) || (delta < 0 && accumulated > 0)) accumulated = 0;
+  accumulated += delta;
+}
+
+function scrollPosition(scroller: Element | null): { y: number; maxY: number } {
+  if (scroller) {
+    return { y: Math.max(0, scroller.scrollTop), maxY: scroller.scrollHeight - scroller.clientHeight };
+  }
+  return {
+    // Clamp: iOS rubber-band reports negative / overshooting positions.
+    y: Math.max(0, window.scrollY),
+    maxY: document.documentElement.scrollHeight - window.innerHeight,
+  };
+}
+
+/** Nearest ancestor that can really scroll vertically (null = the window). */
+function findScroller(start: EventTarget | null): Element | null {
+  let el = start instanceof Element ? start : null;
+  while (el && el !== document.body && el !== document.documentElement) {
+    if (el.scrollHeight > el.clientHeight + 1) {
+      const overflowY = window.getComputedStyle(el).overflowY;
+      if (overflowY === 'auto' || overflowY === 'scroll') {
+        // Tiny inner scrollers (dropdowns, tables) don't drive the page bars.
+        return el.clientHeight >= window.innerHeight * MIN_CONTAINER_RATIO ? el : el.parentElement ? findScroller(el.parentElement) : null;
+      }
+    }
+    el = el.parentElement;
+  }
+  return null;
+}
+
+function shouldIgnoreTouch(start: EventTarget | null): boolean {
+  if (!(start instanceof Element)) return false;
+  return start.closest('canvas, input[type="range"], [data-nav-ignore]') !== null;
+}
+
+function onScroll(e: Event) {
+  if (!isMobileViewport()) return;
+  // A finger is down: onTouchMove decides (avoids counting the same move twice).
+  if (touchActive) return;
+
+  const target = e.target;
+  const isElement = target instanceof Element;
+
+  // Small inner scrollers (dropdowns, drawers, tables, chat boxes) must not
+  // drive the page navigation. Big inner page containers still do.
+  if (isElement && (target as Element).clientHeight < window.innerHeight * MIN_CONTAINER_RATIO) return;
+
+  const source: object = isElement ? (target as Element) : window;
+  const { y, maxY } = scrollPosition(isElement ? (target as Element) : null);
+
+  const last = lastYBySource.get(source);
+  lastYBySource.set(source, y);
+  if (last === undefined) return;
+
+  const delta = y - last;
+  if (delta === 0) return;
+
+  addToAccumulator(delta);
+  evaluate(y, maxY);
 }
 
 function onTouchStart(e: TouchEvent) {
   if (!isMobileViewport()) return;
   const touch = e.touches[0];
-  if (!touch) return;
+  if (!touch || e.touches.length > 1) {
+    touchIgnored = true; // pinch / multi-touch is never a navigation gesture
+    return;
+  }
   touchActive = true;
-  revealLocked = false;
-  pendingBottomReveal = false;
-  lastScrollY = null;
-  clearSettle();
-  clearBurst();
-  touchStartY = touch.clientY;
+  touchIgnored = shouldIgnoreTouch(e.target);
+  touchScroller = findScroller(e.target);
   touchLastY = touch.clientY;
-  touchStartTime = performance.now();
+  accumulated = 0;
+  lastYBySource = new WeakMap<object, number>(); // momentum starts from a fresh baseline
 }
 
 function onTouchMove(e: TouchEvent) {
-  if (!touchActive || !isMobileViewport()) return;
+  if (!touchActive || touchIgnored || !isMobileViewport()) return;
   const touch = e.touches[0];
   if (!touch) return;
+
+  const dy = touch.clientY - touchLastY; // > 0: finger moves DOWN = page scrolls UP
   touchLastY = touch.clientY;
+  if (dy === 0) return;
 
-  const distance = Math.abs(touchLastY - touchStartY);
-  const duration = performance.now() - touchStartTime;
-
-  // The gesture is already bigger than a gentle nudge: it is a normal scroll,
-  // so hide both bars while the finger is still dragging.
-  if (distance > MAX_SWIPE_DISTANCE || duration > MAX_SWIPE_DURATION) {
-    hideBoth();
-  }
+  addToAccumulator(-dy);
+  const { y, maxY } = scrollPosition(touchScroller);
+  evaluate(y, maxY);
 }
 
-function onTouchEnd(e?: TouchEvent) {
-  if (!touchActive) return;
+function onTouchEnd() {
   touchActive = false;
-  if (!isMobileViewport()) return;
-
-  // Browsers do not send touchmove until the finger leaves the tap "slop"
-  // area, so touchLastY can be stale. The final position is the truth.
-  const endTouch = e?.changedTouches?.[0];
-  if (endTouch) touchLastY = endTouch.clientY;
-
-  const deltaY = touchLastY - touchStartY; // > 0 : finger moved DOWN
-  const distance = Math.abs(deltaY);
-  const duration = performance.now() - touchStartTime;
-
-  if (distance < SWIPE_THRESHOLD) {
-    // A tap / tiny jitter: leave the bars exactly as they are.
-    return;
-  }
-
-  if (distance <= MAX_SWIPE_DISTANCE && duration <= MAX_SWIPE_DURATION) {
-    // Deliberate short swipe -> reveal one bar and keep it through momentum.
-    revealLocked = true;
-    if (deltaY > 0) {
-      showBottomOnly(); // finger moved DOWN  -> Bottom menu
-    } else {
-      showTopOnly(); // finger moved UP    -> Top menu
-    }
-    return;
-  }
-
-  // Long / fast gesture = normal scrolling: hide both while it lasts.
-  revealLocked = false;
-  hideBoth();
-
-  // Finger moved DOWN (page scrolls back up): once the scroll settles, bring
-  // the Bottom menu back. Without this the Bottom menu could only ever be
-  // revealed by a tiny <80px nudge, which a normal swipe never is.
-  if (deltaY > 0) {
-    pendingBottomReveal = true;
-    scheduleSettle();
-  }
-}
-
-function onBurstEnd() {
-  burstTimer = null;
-  if (!burstActive) return;
-  burstActive = false;
-  if (touchActive || revealLocked || !isMobileViewport()) return;
-
-  // Scrolling has STOPPED. If the whole burst was only a gentle nudge,
-  // reveal a bar by direction (page moved down = finger swiped UP).
-  const delta = burstLastY - burstStartY;
-  const distance = Math.abs(delta);
-  if (distance >= SWIPE_THRESHOLD && distance <= MAX_SWIPE_DISTANCE) {
-    if (delta > 0) {
-      showTopOnly();
-    } else {
-      showBottomOnly();
-    }
-  }
-}
-
-function onScroll(e: Event) {
-  if (!isMobileViewport()) return;
-
-  // Pages that scroll inside an inner container keep window.scrollY at 0, so
-  // read the position from the element that actually scrolled.
-  const target = e.target;
-  const y = target instanceof Element ? target.scrollTop : window.scrollY;
-  lastScrollY = y;
-
-  // A finger is down: touchmove/touchend decide (avoids flicker on nudges).
-  if (touchActive) return;
-
-  // Momentum after a deliberate reveal must not undo that reveal.
-  if (revealLocked) return;
-
-  // Back at the top of the document: Top menu only.
-  if (y <= TOP_EDGE_PX) {
-    pendingBottomReveal = false;
-    clearSettle();
-    clearBurst();
-    showTopOnly();
-    return;
-  }
-
-  // Momentum after a long finger-DOWN swipe: keep both hidden, reveal the
-  // Bottom menu when the scrolling finally stops.
-  if (pendingBottomReveal) {
-    scheduleSettle();
-    return;
-  }
-
-  if (!burstActive) {
-    burstActive = true;
-    burstStartY = y;
-  }
-  burstLastY = y;
-
-  // Bigger than a nudge = real scrolling: hide both immediately.
-  if (Math.abs(burstLastY - burstStartY) > MAX_SWIPE_DISTANCE) {
-    hideBoth();
-  }
-
-  if (burstTimer !== null) clearTimeout(burstTimer);
-  burstTimer = setTimeout(onBurstEnd, SCROLL_IDLE_MS);
+  touchIgnored = false;
+  touchScroller = null;
 }
 
 function onResize() {
-  if (!isMobileViewport()) showDefault();
+  if (!isMobileViewport()) showBoth();
 }
 
 function attachListeners() {
@@ -298,6 +258,8 @@ function attachListeners() {
   // Capture phase: scroll events from inner scroll containers do not bubble.
   window.addEventListener('scroll', onScroll, { passive: true, capture: true });
   window.addEventListener('resize', onResize);
+  window.addEventListener('focusin', onFocusIn);
+  window.addEventListener('focusout', onFocusOut);
 }
 
 function detachListeners() {
@@ -307,6 +269,8 @@ function detachListeners() {
   window.removeEventListener('touchcancel', onTouchEnd);
   window.removeEventListener('scroll', onScroll, true);
   window.removeEventListener('resize', onResize);
+  window.removeEventListener('focusin', onFocusIn);
+  window.removeEventListener('focusout', onFocusOut);
 }
 
 function subscribe(listener: () => void) {
@@ -316,11 +280,13 @@ function subscribe(listener: () => void) {
     listeners.delete(listener);
     if (listeners.size === 0) {
       detachListeners();
+      if (keyboardTimer !== null) {
+        clearTimeout(keyboardTimer);
+        keyboardTimer = null;
+      }
+      keyboardOpen = false;
+      accumulated = 0;
       touchActive = false;
-      revealLocked = false;
-      pendingBottomReveal = false;
-      clearSettle();
-      clearBurst();
     }
   };
 }
@@ -330,7 +296,7 @@ function getSnapshot(): NavVisibilityState {
 }
 
 function getServerSnapshot(): NavVisibilityState {
-  return INITIAL_STATE;
+  return ALL_VISIBLE;
 }
 
 export function useMobileNavVisibility() {
@@ -344,6 +310,7 @@ export function useMobileNavVisibility() {
 
   const showTop = useCallback(() => showTopOnly(), []);
   const showBottom = useCallback(() => showBottomOnly(), []);
+  const showAll = useCallback(() => showBoth(), []);
   const hide = useCallback(() => hideBoth(), []);
 
   return {
@@ -351,6 +318,7 @@ export function useMobileNavVisibility() {
     bottomVisible: current.bottom,
     showTopOnly: showTop,
     showBottomOnly: showBottom,
+    showBoth: showAll,
     hideBoth: hide,
   };
 }
