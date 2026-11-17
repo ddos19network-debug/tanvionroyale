@@ -44,7 +44,7 @@ const PROFILE_ICON =
 const LOGOUT_ICON =
   'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9';
 
-export function AppHeader() {
+export function AppHeader({ hideOnMobile = false }: { hideOnMobile?: boolean } = {}) {
   const router = useRouter();
   const { user, ready, isAuthenticated, logout } = useAuth();
 
@@ -73,7 +73,7 @@ export function AppHeader() {
    * 5. Desktop/tablet:
    *      Header is always visible.
    */
-  useMobileNavVisibility();
+  const { topVisible } = useMobileNavVisibility();
 
   // Two-back exit confirmation state
   const [showExitConfirm, setShowExitConfirm] =
@@ -285,7 +285,7 @@ export function AppHeader() {
        */}
       <div
         aria-hidden="true"
-        className="h-14 sm:h-16"
+        className={`h-14 sm:h-16 ${hideOnMobile ? 'hidden md:block' : ''}`}
       />
 
       {/*
@@ -305,7 +305,15 @@ export function AppHeader() {
        * the mobile scroll state.
        */}
       <header
-        className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-ink-950/95 backdrop-blur translate-y-0 md:translate-y-0"
+        className={`fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-ink-950/95 backdrop-blur transition-transform duration-200 ease-out md:translate-y-0 ${
+          hideOnMobile ? 'hidden md:block' : ''
+        } ${
+          // Mobile: hidden while scrolling, revealed by a short swipe UP.
+          // Always stays visible while the hamburger drawer or search is open.
+          topVisible || mobileMenuOpen || searchOpen
+            ? 'translate-y-0'
+            : '-translate-y-full'
+        }`}
       >
         <div className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-8">
           <div className="flex min-h-14 items-center justify-between gap-2 py-2 sm:min-h-16 sm:gap-3">
@@ -694,6 +702,3 @@ function MobileNavItem({
     </Link>
   );
 }
-
-
-

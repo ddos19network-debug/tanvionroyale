@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { LogoMark } from '@/components/brand/logo';
@@ -14,6 +15,7 @@ const PROFILE_ICON =
   'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z';
 const LOGOUT_ICON =
   'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9';
+const TRADING_ICON = 'M3 17l6-6 4 4 8-8M15 7h6v6';
 
 export interface MobileNavDrawerProps {
   open: boolean;
@@ -51,6 +53,13 @@ export function MobileNavDrawer({
 
   const studioProduct = studioProductFromQuery(product);
   const currentStudio = normalizeStudio(searchParams.get('provider'));
+
+  // The drawer is rendered through a portal into <body>. The header it is
+  // declared in is `position: fixed` + transformed (hide-on-scroll) +
+  // backdrop-filtered, and any of those turns the header into the containing
+  // block of `fixed` children, which would clip the drawer to the header bar.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const drawerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
@@ -105,9 +114,9 @@ export function MobileNavDrawer({
     touchCurrentX.current = null;
   };
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex md:hidden"
       role="dialog"
@@ -156,6 +165,24 @@ export function MobileNavDrawer({
 
         {/* Scrollable Navigation sections */}
         <div className="flex-1 overflow-y-auto overscroll-contain px-2 py-3">
+          {/* Trading: separate product, always opens in a NEW tab where the
+              main top menu is replaced by the trading top menu. */}
+          <div className="mb-3">
+            <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              TRADING
+            </p>
+            <a
+              href="/trading/home"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onClose}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-ink-800 hover:text-white"
+            >
+              <NavIcon d={TRADING_ICON} />
+              <span className="flex-1 truncate">Trading</span>
+            </a>
+          </div>
+
           {userNavSections.map((section) => {
             const ownsGames = section.items.some((item) =>
               typeof item.href === 'string' && item.href.startsWith('/games'),
@@ -265,6 +292,7 @@ export function MobileNavDrawer({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -55,11 +55,19 @@ export function TradingShell({
   children,
   fullWidth = false,
   hideHeader = false,
+  hideHeaderOnMobile = false,
   onBalanceUpdated,
 }: {
   children: React.ReactNode;
   fullWidth?: boolean;
+  /** Hide the trading top menu on every screen size. */
   hideHeader?: boolean;
+  /**
+   * Hide the trading top menu on mobile only (< 768px). Desktop keeps it.
+   * Used by /trading/profile, whose own mobile header (back + title +
+   * hamburger) replaces the trading top menu on phones.
+   */
+  hideHeaderOnMobile?: boolean;
   onBalanceUpdated?: () => void;
 }) {
   const pathname = usePathname();
@@ -70,7 +78,7 @@ export function TradingShell({
   const [faucetLoading, setFaucetLoading] = useState(false);
   const [faucetMessage, setFaucetMessage] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  useMobileNavVisibility();
+  const { topVisible } = useMobileNavVisibility();
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Search box state in menu
@@ -178,7 +186,15 @@ export function TradingShell({
           ═══════════════════════════════════════════════════════════════════ */}
       {!hideHeader && (
         <header
-          className="border-b border-ink-700/80 bg-ink-900/95 backdrop-blur sticky top-0 z-30 shadow-md translate-y-0 md:translate-y-0"
+          className={`border-b border-ink-700/80 bg-ink-900/95 backdrop-blur sticky top-0 z-30 shadow-md transition-transform duration-200 ease-out md:translate-y-0 ${
+            hideHeaderOnMobile ? 'hidden md:block' : ''
+          } ${
+            // Mobile: hidden while scrolling, revealed by a short swipe UP.
+            // Stays visible while the hamburger menu or search is open.
+            topVisible || mobileMenuOpen || searchOpen
+              ? 'translate-y-0'
+              : '-translate-y-full'
+          }`}
         >
         <div className="mx-auto flex max-w-[1400px] items-center px-2 sm:px-3 py-2 gap-2">
 
@@ -558,4 +574,3 @@ export function Sparkline({
     </svg>
   );
 }
-

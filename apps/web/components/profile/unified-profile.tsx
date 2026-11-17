@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMobileNavVisibility } from '@/components/navigation/use-mobile-nav-visibility';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -318,6 +319,9 @@ export function UnifiedProfile({ isMobileMenuOpen, onMenuToggle, onMenuItemClick
             onToggle();
           } else {
             setActiveTab(tab);
+            if (onMenuItemClick) onMenuItemClick(tab);
+            // Picking a page inside the mobile drawer closes it.
+            setMobileMenuOpen(false);
           }
         }}
         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
@@ -345,7 +349,10 @@ export function UnifiedProfile({ isMobileMenuOpen, onMenuToggle, onMenuItemClick
   function SubItem({ tab, label }: { tab: ProfileTab; label: string }) {
     return (
       <button
-        onClick={() => setActiveTab(tab)}
+        onClick={() => {
+          setActiveTab(tab);
+          setMobileMenuOpen(false);
+        }}
         className={`w-full text-left pl-10 pr-3 py-2 rounded-lg text-xs font-medium transition ${
           activeTab === tab
             ? 'text-white bg-white/8 font-semibold'
@@ -357,19 +364,10 @@ export function UnifiedProfile({ isMobileMenuOpen, onMenuToggle, onMenuItemClick
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#0b0e14] text-slate-100 flex flex-col md:flex-row">
-      {toastMessage && (
-        <div className="fixed top-16 right-4 z-50 rounded-lg bg-emerald-500/90 text-black px-4 py-2 text-xs font-bold shadow-xl">
-          {toastMessage}
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════
-          LEFT SIDEBAR — Full menu as specified
-          ══════════════════════════════════════════════════════════ */}
-      <aside className="hidden md:flex md:w-60 lg:w-64 border-b md:border-b-0 md:border-r border-white/10 bg-[#0e121a] flex-shrink-0">
-        <div className="p-3 space-y-0.5 overflow-y-auto max-h-screen">
+  // Profile left menu. Rendered in the desktop sidebar AND in the mobile
+  // hamburger drawer, so both always show exactly the same entries.
+  const sidebarItems = (
+    <>
 
           {/* Dashboard */}
           <NavItem tab="dashboard" label="Dashboard" icon={
@@ -500,6 +498,102 @@ export function UnifiedProfile({ isMobileMenuOpen, onMenuToggle, onMenuItemClick
             </svg>
           } />
 
+            </>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#0b0e14] text-slate-100 flex flex-col md:flex-row">
+      {/* ══════════════════════════════════════════════════════════
+          MOBILE PROFILE HEADER — Back | Title | Hamburger  (< 768px)
+          The main / trading top menus are hidden on the mobile profile; this
+          header is the only top bar. It hides while scrolling and returns on a
+          short swipe UP (shared mobile nav controller).
+          ══════════════════════════════════════════════════════════ */}
+      <div aria-hidden="true" className="h-[52px] shrink-0 md:hidden" />
+      <div
+        className={`fixed inset-x-0 top-0 z-40 flex h-[52px] items-center justify-between border-b border-white/10 bg-[#0e121a]/95 px-4 backdrop-blur transition-transform duration-200 ease-out md:hidden ${
+          topVisible || mobileMenuOpen ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-sm font-medium text-slate-300 hover:text-white"
+          aria-label="Go back"
+        >
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span className="hidden sm:inline">Back</span>
+        </button>
+
+        <span className="text-sm font-semibold text-white">{pageTitle}</span>
+
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          className="flex items-center text-sm font-semibold text-white"
+          aria-expanded={mobileMenuOpen}
+          aria-label="Open profile menu"
+        >
+          <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      {/* MOBILE LEFT MENU — the whole profile sidebar, slides in from the left.
+          Portaled to <body> so the fixed/transformed header can never clip it. */}
+      {isClient && mobileMenuOpen
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-50 flex md:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Profile menu"
+            >
+              <div
+                className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-hidden="true"
+              />
+              <div className="relative z-10 flex w-72 max-w-[85vw] flex-col border-r border-white/10 bg-[#0e121a] shadow-2xl">
+                <div className="flex items-center justify-between border-b border-white/10 px-4 py-3.5">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">Menu</h3>
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-lg p-1.5 text-slate-400 hover:bg-white/5 hover:text-white"
+                    aria-label="Close menu"
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex-1 space-y-0.5 overflow-y-auto overscroll-contain p-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                  {sidebarItems}
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {toastMessage && (
+        <div className="fixed top-16 right-4 z-50 rounded-lg bg-emerald-500/90 text-black px-4 py-2 text-xs font-bold shadow-xl">
+          {toastMessage}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          LEFT SIDEBAR — Full menu as specified
+          ══════════════════════════════════════════════════════════ */}
+      <aside className="hidden md:flex md:w-60 lg:w-64 border-b md:border-b-0 md:border-r border-white/10 bg-[#0e121a] flex-shrink-0">
+        <div className="p-3 space-y-0.5 overflow-y-auto max-h-screen">
+          {sidebarItems}
         </div>
       </aside>
 
@@ -507,117 +601,6 @@ export function UnifiedProfile({ isMobileMenuOpen, onMenuToggle, onMenuItemClick
           MAIN CONTENT AREA
           ══════════════════════════════════════════════════════════ */}
       <main className="flex-1 w-full min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto max-w-7xl">
-
-        {/* PROFILE HEADER — Back | Dynamic Title | Hamburger */}
-        <div
-          className={`md:hidden flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#0e121a]/50 backdrop-blur-sm sticky top-0 z-40 transition-transform duration-200 ease-out ${!topVisible ? '-translate-y-full md:translate-y-0' : 'translate-y-0'}`}
-        >
-          {/* Back Button */}
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex items-center gap-1.5 text-slate-300 hover:text-white text-sm font-medium"
-            aria-label="Back to Trading"
-          >
-            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span className="hidden sm:inline">Back</span>
-          </button>
-
-          {/* Dynamic Page Title */}
-          <span className="text-sm font-semibold text-white">{pageTitle}</span>
-
-          {/* Hamburger Menu */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className="flex items-center gap-2 text-white font-semibold text-sm"
-            aria-expanded={mobileMenuOpen}
-            aria-label="Open navigation menu"
-          >
-            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {mobileMenuOpen ? (
-                <>
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </>
-              ) : (
-                <>
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </>
-              )}
-            </svg>
-          </button>
-        </div>
-
-        {/* MOBILE MENU PANEL — slides in when open */}
-        {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-40 flex flex-col bg-[#0b0e14] text-slate-100">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 z-50 bg-[#0e121a] sticky top-0">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Menu</h3>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-slate-400 hover:text-white"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6l-12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-1">
-              {MOBILE_TABS.map((item) => {
-                const active = item.key === mobileSelectedTab;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => {
-                      if (onMenuItemClick) onMenuItemClick(item.key);
-                      setActiveTab(item.key as ProfileTab);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition ${
-                      active
-                        ? 'bg-white/10 text-white font-bold'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    <span className="flex items-center gap-3">
-                      <span>{item.icon}</span>
-                      <span>{item.label}</span>
-                    </span>
-                    {active && (
-                      <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="p-4 border-t border-white/10">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-3">Account</p>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onMenuItemClick) onMenuItemClick('account');
-                  setActiveTab('account');
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition"
-              >
-                <span>Account Settings</span>
-                <svg className="h-4 w-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H9a2 2 0 01-2-2v-6a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* ── TOP USER BANNER ─────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
@@ -1113,8 +1096,9 @@ export function UnifiedProfile({ isMobileMenuOpen, onMenuToggle, onMenuItemClick
           </div>
         )}
 
+        {/* Room so the mobile bottom menu never covers the last content */}
+        <div aria-hidden="true" className="h-16 md:hidden" />
       </main>
     </div>
   );
 }
-
