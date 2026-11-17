@@ -12,13 +12,18 @@ import { usePathname } from 'next/navigation';
  *
  * Behaviour (mobile only, viewport < 768px):
  *
- *   ONLY ONE bar is ever visible at a time (or none while scrolling).
+ *   Top and Bottom are independent: showing one does NOT hide the other.
+ *   Both hide only on a real scroll (more than ~80px of travel); a small
+ *   scroll/nudge never hides a bar that is already visible.
  *
  *   - At the very top of the page   -> Top menu visible, Bottom hidden
  *   - While the page is scrolling   -> Top + Bottom menu both hidden
  *   - Scrolling stops               -> both stay hidden (no auto-reveal)
  *   - Short finger swipe UP         -> Top menu appears   (Bottom stays hidden)
  *   - Short finger swipe DOWN       -> Bottom menu appears (Top stays hidden)
+ *   - LONG finger swipe DOWN        -> both hide while moving, then the Bottom
+ *                                      menu appears as soon as scrolling settles
+ *                                      (unless the page ended at the very top)
  *   - Route change                  -> Top menu visible, Bottom hidden
  *   - Desktop (>= 768px)            -> controller is inert, bars use their own CSS
  *
@@ -61,6 +66,11 @@ let burstLastY = 0;
 let burstTimer: ReturnType<typeof setTimeout> | null = null;
 /** After a deliberate reveal, momentum scrolling must not hide the bar again. */
 let revealLocked = false;
+/** A long finger-DOWN swipe ended: reveal the Bottom menu once scrolling settles. */
+let pendingBottomReveal = false;
+let settleTimer: ReturnType<typeof setTimeout> | null = null;
+/** Last scroll position seen (window OR inner scroll container). */
+let lastScrollY: number | null = null;
 
 function isMobileViewport(): boolean {
   return typeof window !== 'undefined' && window.innerWidth < MOBILE_MAX_WIDTH;
@@ -81,12 +91,13 @@ function hideBoth() {
   setState({ top: false, bottom: false });
 }
 
+/** Showing one bar NEVER hides the other: they are independent. */
 function showTopOnly() {
-  setState({ top: true, bottom: false });
+  setState({ top: true, bottom: state.bottom });
 }
 
 function showBottomOnly() {
-  setState({ top: false, bottom: true });
+  setState({ top: state.top, bottom: true });
 }
 
 /** Reset to the default "everything visible" state (used on route change). */
@@ -98,9 +109,40 @@ function clearBurst() {
   }
 }
 
+function clearSettle() {
+  if (settleTimer !== null) {
+    clearTimeout(settleTimer);
+    settleTimer = null;
+  }
+}
+
+/** Restarts the "scrolling has settled" timer (momentum scroll keeps pushing it back). */
+function scheduleSettle() {
+  clearSettle();
+  settleTimer = setTimeout(onSettle, SCROLL_IDLE_MS + 60);
+}
+
+function onSettle() {
+  settleTimer = null;
+  if (touchActive || !pendingBottomReveal || !isMobileViewport()) return;
+  pendingBottomReveal = false;
+
+  const y = lastScrollY ?? window.scrollY;
+  if (y <= TOP_EDGE_PX) {
+    // The swipe brought the page back to the very top: make sure Top is shown.
+    showTopOnly();
+    return;
+  }
+  revealLocked = true;
+  showBottomOnly();
+}
+
 export function resetMobileNavVisibility() {
   revealLocked = false;
   touchActive = false;
+  pendingBottomReveal = false;
+  lastScrollY = null;
+  clearSettle();
   clearBurst();
   showDefault();
 }
@@ -111,6 +153,9 @@ function onTouchStart(e: TouchEvent) {
   if (!touch) return;
   touchActive = true;
   revealLocked = false;
+  pendingBottomReveal = false;
+  lastScrollY = null;
+  clearSettle();
   clearBurst();
   touchStartY = touch.clientY;
   touchLastY = touch.clientY;
@@ -163,9 +208,17 @@ function onTouchEnd(e?: TouchEvent) {
     return;
   }
 
-  // Long / fast gesture = normal scrolling.
+  // Long / fast gesture = normal scrolling: hide both while it lasts.
   revealLocked = false;
   hideBoth();
+
+  // Finger moved DOWN (page scrolls back up): once the scroll settles, bring
+  // the Bottom menu back. Without this the Bottom menu could only ever be
+  // revealed by a tiny <80px nudge, which a normal swipe never is.
+  if (deltaY > 0) {
+    pendingBottomReveal = true;
+    scheduleSettle();
+  }
 }
 
 function onBurstEnd() {
@@ -187,10 +240,14 @@ function onBurstEnd() {
   }
 }
 
-function onScroll() {
+function onScroll(e: Event) {
   if (!isMobileViewport()) return;
 
-  const y = window.scrollY;
+  // Pages that scroll inside an inner container keep window.scrollY at 0, so
+  // read the position from the element that actually scrolled.
+  const target = e.target;
+  const y = target instanceof Element ? target.scrollTop : window.scrollY;
+  lastScrollY = y;
 
   // A finger is down: touchmove/touchend decide (avoids flicker on nudges).
   if (touchActive) return;
@@ -200,8 +257,17 @@ function onScroll() {
 
   // Back at the top of the document: Top menu only.
   if (y <= TOP_EDGE_PX) {
+    pendingBottomReveal = false;
+    clearSettle();
     clearBurst();
-    showDefault();
+    showTopOnly();
+    return;
+  }
+
+  // Momentum after a long finger-DOWN swipe: keep both hidden, reveal the
+  // Bottom menu when the scrolling finally stops.
+  if (pendingBottomReveal) {
+    scheduleSettle();
     return;
   }
 
@@ -252,6 +318,8 @@ function subscribe(listener: () => void) {
       detachListeners();
       touchActive = false;
       revealLocked = false;
+      pendingBottomReveal = false;
+      clearSettle();
       clearBurst();
     }
   };
