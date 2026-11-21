@@ -38,12 +38,55 @@ export interface DashboardOverview {
       change24h: number;
     }[];
   };
+  financial: {
+    totalDeposits: number;
+    totalWithdrawals: number;
+    pendingDepositsCount: number;
+    pendingWithdrawalsCount: number;
+    recentTransactions: {
+      id: string;
+      type: string;
+      amount: number;
+      currency: string;
+      status: string;
+      reference: string | null;
+      createdAt: string;
+    }[];
+  };
   trading: {
     openOrdersCount: number;
     activePositionsCount: number;
     virtualBalance: number;
+    portfolioValue: number;
     unrealizedPnl: number;
     totalOrders: number;
+    recentOrders: {
+      id: string;
+      symbol: string;
+      side: string;
+      quantity: number;
+      priceFilled: number | null;
+      status: string;
+      createdAt: string;
+    }[];
+    marketOverview: {
+      symbol: string;
+      name: string;
+      type: string;
+      basePrice: number;
+    }[];
+  };
+  notifications: {
+    unreadCount: number;
+    items: {
+      id: string;
+      type: string;
+      title: string;
+      message: string;
+      isRead: boolean;
+      createdAt: string;
+      actionUrl: string | null;
+    }[];
   };
   betting: {
     activeBetsCount: number;

@@ -196,7 +196,7 @@ function deriveOneSpin(
     // onWins hook
     let extraRemoved: Array<{ row: number; col: number }> = [];
     let extraMeta: Record<string, unknown> = {};
-    if (wins.length > 0 && hooks.onWins) {
+    if (hooks.onWins) {
       const r = hooks.onWins(ctx, grid, wins, stepIdx);
       if (r.extraRemoved) extraRemoved = r.extraRemoved;
       if (r.extraMeta) extraMeta = r.extraMeta;

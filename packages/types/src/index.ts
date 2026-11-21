@@ -9,3 +9,4 @@ export * from './trading';
 export * from './casino';
 export * from './winhouse';
 export * from './slots';
+export * from './p2p';

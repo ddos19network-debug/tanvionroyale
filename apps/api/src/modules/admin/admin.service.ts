@@ -179,30 +179,77 @@ export class AdminService {
     // accounts at the query level — staff rows never inflate customer numbers.
     const CUSTOMER_ONLY = { accountType: 'CUSTOMER' } as const;
     const customerBetsOnly = { user: CUSTOMER_ONLY } as const;
-    const [userGroups, eventStatusGroups, eventScheduled, betGroups, sportCounts, competitionCounts, walletGroups, dbUp] =
-      await Promise.all([
-        this.prisma.user.groupBy({
-          by: ['status'],
-          where: CUSTOMER_ONLY,
-          _count: { _all: true },
-        }),
-        this.prisma.event.groupBy({ by: ['status'], _count: { _all: true } }),
-        this.prisma.event.count({ where: { status: 'SCHEDULED', startTime: { gt: new Date() } } }),
-        this.prisma.bet.groupBy({
-          by: ['status'],
-          where: customerBetsOnly,
-          _count: { _all: true },
-        }),
-        this.prisma.sport.groupBy({ by: ['status'], _count: { _all: true } }),
-        this.prisma.competition.groupBy({ by: ['status'], _count: { _all: true } }),
-        this.prisma.wallet.groupBy({
-          by: ['currency'],
-          where: { user: CUSTOMER_ONLY },
-          _count: { _all: true },
-          _sum: { availableBalance: true, lockedBalance: true },
-        }),
-        this.prisma.isHealthy(),
-      ]);
+    const [
+      userGroups,
+      eventStatusGroups,
+      eventScheduled,
+      betGroups,
+      sportCounts,
+      competitionCounts,
+      walletGroups,
+      dbUp,
+      pendingDeposits,
+      pendingWithdrawals,
+      completedDeposits,
+      completedWithdrawals,
+      recentTransactions,
+    ] = await Promise.all([
+      this.prisma.user.groupBy({
+        by: ['status'],
+        where: CUSTOMER_ONLY,
+        _count: { _all: true },
+      }),
+      this.prisma.event.groupBy({ by: ['status'], _count: { _all: true } }),
+      this.prisma.event.count({ where: { status: 'SCHEDULED', startTime: { gt: new Date() } } }),
+      this.prisma.bet.groupBy({
+        by: ['status'],
+        where: customerBetsOnly,
+        _count: { _all: true },
+      }),
+      this.prisma.sport.groupBy({ by: ['status'], _count: { _all: true } }),
+      this.prisma.competition.groupBy({ by: ['status'], _count: { _all: true } }),
+      this.prisma.wallet.groupBy({
+        by: ['currency'],
+        where: { user: CUSTOMER_ONLY },
+        _count: { _all: true },
+        _sum: { availableBalance: true, lockedBalance: true },
+      }),
+      this.prisma.isHealthy(),
+      this.prisma.manualDepositRequest?.count
+        ? this.prisma.manualDepositRequest.count({ where: { status: 'PENDING' } })
+        : Promise.resolve(0),
+      this.prisma.withdrawalRequest?.count
+        ? this.prisma.withdrawalRequest.count({ where: { status: 'PENDING' } })
+        : Promise.resolve(0),
+      this.prisma.walletTransaction?.aggregate
+        ? this.prisma.walletTransaction.aggregate({
+            where: { type: 'DEPOSIT', status: 'COMPLETED' },
+            _sum: { amount: true },
+          })
+        : Promise.resolve({ _sum: { amount: 0 } }),
+      this.prisma.walletTransaction?.aggregate
+        ? this.prisma.walletTransaction.aggregate({
+            where: { type: 'WITHDRAWAL', status: 'COMPLETED' },
+            _sum: { amount: true },
+          })
+        : Promise.resolve({ _sum: { amount: 0 } }),
+      this.prisma.walletTransaction?.findMany
+        ? this.prisma.walletTransaction.findMany({
+            take: 5,
+            orderBy: { createdAt: 'desc' },
+            select: {
+              id: true,
+              userId: true,
+              type: true,
+              amount: true,
+              currency: true,
+              status: true,
+              reference: true,
+              createdAt: true,
+            },
+          })
+        : Promise.resolve([]),
+    ]);
 
     const byStatus = (rows: Array<{ status: string; _count: { _all: number } }>): Map<string, number> => {
       const map = new Map<string, number>();
@@ -257,6 +304,16 @@ export class AdminService {
       competitions: catalogCounts(competitionMap),
       wallets,
       providers,
+      financial: {
+        pendingDeposits,
+        pendingWithdrawals,
+        totalDepositsMinor: completedDeposits._sum.amount ?? 0,
+        totalWithdrawalsMinor: completedWithdrawals._sum.amount ?? 0,
+        recentTransactions: recentTransactions.map((tx) => ({
+          ...tx,
+          createdAt: tx.createdAt.toISOString(),
+        })),
+      },
       system: {
         bettingProvider: configuredBettingProviderName(),
         database: dbUp ? 'up' : 'down',

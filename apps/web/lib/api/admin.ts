@@ -414,6 +414,22 @@ export interface AdminSummary {
     }>;
   };
   providers: AdminPartnerProvider[];
+  financial?: {
+    pendingDeposits: number;
+    pendingWithdrawals: number;
+    totalDepositsMinor: number;
+    totalWithdrawalsMinor: number;
+    recentTransactions: Array<{
+      id: string;
+      userId: string;
+      type: string;
+      amount: number;
+      currency: string;
+      status: string;
+      reference: string | null;
+      createdAt: string;
+    }>;
+  };
   system: {
     bettingProvider: string | null;
     database: 'up' | 'down';

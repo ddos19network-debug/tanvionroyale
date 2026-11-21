@@ -1,279 +1,365 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { TradingShell } from '@/components/trading/trading-shell';
 
-const FIAT_CURRENCIES = [
-  { code: 'USD', symbol: '$', rateToUsd: 1, label: 'USD - US Dollar' },
-  { code: 'BDT', symbol: '৳', rateToUsd: 0.0083, label: 'BDT - Bangladeshi Taka' },
-  { code: 'EUR', symbol: '€', rateToUsd: 1.08, label: 'EUR - Euro' },
-  { code: 'GBP', symbol: '£', rateToUsd: 1.28, label: 'GBP - British Pound' },
+const CRYPTO_TABS = [
+  { symbol: 'USDT', label: 'USDT', apr: '10.25% APR', hasApr: true },
+  { symbol: 'BTC', label: 'BTC', apr: undefined, hasApr: false },
+  { symbol: 'USDC', label: 'USDC', apr: undefined, hasApr: false },
+  { symbol: 'FDUSD', label: 'FDUSD', apr: undefined, hasApr: false },
+  { symbol: 'BNB', label: 'BNB', apr: undefined, hasApr: false },
+  { symbol: 'ETH', label: 'ETH', apr: undefined, hasApr: false },
+  { symbol: 'ADA', label: 'ADA', apr: undefined, hasApr: false },
+  { symbol: 'SHIB', label: 'SHIB', apr: undefined, hasApr: false },
+  { symbol: 'DOGE', label: 'DOGE', apr: undefined, hasApr: false },
+  { symbol: 'TRX', label: 'TRX', apr: undefined, hasApr: false },
+  { symbol: 'SOL', label: 'SOL', apr: undefined, hasApr: false },
+  { symbol: 'PEPE', label: 'PEPE', apr: undefined, hasApr: false },
+  { symbol: 'TRUMP', label: 'TRUMP', apr: undefined, hasApr: false },
+  { symbol: 'DOLO', label: 'DOLO', apr: undefined, hasApr: false },
+  { symbol: 'XPL', label: 'XPL', apr: undefined, hasApr: false },
+  { symbol: 'ASTER', label: 'ASTER', apr: undefined, hasApr: false },
 ];
 
-const CRYPTO_COINS = [
-  { symbol: 'USDT', name: 'Tether USD', priceUsd: 1.0, icon: '₮' },
-  { symbol: 'BTC', name: 'Bitcoin', priceUsd: 75860.0, icon: '₿' },
-  { symbol: 'ETH', name: 'Ethereum', priceUsd: 3840.0, icon: 'Ξ' },
-  { symbol: 'SOL', name: 'Solana', priceUsd: 198.5, icon: '◎' },
-  { symbol: 'BNB', name: 'BNB', priceUsd: 615.0, icon: '🔶' },
-];
-
-const PAYMENT_METHODS = [
+const ADVERTISERS = [
   {
-    id: 'card',
-    name: 'Visa / Mastercard',
-    badge: '0% Fee Promo',
-    desc: 'Instant delivery to your trading wallet via credit or debit card.',
-    icon: (
-      <svg className="h-5 w-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="2" y="5" width="20" height="14" rx="2" />
-        <line x1="2" y1="10" x2="22" y2="10" />
-      </svg>
-    ),
+    id: 1,
+    name: 'Believers24H__SK',
+    verified: true,
+    orders: '7,400 orders',
+    completion: '99.90%',
+    positive: '99.89%',
+    avgTime: '15 min',
+    price: 'Tk. 130.08',
+    available: '829.85 USDT',
+    limit: '9,000 BDT - 49,100 BDT',
+    payment: 'bKash',
+    paymentColor: 'text-pink-400',
   },
   {
-    id: 'bkash',
-    name: 'bKash / Nagad / Rocket',
-    badge: 'Instant BDT',
-    desc: 'Instant mobile banking direct payment in BDT.',
-    icon: (
-      <svg className="h-5 w-5 text-pink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="5" y="2" width="14" height="20" rx="3" />
-        <line x1="12" y1="18" x2="12.01" y2="18" />
-      </svg>
-    ),
+    id: 2,
+    name: 'Safe--P2P--Exchange',
+    verified: true,
+    orders: '5,797 orders',
+    completion: '99.90%',
+    positive: '99.34%',
+    avgTime: '15 min',
+    price: 'Tk. 130.45',
+    available: '1,198.08 USDT',
+    limit: '15,000 BDT - 49,100 BDT',
+    payment: 'bKash',
+    paymentColor: 'text-pink-400',
   },
   {
-    id: 'bank',
-    name: 'Bank Transfer (SEPA / Wire)',
-    badge: 'Lowest Rate',
-    desc: 'Direct bank transfer from your verified bank account.',
-    icon: (
-      <svg className="h-5 w-5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M3 21h18M3 10h18M5 10v11M9 10v11M15 10v11M19 10v11M12 3l9 7H3z" />
-      </svg>
-    ),
+    id: 3,
+    name: 'CryptoKing24x7',
+    verified: false,
+    orders: '3,210 orders',
+    completion: '98.45%',
+    positive: '97.12%',
+    avgTime: '22 min',
+    price: 'Tk. 131.20',
+    available: '2,450.00 USDT',
+    limit: '5,000 BDT - 50,000 BDT',
+    payment: 'Nagad',
+    paymentColor: 'text-amber-400',
+  },
+  {
+    id: 4,
+    name: 'BDT_Trader_Pro',
+    verified: true,
+    orders: '12,500 orders',
+    completion: '99.80%',
+    positive: '99.55%',
+    avgTime: '10 min',
+    price: 'Tk. 129.85',
+    available: '5,000.00 USDT',
+    limit: '1,000 BDT - 100,000 BDT',
+    payment: 'Rocket',
+    paymentColor: 'text-emerald-400',
+  },
+  {
+    id: 5,
+    name: 'QuickP2P_BD',
+    verified: false,
+    orders: '1,890 orders',
+    completion: '97.20%',
+    positive: '95.80%',
+    avgTime: '35 min',
+    price: 'Tk. 132.10',
+    available: '675.50 USDT',
+    limit: '3,000 BDT - 30,000 BDT',
+    payment: 'bKash',
+    paymentColor: 'text-pink-400',
   },
 ];
 
 export default function TradingBuyCryptoPage() {
   const [mode, setMode] = useState<'BUY' | 'SELL'>('BUY');
-  const [fiatAmount, setFiatAmount] = useState('500');
-  const [selectedFiat, setSelectedFiat] = useState(FIAT_CURRENCIES[0]);
-  const [selectedCrypto, setSelectedCrypto] = useState(CRYPTO_COINS[0]);
-  const [selectedPayment, setSelectedPayment] = useState(PAYMENT_METHODS[0].id);
-  const [successToast, setSuccessToast] = useState<string | null>(null);
-
-  // Compute crypto received based on exchange rate
-  const spendNum = parseFloat(fiatAmount) || 0;
-  const spendUsd = spendNum * selectedFiat.rateToUsd;
-  const cryptoReceived =
-    selectedCrypto.priceUsd > 0
-      ? (spendUsd / selectedCrypto.priceUsd).toFixed(
-          selectedCrypto.symbol === 'BTC' ? 6 : selectedCrypto.symbol === 'ETH' ? 5 : 2,
-        )
-      : '0.00';
-
-  function handleBuy(e: React.FormEvent) {
-    e.preventDefault();
-    if (spendNum <= 0) return;
-    setSuccessToast(
-      `Order placed! ${cryptoReceived} ${selectedCrypto.symbol} will be credited to your trading wallet.`,
-    );
-    setTimeout(() => setSuccessToast(null), 4000);
-  }
+  const [activeTab, setActiveTab] = useState('USDT');
+  const [amountFilter, setAmountFilter] = useState('Transaction amount');
+  const [fiatCurrency, setFiatCurrency] = useState('BDT');
+  const [paymentFilter, setPaymentFilter] = useState('All payment methods');
+  const [sortBy, setSortBy] = useState('Price');
 
   return (
     <TradingShell>
-      <div className="max-w-4xl mx-auto space-y-8 py-4 sm:py-6">
-        {successToast && (
-          <div className="fixed top-16 right-4 z-50 rounded-xl bg-emerald-500 text-ink-950 px-4 py-2.5 text-xs font-bold shadow-2xl animate-fade-in flex items-center gap-2">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            <span>{successToast}</span>
+      <div className="w-full py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
+        {/* P2P Header Tabs */}
+        <div className="flex items-center justify-between px-2 mb-6">
+          <div className="flex gap-1 rounded-lg border border-ink-800/50 bg-ink-900/50 p-1">
+            <button
+              onClick={() => setMode('BUY')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition ${mode === 'BUY' ? 'bg-ink-800 text-white' : 'text-slate-400 hover:text-white'}`}
+            >
+              Buy
+            </button>
+            <button
+              onClick={() => setMode('SELL')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition ${mode === 'SELL' ? 'bg-ink-800 text-white' : 'text-slate-400 hover:text-white'}`}
+            >
+              Sell
+            </button>
           </div>
-        )}
-
-        {/* Top Header */}
-        <div className="text-center max-w-xl mx-auto space-y-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-brand/40 bg-brand/10 px-3 py-0.5 text-xs font-semibold text-brand">
-            <span>★ Instant Fiat to Crypto Onramp</span>
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-            Buy &amp; Sell Crypto Instantly
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400">
-            Purchase Bitcoin, USDT, and 50+ cryptocurrencies with Card, Mobile Banking, or Bank Transfer.
-          </p>
+        {/* Crypto Tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+          {CRYPTO_TABS.map((tab) => (
+            <button
+              key={tab.symbol}
+              onClick={() => setActiveTab(tab.symbol)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap ${
+                activeTab === tab.symbol
+                  ? 'bg-brand/10 text-brand border border-brand/40'
+                  : 'text-slate-400 hover:text-white hover:bg-ink-800/50'
+              }`}
+            >
+              {tab.symbol}
+              {tab.hasApr && (
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
+                  {tab.apr}
+                </span>
+              )}
+            </button>
+          ))}
+          <button className="px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-ink-800/50 transition">
+            More ▾
+          </button>
         </div>
 
-        {/* Buy / Sell Form Card (Binance-style) */}
-        <div className="rounded-3xl border border-ink-700/80 bg-ink-900/90 p-6 sm:p-8 shadow-2xl max-w-xl mx-auto space-y-6">
-          {/* Mode Switcher */}
-          <div className="flex rounded-full bg-ink-800/80 p-1 border border-ink-700">
-            <button
-              type="button"
-              onClick={() => setMode('BUY')}
-              className={`flex-1 rounded-full py-2 text-xs font-bold transition ${
-                mode === 'BUY'
-                  ? 'bg-gradient-to-r from-amber-400 to-[#F0B90B] text-ink-950 shadow'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Buy Crypto
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('SELL')}
-              className={`flex-1 rounded-full py-2 text-xs font-bold transition ${
-                mode === 'SELL'
-                  ? 'bg-gradient-to-r from-amber-400 to-[#F0B90B] text-ink-950 shadow'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Sell Crypto
-            </button>
+        {/* Filter Bar */}
+        <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center mb-6">
+          <div className="flex gap-2">
+            <div className="flex items-center gap-2 rounded-lg border border-ink-700 bg-ink-900/50">
+              <select
+                defaultValue={amountFilter}
+                onChange={(e) => setAmountFilter(e.target.value)}
+                className="bg-transparent px-3 py-2 text-xs text-slate-300 outline-none cursor-pointer"
+              >
+                {['Transaction amount', 'No limit', '1 - 1,000', '1,001 - 5,000', '5,001 - 10,000'].map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-1 rounded-lg border border-ink-700 bg-ink-900/50">
+              <div className="flex items-center gap-1 px-2">
+                <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center text-[10px] text-white font-bold">
+                  ₿
+                </div>
+                <span className="text-xs font-medium text-slate-300">{fiatCurrency}</span>
+              </div>
+              <select
+                defaultValue={fiatCurrency}
+                onChange={(e) => setFiatCurrency(e.target.value)}
+                className="bg-transparent px-3 py-2 text-xs text-slate-300 outline-none cursor-pointer"
+              >
+                {['BDT', 'USD', 'EUR', 'GBP'].map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <form onSubmit={handleBuy} className="space-y-4">
-            {/* Spend Input */}
-            <div className="rounded-2xl border border-ink-700/80 bg-ink-800/60 p-3.5 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                <span>I want to spend</span>
-                <span>Min: $10</span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <input
-                  type="number"
-                  value={fiatAmount}
-                  onChange={(e) => setFiatAmount(e.target.value)}
-                  placeholder="500"
-                  className="w-full bg-transparent text-xl sm:text-2xl font-black font-mono text-white outline-none"
-                />
-                <select
-                  value={selectedFiat.code}
-                  onChange={(e) => {
-                    const f = FIAT_CURRENCIES.find((c) => c.code === e.target.value);
-                    if (f) setSelectedFiat(f);
-                  }}
-                  className="rounded-full border border-ink-700 bg-ink-900 px-3 py-1.5 text-xs font-bold text-white outline-none cursor-pointer hover:border-brand"
-                >
-                  {FIAT_CURRENCIES.map((f) => (
-                    <option key={f.code} value={f.code}>
-                      {f.code}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 rounded-lg border border-ink-700 bg-ink-900/50">
+            <span className="px-3 py-2 text-xs text-slate-400">All payment methods</span>
+            <button className="px-3 py-2 text-xs text-slate-400 hover:text-white transition">
+              ▾
+            </button>
+          </div>
+          <button className="p-2.5 rounded-lg border border-ink-700 bg-ink-900/50 text-slate-400 hover:text-white transition">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6 6A1 1 0 0113 13H4a1 1 0 01-.707-.293l-6-6A1 1 0 011 6.586V4z" />
+            </svg>
+          </button>
+          <div className="ml-auto flex items-center gap-2 rounded-lg border border-ink-700 bg-ink-900/50">
+            <span className="px-3 py-2 text-xs text-slate-400">Sort By</span>
+            <button className="px-3 py-2 text-xs text-slate-400 hover:text-white transition">
+              Price ▾
+            </button>
+          </div>
+        </div>
 
-            {/* Quick Amount Buttons */}
-            <div className="flex items-center gap-2">
-              {['100', '250', '500', '1000'].map((amt) => (
-                <button
-                  key={amt}
-                  type="button"
-                  onClick={() => setFiatAmount(amt)}
-                  className={`flex-1 rounded-full py-1 text-xs font-mono font-semibold transition border ${
-                    fiatAmount === amt
-                      ? 'border-brand bg-brand/10 text-brand font-bold'
-                      : 'border-ink-700/80 bg-ink-800/40 text-slate-400 hover:text-white hover:border-ink-600'
-                  }`}
-                >
-                  {selectedFiat.symbol}{amt}
-                </button>
-              ))}
-            </div>
+        {/* Table Header */}
+        <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          <span>Advertisers</span>
+          <span className="hidden sm:block">Price</span>
+          <span className="hidden sm:block">Available/Order Limit</span>
+          <span className="hidden sm:block">Payment</span>
+          <span className="text-right">Trade</span>
+        </div>
 
-            {/* Receive Crypto Input */}
-            <div className="rounded-2xl border border-ink-700/80 bg-ink-800/60 p-3.5 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                <span>I will receive (Estimated)</span>
-                <span>1 {selectedCrypto.symbol} ≈ ${selectedCrypto.priceUsd.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <div className="w-full text-xl sm:text-2xl font-black font-mono text-emerald-400">
-                  {cryptoReceived}
-                </div>
-                <select
-                  value={selectedCrypto.symbol}
-                  onChange={(e) => {
-                    const c = CRYPTO_COINS.find((coin) => coin.symbol === e.target.value);
-                    if (c) setSelectedCrypto(c);
-                  }}
-                  className="rounded-full border border-ink-700 bg-ink-900 px-3 py-1.5 text-xs font-bold text-white outline-none cursor-pointer hover:border-brand"
-                >
-                  {CRYPTO_COINS.map((c) => (
-                    <option key={c.symbol} value={c.symbol}>
-                      {c.symbol} - {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+        {/* Advertiser List */}
+        <div className="space-y-3">
 
-            {/* Payment Method Selector */}
-            <div className="space-y-2 pt-2">
-              <div className="text-xs font-semibold text-slate-300">Select Payment Method</div>
-              <div className="space-y-2">
-                {PAYMENT_METHODS.map((method) => (
-                  <div
-                    key={method.id}
-                    onClick={() => setSelectedPayment(method.id)}
-                    className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition ${
-                      selectedPayment === method.id
-                        ? 'border-brand bg-brand/10 text-white'
-                        : 'border-ink-700/80 bg-ink-800/40 text-slate-300 hover:bg-ink-800/80'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-ink-900 border border-ink-700">{method.icon}</div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs sm:text-sm text-white">{method.name}</span>
-                          <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
-                            {method.badge}
-                          </span>
+              {ADVERTISERS.slice(0, 2).map((adv) => (
+                <div
+                  key={adv.id}
+                  className="flex items-center justify-between px-3 py-3 rounded-2xl border border-white/10 bg-ink-900/50 hover:border-white/20 transition"
+                >
+                  {/* Advertiser Info */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative shrink-0">
+                      <img
+                        src="https://api.dicebear.com/7.x/avataaars/svg?seed=trader"
+                        alt={adv.name}
+                        className="w-8 h-8 rounded-full object-cover border border-white/10"
+                      />
+                      {adv.verified && (
+                        <div className="absolute -right-1 -bottom-1 w-3 h-3 rounded-full border-2 border-ink-950 bg-emerald-500 flex items-center justify-center">
+                          <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
                         </div>
-                        <div className="text-[11px] text-slate-400">{method.desc}</div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-white truncate">{adv.name}</span>
+                        {adv.verified && (
+                          <span className="h-2.5 w-2.5 text-emerald-400">
+                            <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                        <span>{adv.orders}</span>
+                        <span>•</span>
+                        <span>{adv.completion} completion</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-emerald-400">
+                        <span>👍 {adv.positive}</span>
+                        <span>•</span>
+                        <span>{adv.avgTime}</span>
                       </div>
                     </div>
+                  </div>
 
-                    <div
-                      className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
-                        selectedPayment === method.id ? 'border-brand bg-brand' : 'border-ink-600'
-                      }`}
+                  {/* Price */}
+                  <div className="hidden sm:block min-w-[70px]">
+                    <span className="text-sm font-bold text-white">{adv.price}</span>
+                  </div>
+
+                  {/* Available / Limit */}
+                  <div className="hidden sm:block min-w-[120px] text-[11px]">
+                    <span className="text-white font-medium block">{adv.available}</span>
+                    <span className="text-slate-500">{adv.limit}</span>
+                  </div>
+
+                  {/* Payment Method */}
+                  <div className="hidden sm:block min-w-[60px]">
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-ink-800 border border-white/10 ${adv.paymentColor} text-[10px] font-bold`}>
+                      {adv.payment}
+                    </span>
+                  </div>
+
+                  {/* Trade Button */}
+                  <div className="text-right shrink-0">
+                    <button
+                      className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-emerald-600/25 hover:bg-emerald-500 transition active:scale-95"
                     >
-                      {selectedPayment === method.id && <div className="h-2 w-2 rounded-full bg-ink-950" />}
+                      Buy {activeTab}
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {ADVERTISERS.slice(2, 5).map((adv) => (
+                <div
+                  key={adv.id}
+                  className="flex items-center justify-between px-3 py-3 rounded-2xl border border-white/10 bg-ink-900/50 hover:border-white/20 transition"
+                >
+                  {/* Advertiser Info */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative shrink-0">
+                      <img
+                        src="https://api.dicebear.com/7.x/avataaars/svg?seed=trader"
+                        alt={adv.name}
+                        className="w-8 h-8 rounded-full object-cover border border-white/10"
+                      />
+                      {adv.verified && (
+                        <div className="absolute -right-1 -bottom-1 w-3 h-3 rounded-full border-2 border-ink-950 bg-emerald-500 flex items-center justify-center">
+                          <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-white truncate">{adv.name}</span>
+                        {adv.verified && (
+                          <span className="h-2.5 w-2.5 text-emerald-400">
+                            <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                        <span>{adv.orders}</span>
+                        <span>•</span>
+                        <span>{adv.completion} completion</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-emerald-400">
+                        <span>👍 {adv.positive}</span>
+                        <span>•</span>
+                        <span>{adv.avgTime}</span>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Summary Breakdown */}
-            <div className="rounded-2xl border border-ink-700/60 bg-ink-900/60 p-3 space-y-1.5 text-xs text-slate-400">
-              <div className="flex justify-between">
-                <span>Fee</span>
-                <span className="text-emerald-400 font-bold">$0.00 (Promotion)</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Estimated Arrival</span>
-                <span className="text-white font-medium">Instant to Trading Wallet</span>
-              </div>
-            </div>
+                  {/* Price */}
+                  <div className="hidden sm:block min-w-[70px]">
+                    <span className="text-sm font-bold text-white">{adv.price}</span>
+                  </div>
 
-            {/* CTA Button */}
-            <button
-              type="submit"
-              className="w-full rounded-full bg-gradient-to-r from-amber-400 to-[#F0B90B] py-3 text-sm font-bold text-ink-950 shadow-lg shadow-amber-500/25 hover:brightness-110 transition active:scale-95"
-            >
-              {mode === 'BUY' ? `Buy ${selectedCrypto.symbol} Now` : `Sell ${selectedCrypto.symbol}`}
-            </button>
-          </form>
+                  {/* Available / Limit */}
+                  <div className="hidden sm:block min-w-[120px] text-[11px]">
+                    <span className="text-white font-medium block">{adv.available}</span>
+                    <span className="text-slate-500">{adv.limit}</span>
+                  </div>
+
+                  {/* Payment Method */}
+                  <div className="hidden sm:block min-w-[60px]">
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-ink-800 border border-white/10 ${adv.paymentColor} text-[10px] font-bold`}>
+                      {adv.payment}
+                    </span>
+                  </div>
+
+                  {/* Trade Button */}
+                  <div className="text-right shrink-0">
+                    <button
+                      className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-emerald-600/25 hover:bg-emerald-500 transition active:scale-95"
+                    >
+                      Buy {activeTab}
+                    </button>
+                  </div>
+                </div>
+              ))}
         </div>
+      </div>
       </div>
     </TradingShell>
   );

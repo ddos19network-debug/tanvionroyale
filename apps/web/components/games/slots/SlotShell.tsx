@@ -24,6 +24,7 @@ export function SlotShell({ slug }: SlotShellProps) {
     stake,
     setStake,
     grid,
+    winningPositions,
     isSpinning,
     activeMultiplier,
     lastWin,
@@ -148,6 +149,7 @@ export function SlotShell({ slug }: SlotShellProps) {
           rows={config?.rows ?? 4}
           symbolsMeta={config?.symbols}
           isSpinning={isSpinning}
+          winningPositions={winningPositions}
           frameBorderColor={theme.frameBorderColor}
           frameGlowColor={theme.frameGlowColor}
         />

@@ -149,13 +149,26 @@ function atlantisHooks(): GameHooks {
 
       // Treasure Chest: 3+ anywhere -> instant prize 5x-25x stake
       let chestCount = 0;
-      for (const row of grid) for (const s of row) if (s === ATLANTIS_SYMBOLS.TREASURE) chestCount++;
+      const chestPositions: Array<{ row: number; col: number }> = [];
+      for (let r = 0; r < grid.length; r++) {
+        for (let c = 0; c < grid[r].length; c++) {
+          if (grid[r][c] === ATLANTIS_SYMBOLS.TREASURE) {
+            chestCount++;
+            chestPositions.push({ row: r, col: c });
+          }
+        }
+      }
+
       if (chestCount >= 3) {
         const mult = 5 + ctx.rng.int(21); // 5–25×
         const prizeBp = mult * 10000;
+        for (const p of chestPositions) {
+          extraRemoved.push(p);
+        }
         wins.push({
           symbolId: ATLANTIS_SYMBOLS.TREASURE,
           count: chestCount,
+          positions: chestPositions,
           basepayBp: prizeBp,
           multiplierBp: 10000,
           payBp: prizeBp,
@@ -163,7 +176,17 @@ function atlantisHooks(): GameHooks {
         extraMeta.treasureBonusBp = prizeBp;
       }
 
-      return { extraRemoved, extraMeta };
+      const seen = new Set<string>();
+      const dedupedRemoved: Array<{ row: number; col: number }> = [];
+      for (const p of extraRemoved) {
+        const k = `${p.row},${p.col}`;
+        if (!seen.has(k)) {
+          seen.add(k);
+          dedupedRemoved.push(p);
+        }
+      }
+
+      return { extraRemoved: dedupedRemoved, extraMeta };
     },
   };
 }

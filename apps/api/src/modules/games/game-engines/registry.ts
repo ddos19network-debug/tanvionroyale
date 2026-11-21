@@ -9,6 +9,7 @@ import { DiceRollEngine } from './dice-roll.engine';
 import { HighCardEngine } from './high-card.engine';
 import { ColorPredictionEngine } from './color-prediction.engine';
 import { LuckyNumberEngine } from './lucky-number.engine';
+import { RoyaleAtlantisEngine } from './royale-atlantis.engine';
 import { SLOT_ENGINES } from './slot-engines.config';
 import type { FreePlayGameEngine, PublicFreePlayGame } from './free-play-engine.interface';
 
@@ -24,6 +25,7 @@ const ENGINES: readonly FreePlayGameEngine[] = [
   new HighCardEngine(),
   new ColorPredictionEngine(),
   new LuckyNumberEngine(),
+  new RoyaleAtlantisEngine(),
   ...SLOT_ENGINES,
 ];
 

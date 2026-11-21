@@ -154,6 +154,13 @@ export const userNavSections: readonly UserNavSection[] = [
         active: (p) => p === '/wallet' || p === '/wallet/transactions',
       },
       {
+        key: 'assets',
+        label: 'Assets',
+        href: '/assets',
+        icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
+        active: (p) => p === '/assets',
+      },
+      {
         key: 'saved-favourite',
         label: 'Saved Favourite',
         href: '/favorites',
@@ -240,6 +247,7 @@ const USER_PANEL_PREFIXES = [
   '/live',
   '/events',
   '/wallet',
+  '/assets',
   '/settings',
   '/verification',
   '/support',

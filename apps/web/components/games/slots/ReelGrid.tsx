@@ -10,6 +10,7 @@ interface ReelGridProps {
   rows: number;
   symbolsMeta?: SlotSymbolMeta[];
   isSpinning?: boolean;
+  winningPositions?: Array<{ row: number; col: number }>;
   frameBorderColor?: string;
   frameGlowColor?: string;
 }
@@ -20,11 +21,16 @@ export function ReelGrid({
   rows,
   symbolsMeta,
   isSpinning = false,
+  winningPositions = [],
   frameBorderColor = 'border-amber-400/60',
   frameGlowColor = 'rgba(251,191,36,0.18)',
 }: ReelGridProps) {
   // Compute cell size dynamically based on columns
   const cellSize = reels >= 7 ? 40 : reels >= 6 ? 48 : 56;
+
+  const isWinning = (r: number, c: number) => {
+    return winningPositions.some((p) => p.row === r && p.col === c);
+  };
 
   return (
     <div
@@ -39,20 +45,27 @@ export function ReelGrid({
       >
         {grid
           ? grid.map((row, r) =>
-              row.map((sym, c) => (
-                <div
-                  key={`${r}-${c}`}
-                  className={`flex items-center justify-center transition-all ${
-                    isSpinning ? 'opacity-80 scale-95 blur-[0.3px]' : 'opacity-100 scale-100'
-                  }`}
-                >
-                  <SymbolView
-                    symbolId={sym}
-                    symbolsMeta={symbolsMeta}
-                    size={cellSize}
-                  />
-                </div>
-              )),
+              row.map((sym, c) => {
+                const win = isWinning(r, c);
+                return (
+                  <div
+                    key={`${r}-${c}`}
+                    className={`flex items-center justify-center transition-all ${
+                      win
+                        ? 'ring-2 ring-yellow-400 bg-yellow-400/20 rounded-xl scale-105 z-10 animate-pulse shadow-[0_0_15px_rgba(250,204,21,0.6)]'
+                        : isSpinning
+                          ? 'opacity-80 scale-95 blur-[0.3px]'
+                          : 'opacity-100 scale-100'
+                    }`}
+                  >
+                    <SymbolView
+                      symbolId={sym}
+                      symbolsMeta={symbolsMeta}
+                      size={cellSize}
+                    />
+                  </div>
+                );
+              }),
             )
           : Array.from({ length: rows * reels }).map((_, i) => (
               <div

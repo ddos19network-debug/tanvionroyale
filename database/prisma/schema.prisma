@@ -200,6 +200,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // --- P2P marketplace relations (additive, Phase Buy Crypto) ---
+  p2pOrdersAsBuyer  P2POrder[]  @relation("P2POrderBuyer")
+  p2pOrdersAsSeller P2POrder[]  @relation("P2POrderSeller")
+  p2pOffers         P2POffer[]  @relation("P2POfferMerchant")
+  p2pPaymentsAsPayer   P2PPayment[]   @relation("P2PPaymentPayer")
+  p2pPaymentsAsPayee   P2PPayment[]   @relation("P2PPaymentPayee")
+  p2pDisputesOpened    P2PDispute[]   @relation("P2PDisputeOpener")
+  merchantProfile   P2PMerchantProfile? @relation("P2PMerchantProfileUser")
+
   @@index([status])
   @@index([createdAt])
   @@index([accountType])
@@ -3854,4 +3863,208 @@ model FreePlaySlotRound {
 
   @@unique([userId, clientRequestId])
   @@index([userId, gameSlug, createdAt])
+}
+
+// ============================================================================
+// P2P CRYPTO MARKETPLACE + ROYALE PAY (Buy Crypto)
+// Additive-only models. No existing table, column, or enum is modified.
+// Money amounts are integer MINOR UNITS (wallet convention).
+// ============================================================================
+
+/// Verified merchant profile for the P2P marketplace.
+/// One profile per user; maintained by admin approval workflow.
+model P2PMerchantProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation("P2PMerchantProfileUser", fields: [userId], references: [id], onDelete: Cascade)
+  displayName       String
+  offers            P2POffer[] @relation("P2POfferMerchantProfile")
+  verificationStatus P2PVerificationStatus @default(UNVERIFIED)
+  totalOrders       Int      @default(0)
+  completedOrders   Int      @default(0)
+  cancelledOrders   Int      @default(0)
+  completionRate    Decimal  @default(0)
+  positiveFeedback  Decimal  @default(0)
+  avgCompletionMin  Int      @default(0)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([verificationStatus, isActive])
+}
+
+/// A live merchant offer to buy or sell crypto against fiat.
+/// Prices are set by the merchant; backend validates and serves offers.
+model P2POffer {
+  id              String   @id @default(uuid())
+  merchantId      String
+  merchant        User     @relation("P2POfferMerchant", fields: [merchantId], references: [id], onDelete: Cascade)
+  profile         P2PMerchantProfile? @relation("P2POfferMerchantProfile", fields: [merchantProfileId], references: [id])
+  merchantProfileId String?
+
+  orders          P2POrder[] @relation("P2POrderOffer")
+
+  symbol          String
+  fiat            String
+  side            P2POrderSide
+
+  pricePerFiatUnit Int
+  cryptoScale     Int      @default(8)
+
+  availableCrypto  BigInt
+  minOrderFiat     Int
+  maxOrderFiat     Int
+
+  paymentMethods   Json
+
+  isActive         Boolean  @default(true)
+  expiresAt        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([symbol, fiat, side, isActive])
+  @@index([merchantId, isActive])
+  @@index([pricePerFiatUnit])
+  @@index([availableCrypto])
+}
+/// A P2P order through its full lifecycle.
+model P2POrder {
+  id               String   @id @default(uuid())
+  orderReference   String   @unique
+  idempotencyKey   String   @unique
+
+  buyerId          String
+  buyer            User     @relation("P2POrderBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId         String
+  seller           User     @relation("P2POrderSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  offerId          String   @unique
+  offer            P2POffer @relation("P2POrderOffer", fields: [offerId], references: [id])
+
+  symbol           String
+  fiat             String
+  side             P2POrderSide
+
+  pricePerFiatUnit Int
+  cryptoAmount     BigInt
+  fiatAmount       Int
+  feeAmount        Int      @default(0)
+
+  status           P2POrderStatus @default(CREATED)
+
+  paymentMethod    String?
+  paymentReference String?
+  paymentProofUrl  String?
+
+  expiresAt        DateTime
+  paidAt           DateTime?
+  completedAt      DateTime?
+  cancelledAt      DateTime?
+  cancellationReason String?
+
+  // One-to-one back relations (additive, Phase Buy Crypto)
+  payment          P2PPayment?   @relation("P2POrderPayment")
+  dispute          P2PDispute?   @relation("P2POrderDispute")
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([buyerId, status])
+  @@index([sellerId, status])
+  @@index([status, createdAt])
+  @@index([offerId])
+  @@index([idempotencyKey])
+}
+
+/// Payment record / evidence for a P2P order.
+model P2PPayment {
+  id             String   @id @default(uuid())
+  orderId        String   @unique
+  order          P2POrder @relation("P2POrderPayment", fields: [orderId], references: [id], onDelete: Cascade)
+  payerId        String
+  payer          User     @relation("P2PPaymentPayer", fields: [payerId], references: [id], onDelete: Cascade)
+  payeeId        String
+  payee          User     @relation("P2PPaymentPayee", fields: [payeeId], references: [id], onDelete: Cascade)
+  method         String
+  amount         Int
+  currency       String
+  reference      String?
+  proofUrl       String?
+  status         P2PPaymentStatus @default(PENDING)
+  verifiedBy     String?
+  verifiedAt     DateTime?
+  verificationNote String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([payerId, status])
+  @@index([status])
+}
+
+/// Dispute raised on a P2P order.
+model P2PDispute {
+  id             String   @id @default(uuid())
+  orderId        String   @unique
+  order          P2POrder @relation("P2POrderDispute", fields: [orderId], references: [id], onDelete: Cascade)
+  openedBy       String
+  opener         User     @relation("P2PDisputeOpener", fields: [openedBy], references: [id], onDelete: Cascade)
+  reason         String
+  status         P2PDisputeStatus @default(OPEN)
+  resolution     P2PDisputeResolution?
+  resolvedBy     String?
+  resolvedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+}
+
+enum P2PVerificationStatus {
+  UNVERIFIED
+  VERIFIED
+  SUSPENDED
+}
+
+enum P2POrderSide {
+  BUY
+  SELL
+}
+
+enum P2POrderStatus {
+  CREATED
+  PAYMENT_PENDING
+  PAYMENT_SUBMITTED
+  PAYMENT_VERIFICATION_PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+  EXPIRED
+  DISPUTED
+  REFUNDED
+  FAILED
+}
+
+enum P2PPaymentStatus {
+  PENDING
+  SUBMITTED
+  VERIFIED
+  REJECTED
+  FAILED
+  REFUNDED
+}
+
+enum P2PDisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum P2PDisputeResolution {
+  BUYER_WINS
+  SELLER_WINS
+  SPLIT
 }

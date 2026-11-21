@@ -6,10 +6,11 @@ import {
   currencySymbol,
   formatWalletAmount,
   getWalletBalance,
+  listWalletTransactions,
   type WalletCurrencyCode,
 } from '@/lib/api/wallet';
 
-import type { WalletBalanceView } from '@tanvion-royale/types';
+import type { WalletBalanceView, WalletTransactionView } from '@tanvion-royale/types';
 
 const CURRENCIES: WalletCurrencyCode[] = [
   'BDT',
@@ -27,6 +28,9 @@ export default function WalletPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [recentTxns, setRecentTxns] = useState<WalletTransactionView[]>([]);
+  const [txnsLoading, setTxnsLoading] = useState(true);
 
   const selectedBalance =
     balances[selectedCurrency];

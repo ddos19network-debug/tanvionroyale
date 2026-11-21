@@ -1,16 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { ADMIN_PERMISSIONS } from '@tanvion-royale/types';
 import { Button } from '@tanvion-royale/ui';
-import {
-  listAdminUsers,
-  getAdminWalletDetail,
-  adjustAdminWallet,
-  type AdminUserListItem,
-  type AdminWalletDetail,
-  type AdminWalletTransactionItem,
-} from '@/lib/api/admin';
+import { getAdminSummary, type AdminSummary } from '@/lib/api/admin';
 import { ApiClientError } from '@/lib/api/client';
 import {
   AdminPageHeader,
@@ -18,844 +12,361 @@ import {
   formatDateTime,
   formatMinor,
 } from '@/components/admin/ui';
-import {
-  AdminTable,
-  AdminTableSkeleton,
-  AdminErrorState,
-  AdminEmptyState,
-  AdminPagination,
-} from '@/components/admin/data-table';
-import { ConfirmDialog } from '@/components/admin/modal';
-import { useToast } from '@/components/admin/toast';
 import { useAdminPermission } from '@/components/admin/admin-guard';
+import { currencySymbol } from '@/lib/api/wallet';
 
-const inputClass =
-  'w-full rounded-md border border-ink-600 bg-ink-800 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30';
-
-const TX_TYPES = [
-  '',
-  'DEPOSIT',
-  'WITHDRAWAL',
-  'BET_STAKE',
-  'BET_PAYOUT',
-  'BET_REFUND',
-  'ADJUSTMENT',
-];
-
-const TX_STATUSES = [
-  '',
-  'PENDING',
-  'PROCESSING',
-  'COMPLETED',
-  'FAILED',
-  'CANCELLED',
-  'REVERSED',
-];
-
-const CURRENCIES = ['', 'BDT', 'USD', 'EUR'];
-
-function newIdempotencyKey(): string {
-  if (
-    typeof crypto !== 'undefined' &&
-    'randomUUID' in crypto
-  ) {
-    return crypto.randomUUID();
-  }
-
-  return `admin-wallet-${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 10)}`;
+function formatCurrencyAmount(minor: number, currency: string) {
+  const symbol = currencySymbol(currency);
+  const major = (minor / 100).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `${symbol}${major}`;
 }
 
-function getCurrencyLabel(currency: string) {
-  switch (currency) {
-    case 'BDT':
-      return '৳ BDT';
-    case 'USD':
-      return '$ USD';
-    case 'EUR':
-      return '€ EUR';
-    default:
-      return currency;
-  }
-}
+export default function AdminDashboardPage() {
+  const canReadDashboard = useAdminPermission(ADMIN_PERMISSIONS.DASHBOARD_READ);
 
-export default function AdminWalletsPage() {
-  const { toast } = useToast();
-  const canManage = useAdminPermission(ADMIN_PERMISSIONS.WALLETS_MANAGE);
+  const [summary, setSummary] = useState<AdminSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [search, setSearch] = useState('');
-  const [searching, setSearching] = useState(false);
-  const [results, setResults] =
-    useState<AdminUserListItem[] | null>(null);
-  const [searchError, setSearchError] =
-    useState<string | null>(null);
-
-  const [selected, setSelected] =
-    useState<AdminUserListItem | null>(null);
-
-  const [detail, setDetail] =
-    useState<AdminWalletDetail | null>(null);
-
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] =
-    useState<string | null>(null);
-
-  const [txPage, setTxPage] = useState(1);
-  const [txType, setTxType] = useState('');
-  const [txStatus, setTxStatus] = useState('');
-  const [txCurrency, setTxCurrency] = useState('');
-
-  const pageSize = 15;
-
-  const [adjustOpen, setAdjustOpen] = useState(false);
-  const [amountMajor, setAmountMajor] = useState('');
-  const [direction, setDirection] =
-    useState<'credit' | 'debit'>('credit');
-  const [adjustCurrency, setAdjustCurrency] =
-    useState<'BDT' | 'USD' | 'EUR'>('BDT');
-  const [reason, setReason] = useState('');
-  const [adjusting, setAdjusting] = useState(false);
-
-  async function runSearch() {
-    if (search.trim().length < 2) {
-      toast(
-        'Enter at least 2 characters (email, username, phone or name).',
-        'error',
-      );
-      return;
-    }
-
-    setSearching(true);
-    setSearchError(null);
-
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const res = await listAdminUsers({
-        q: search.trim(),
-        limit: 10,
-      });
-
-      setResults(res.items);
+      const data = await getAdminSummary();
+      setSummary(data);
     } catch (err) {
-      setSearchError(
-        err instanceof ApiClientError
-          ? err.message
-          : 'Search failed.',
-      );
-    } finally {
-      setSearching(false);
-    }
-  }
-
-  const loadDetail = useCallback(
-    async (
-      userId: string,
-      page: number,
-      type: string,
-      status: string,
-      currency: string,
-    ) => {
-      setDetailLoading(true);
-      setDetailError(null);
-
-      try {
-        const res = await getAdminWalletDetail(userId, {
-          page,
-          limit: pageSize,
-          type: type || undefined,
-          status: status || undefined,
-          currency: currency || undefined,
-        });
-
-        setDetail(res);
-      } catch (err) {
-        setDetailError(
-          err instanceof ApiClientError
-            ? err.message
-            : 'Failed to load wallet details.',
-        );
-      } finally {
-        setDetailLoading(false);
+      if (err instanceof ApiClientError && err.status === 403) {
+        setError('You do not have permission to view the admin dashboard.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load admin summary.');
       }
-    },
-    [pageSize],
-  );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!selected) return;
+    void load();
+  }, [load]);
 
-    void loadDetail(
-      selected.id,
-      txPage,
-      txType,
-      txStatus,
-      txCurrency,
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <AdminPageHeader
+          title="Admin Dashboard"
+          description="Platform operations and financial overview."
+          crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Dashboard' }]}
+        />
+        <div className="rounded-xl border border-red-500/40 bg-red-950/50 p-6 text-center">
+          <p className="text-sm font-medium text-red-300">{error}</p>
+          <Button onClick={() => void load()} className="mt-4" variant="secondary" size="sm">
+            Retry
+          </Button>
+        </div>
+      </div>
     );
-  }, [
-    selected,
-    txPage,
-    txType,
-    txStatus,
-    txCurrency,
-    loadDetail,
-  ]);
-
-  function selectUser(user: AdminUserListItem) {
-    setSelected(user);
-    setDetail(null);
-    setDetailError(null);
-    setTxPage(1);
-    setTxType('');
-    setTxStatus('');
-    setTxCurrency('');
   }
 
-  function openAdjust() {
-    setAmountMajor('');
-    setDirection('credit');
-    setAdjustCurrency('BDT');
-    setReason('');
-    setAdjustOpen(true);
-  }
-
-  function parsedMinor(): number {
-    const parsed = Number.parseFloat(
-      (amountMajor || '0')
-        .replace(/,/g, '')
-        .trim(),
-    );
-
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      return 0;
-    }
-
-    return Math.floor(parsed * 100);
-  }
-
-  async function submitAdjustment() {
-    if (!selected) return;
-
-    const minor = parsedMinor();
-
-    if (minor <= 0) {
-      toast('Enter a valid positive amount.', 'error');
-      return;
-    }
-
-    if (reason.trim().length < 3) {
-      toast(
-        'A reason (minimum 3 characters) is mandatory.',
-        'error',
-      );
-      return;
-    }
-
-    setAdjusting(true);
-
-    try {
-      const res = await adjustAdminWallet(selected.id, {
-        amount:
-          direction === 'credit' ? minor : -minor,
-        reason: reason.trim(),
-        idempotencyKey: newIdempotencyKey(),
-        currency: adjustCurrency,
-      });
-
-      toast(
-        res.duplicate
-          ? 'Duplicate request detected. No double credit was applied.'
-          : `Adjustment complete: ${formatMinor(
-              res.transaction.amount,
-              res.transaction.currency,
-            )}. New balance: ${formatMinor(
-              res.wallet.availableBalance,
-              res.wallet.currency,
-            )}.`,
-        'success',
-      );
-
-      setAdjustOpen(false);
-
-      await loadDetail(
-        selected.id,
-        txPage,
-        txType,
-        txStatus,
-        txCurrency,
-      );
-    } catch (err) {
-      toast(
-        err instanceof ApiClientError
-          ? err.message
-          : 'Adjustment failed.',
-        'error',
-      );
-    } finally {
-      setAdjusting(false);
-    }
-  }
+  const financial = summary?.financial;
+  const wallets = summary?.wallets;
+  const users = summary?.users;
+  const system = summary?.system;
 
   return (
-    <div>
-      <AdminPageHeader
-        title="Wallets"
-        description="Manage user wallets, review balances and transactions, and make audited manual adjustments."
-        crumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Wallets' },
-        ]}
-      />
-
-      {/* Search */}
-      <form
-        className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void runSearch();
-        }}
-      >
-        <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
-          <span className="text-xs text-slate-400">
-            Find a user
-          </span>
-
-          <input
-            className={inputClass}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            type="search"
-            placeholder="Email, username, phone or name…"
-          />
-        </label>
-
-        <Button
-          type="submit"
-          loading={searching}
-          className="w-full sm:w-auto"
-        >
-          Search
-        </Button>
-      </form>
-
-      {searchError && (
-        <AdminErrorState
-          message={searchError}
-          onRetry={() => void runSearch()}
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <AdminPageHeader
+          title="Executive Administration Dashboard"
+          description="Real-time financial liabilities, pending operations, and platform health."
+          crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Dashboard' }]}
         />
-      )}
+        <div className="flex items-center gap-3">
+          {system?.generatedAt && (
+            <span className="text-xs text-slate-500">
+              Updated: {formatDateTime(system.generatedAt)}
+            </span>
+          )}
+          <Button onClick={() => void load()} disabled={loading} variant="secondary" size="sm">
+            {loading ? 'Refreshing…' : '↻ Refresh'}
+          </Button>
+        </div>
+      </div>
 
-      {results && results.length === 0 && (
-        <AdminEmptyState
-          title="No users matched your search"
-        />
-      )}
-
-      {/* Search results */}
-      {results && results.length > 0 && (
-        <div className="mb-6">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Search results
-          </h2>
-
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {results.map((user) => (
-              <button
-                key={user.id}
-                type="button"
-                onClick={() => selectUser(user)}
-                className={`rounded-lg border px-3 py-3 text-left transition ${
-                  selected?.id === user.id
-                    ? 'border-teal-500/60 bg-teal-950/20'
-                    : 'border-ink-600 bg-ink-900 hover:border-teal-500/40'
-                }`}
-              >
-                <p className="break-all text-sm font-medium text-white">
-                  {user.username}
-                </p>
-
-                <p className="mt-1 break-all text-xs text-slate-500">
-                  {user.email ||
-                    user.phone ||
-                    user.id}
-                </p>
-
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <AdminStatusBadge value={user.status} />
-
-                  <span className="text-xs text-slate-500">
-                    {user.roles.join(', ') || '—'}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
+      {loading && !summary && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 rounded-xl border border-white/5 bg-ink-800 animate-pulse" />
+          ))}
         </div>
       )}
 
-      {/* Selected user */}
-      {selected && (
-        <div>
-          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-base font-semibold text-white">
-                Wallet —{' '}
-                <span className="text-teal-300">
-                  {selected.username}
-                </span>
-              </h2>
-
-              <p className="mt-1 break-all text-xs text-slate-500">
-                {selected.email ||
-                  selected.phone ||
-                  selected.id}
-              </p>
-            </div>
-
-            {canManage ? (
-              <Button
-                size="sm"
-                onClick={openAdjust}
-                className="w-full sm:w-auto"
-              >
-                New adjustment
-              </Button>
-            ) : null}
-          </div>
-
-          {detailLoading && !detail ? (
-            <AdminTableSkeleton />
-          ) : detailError ? (
-            <AdminErrorState
-              message={detailError}
-              onRetry={() =>
-                void loadDetail(
-                  selected.id,
-                  txPage,
-                  txType,
-                  txStatus,
-                  txCurrency,
-                )
-              }
-            />
-          ) : detail ? (
-            <div className="space-y-4">
-              {/* Currency wallets */}
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {detail.wallets.length === 0 ? (
-                  <div className="rounded-lg border border-ink-600 bg-ink-900 p-4">
-                    <p className="text-sm text-slate-400">
-                      This user has no wallets yet.
-                    </p>
-
-                    <p className="mt-1 text-xs text-slate-500">
-                      A wallet is created when the first funded
-                      transaction is completed.
-                    </p>
-                  </div>
-                ) : (
-                  detail.wallets.map((wallet) => (
-                    <div
-                      key={wallet.id}
-                      className="rounded-lg border border-ink-600 bg-ink-900 px-4 py-4"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs uppercase tracking-wide text-slate-500">
-                          {getCurrencyLabel(
-                            wallet.currency,
-                          )}
-                        </p>
-
-                        <AdminStatusBadge
-                          value={wallet.status}
-                        />
-                      </div>
-
-                      <p className="mt-2 break-all text-xl font-semibold text-white">
-                        {formatMinor(
-                          wallet.availableBalance,
-                          wallet.currency,
-                        )}
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-500">
-                        Locked:{' '}
-                        {formatMinor(
-                          wallet.lockedBalance,
-                          wallet.currency,
-                        )}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* Transaction filters */}
-              <div className="rounded-lg border border-ink-600 bg-ink-900 p-3">
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-xs text-slate-400">
-                      Type
-                    </span>
-
-                    <select
-                      className={inputClass}
-                      value={txType}
-                      onChange={(e) => {
-                        setTxType(e.target.value);
-                        setTxPage(1);
-                      }}
-                    >
-                      {TX_TYPES.map((type) => (
-                        <option
-                          key={type}
-                          value={type}
-                        >
-                          {type === ''
-                            ? 'All types'
-                            : type}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-xs text-slate-400">
-                      Status
-                    </span>
-
-                    <select
-                      className={inputClass}
-                      value={txStatus}
-                      onChange={(e) => {
-                        setTxStatus(e.target.value);
-                        setTxPage(1);
-                      }}
-                    >
-                      {TX_STATUSES.map((status) => (
-                        <option
-                          key={status}
-                          value={status}
-                        >
-                          {status === ''
-                            ? 'All statuses'
-                            : status}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-xs text-slate-400">
-                      Currency
-                    </span>
-
-                    <select
-                      className={inputClass}
-                      value={txCurrency}
-                      onChange={(e) => {
-                        setTxCurrency(e.target.value);
-                        setTxPage(1);
-                      }}
-                    >
-                      {CURRENCIES.map((currency) => (
-                        <option
-                          key={currency}
-                          value={currency}
-                        >
-                          {currency === ''
-                            ? 'All currencies'
-                            : getCurrencyLabel(
-                                currency,
-                              )}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              </div>
-
-              {/* Transactions */}
-              <TransactionsTable
-                transactions={
-                  detail.transactions.items
-                }
-                onRetry={() =>
-                  void loadDetail(
-                    selected.id,
-                    txPage,
-                    txType,
-                    txStatus,
-                    txCurrency,
-                  )
-                }
-                loading={detailLoading}
-              />
-
-              <AdminPagination
-                page={detail.transactions.page}
-                limit={detail.transactions.limit}
-                total={detail.transactions.total}
-                onPageChange={setTxPage}
-              />
-            </div>
-          ) : null}
-        </div>
-      )}
-
-      {/* Adjustment dialog */}
-      <ConfirmDialog
-        open={adjustOpen}
-        title="Confirm wallet adjustment"
-        danger={direction === 'debit'}
-        confirmLabel={
-          direction === 'credit'
-            ? 'Credit wallet'
-            : 'Debit wallet'
-        }
-        loading={adjusting}
-        onConfirm={() => void submitAdjustment()}
-        onCancel={() => setAdjustOpen(false)}
-        message={
-          <div className="space-y-4">
-            <p className="text-sm leading-6">
-              You are about to{' '}
-              <span className="font-semibold text-white">
-                {direction === 'credit'
-                  ? 'credit'
-                  : 'debit'}
-              </span>{' '}
-              the wallet of{' '}
-              <span className="font-medium text-teal-300">
-                {selected?.username}
-              </span>
-              .
-            </p>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              {/* Direction */}
-              <label className="flex flex-col gap-1 text-sm">
-                <span>Direction</span>
-
-                <select
-                  className={inputClass}
-                  value={direction}
-                  onChange={(e) =>
-                    setDirection(
-                      e.target.value as
-                        | 'credit'
-                        | 'debit',
-                    )
-                  }
-                >
-                  <option value="credit">
-                    Credit (+)
-                  </option>
-
-                  <option value="debit">
-                    Debit (−)
-                  </option>
-                </select>
-              </label>
-
-              {/* Currency */}
-              <label className="flex flex-col gap-1 text-sm">
-                <span>Currency</span>
-
-                <select
-                  className={inputClass}
-                  value={adjustCurrency}
-                  onChange={(e) =>
-                    setAdjustCurrency(
-                      e.target.value as
-                        | 'BDT'
-                        | 'USD'
-                        | 'EUR',
-                    )
-                  }
-                >
-                  <option value="BDT">
-                    ৳ BDT
-                  </option>
-
-                  <option value="USD">
-                    $ USD
-                  </option>
-
-                  <option value="EUR">
-                    € EUR
-                  </option>
-                </select>
-              </label>
-
-              {/* Amount */}
-              <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-                <span>
-                  Amount ({adjustCurrency}, major units)
-                </span>
-
-                <input
-                  className={inputClass}
-                  value={amountMajor}
-                  onChange={(e) =>
-                    setAmountMajor(
-                      e.target.value,
-                    )
-                  }
-                  inputMode="decimal"
-                  placeholder="0.00"
-                />
-
-                {parsedMinor() > 0 && (
-                  <span className="text-xs text-slate-500">
-                    Adjustment:{' '}
-                    {formatMinor(
-                      direction === 'credit'
-                        ? parsedMinor()
-                        : -parsedMinor(),
-                      adjustCurrency,
-                    )}
-                  </span>
-                )}
-              </label>
-
-              {/* Reason */}
-              <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-                <span>
-                  Reason{' '}
-                  <span className="text-red-400">
-                    *
-                  </span>
-                </span>
-
-                <input
-                  className={inputClass}
-                  value={reason}
-                  onChange={(e) =>
-                    setReason(e.target.value)
-                  }
-                  maxLength={500}
-                  placeholder="e.g. Goodwill credit after settlement review"
-                />
-
-                <span className="text-xs text-slate-500">
-                  This reason is stored in the audit trail.
-                </span>
-              </label>
-            </div>
-
-            <div className="rounded-md border border-amber-500/20 bg-amber-950/20 px-3 py-2 text-xs leading-5 text-amber-300">
-              This operation changes the real wallet balance
-              through the backend ledger. Do not submit an
-              adjustment unless the amount, currency and reason
-              are correct.
-            </div>
-          </div>
-        }
-      />
-    </div>
-  );
-}
-
-function TransactionsTable({
-  transactions,
-  loading,
-}: {
-  transactions: AdminWalletTransactionItem[];
-  onRetry: () => void;
-  loading: boolean;
-}) {
-  return (
-    <AdminTable
-      columns={[
-        {
-          key: 'created',
-          header: 'Date',
-          render: (transaction) => (
-            <span className="text-xs text-slate-400">
-              {formatDateTime(
-                transaction.createdAt,
-              )}
-            </span>
-          ),
-        },
-        {
-          key: 'type',
-          header: 'Type',
-          render: (transaction) => (
-            <AdminStatusBadge
-              value={transaction.type}
-            />
-          ),
-        },
-        {
-          key: 'status',
-          header: 'Status',
-          render: (transaction) => (
-            <AdminStatusBadge
-              value={transaction.status}
-            />
-          ),
-        },
-        {
-          key: 'currency',
-          header: 'Currency',
-          render: (transaction) => (
-            <span className="text-xs font-semibold text-slate-300">
-              {getCurrencyLabel(
-                transaction.currency,
-              )}
-            </span>
-          ),
-        },
-        {
-          key: 'amount',
-          header: 'Amount',
-          render: (transaction) => (
-            <span
-              className={
-                transaction.amount < 0
-                  ? 'font-medium text-red-300'
-                  : 'font-medium text-emerald-300'
-              }
+      {summary && (
+        <>
+          {/* ── 1. ACTION REQUIRED NOTICES ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Pending Deposits */}
+            <Link
+              href="/admin/manual-deposits"
+              className={`rounded-2xl border p-5 transition flex flex-col justify-between ${
+                (financial?.pendingDeposits ?? 0) > 0
+                  ? 'border-amber-500/40 bg-amber-950/20 hover:border-amber-500/70'
+                  : 'border-white/10 bg-ink-800 hover:border-white/20'
+              }`}
             >
-              {formatMinor(
-                transaction.amount,
-                transaction.currency,
-              )}
-            </span>
-          ),
-        },
-        {
-          key: 'reference',
-          header: 'Reference',
-          render: (transaction) => (
-            <span className="break-all font-mono text-xs text-slate-500">
-              {transaction.reference ?? '—'}
-            </span>
-          ),
-        },
-        {
-          key: 'failure',
-          header: 'Failure reason',
-          render: (transaction) => (
-            <span className="break-all text-xs text-red-300">
-              {transaction.failureReason ?? '—'}
-            </span>
-          ),
-        },
-      ]}
-      rows={transactions}
-      rowKey={(transaction) => transaction.id}
-      emptyState={
-        loading ? (
-          <AdminTableSkeleton rows={3} />
-        ) : (
-          <AdminEmptyState
-            title="No transactions"
-            hint="Nothing matches the current filters."
-          />
-        )
-      }
-    />
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Pending Deposits
+                  </p>
+                  <span className="text-xl">💰</span>
+                </div>
+                <p className="text-3xl font-black text-white mt-2">
+                  {financial?.pendingDeposits ?? 0}
+                </p>
+              </div>
+              <p className="text-xs font-medium text-amber-400 mt-4">
+                {(financial?.pendingDeposits ?? 0) > 0 ? 'Review & approve proof →' : 'No pending submissions'}
+              </p>
+            </Link>
+
+            {/* Pending Withdrawals */}
+            <Link
+              href="/admin/manual-withdrawals"
+              className={`rounded-2xl border p-5 transition flex flex-col justify-between ${
+                (financial?.pendingWithdrawals ?? 0) > 0
+                  ? 'border-rose-500/40 bg-rose-950/20 hover:border-rose-500/70'
+                  : 'border-white/10 bg-ink-800 hover:border-white/20'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Pending Withdrawals
+                  </p>
+                  <span className="text-xl">💸</span>
+                </div>
+                <p className="text-3xl font-black text-white mt-2">
+                  {financial?.pendingWithdrawals ?? 0}
+                </p>
+              </div>
+              <p className="text-xs font-medium text-rose-400 mt-4">
+                {(financial?.pendingWithdrawals ?? 0) > 0 ? 'Review & process payouts →' : 'No pending payouts'}
+              </p>
+            </Link>
+
+            {/* Moderation Alerts */}
+            <Link
+              href="/admin/users"
+              className="rounded-2xl border border-white/10 bg-ink-800 p-5 transition hover:border-white/20 flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Total Users
+                  </p>
+                  <span className="text-xl">👥</span>
+                </div>
+                <p className="text-3xl font-black text-white mt-2">
+                  {users?.total ?? 0}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-slate-400 mt-4">
+                <span className="text-emerald-400 font-semibold">{users?.active ?? 0} Active</span>
+                <span>•</span>
+                <span className="text-amber-400 font-semibold">{users?.pending ?? 0} Pending</span>
+                <span>•</span>
+                <span className="text-rose-400 font-semibold">{users?.suspended ?? 0} Suspended</span>
+              </div>
+            </Link>
+          </div>
+
+          {/* ── 2. FINANCIAL LIABILITIES & VOLUME ── */}
+          <div className="rounded-2xl border border-white/10 bg-ink-800 p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-white">Platform Financial Ledger Summary</h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Aggregate customer balances and platform liabilities across all supported currencies.
+                </p>
+              </div>
+              <Link href="/admin/wallets" className="text-xs text-teal-400 hover:text-teal-300 font-medium">
+                Adjust Ledger →
+              </Link>
+            </div>
+
+            {/* Volume Aggregates */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                <p className="text-xs uppercase tracking-wider text-slate-500">Completed Deposits</p>
+                <p className="text-2xl font-black text-emerald-400 mt-1">
+                  ৳{formatMinor(financial?.totalDepositsMinor ?? 0)}
+                </p>
+                <p className="text-[11px] text-slate-500 mt-1">Customer credited deposits</p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                <p className="text-xs uppercase tracking-wider text-slate-500">Completed Withdrawals</p>
+                <p className="text-2xl font-black text-rose-400 mt-1">
+                  ৳{formatMinor(financial?.totalWithdrawalsMinor ?? 0)}
+                </p>
+                <p className="text-[11px] text-slate-500 mt-1">Settled customer payouts</p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                <p className="text-xs uppercase tracking-wider text-slate-500">Active Customer Wallets</p>
+                <p className="text-2xl font-black text-white mt-1">
+                  {wallets?.wallets ?? 0}
+                </p>
+                <p className="text-[11px] text-slate-500 mt-1">Across all currencies</p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                <p className="text-xs uppercase tracking-wider text-slate-500">Database Status</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span
+                    className={`h-3 w-3 rounded-full ${
+                      system?.database === 'up' ? 'bg-emerald-400 animate-pulse' : 'bg-red-500'
+                    }`}
+                  />
+                  <span className="text-sm font-bold text-white uppercase">{system?.database ?? 'UP'}</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">PostgreSQL 15+ ACID</p>
+              </div>
+            </div>
+
+            {/* Currency Breakdown Table */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+                Customer Balances By Currency
+              </p>
+              <div className="overflow-x-auto rounded-xl border border-white/5 bg-ink-900/50">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.02]">
+                      <th className="px-4 py-3 text-slate-400 uppercase font-semibold">Currency</th>
+                      <th className="px-4 py-3 text-right text-slate-400 uppercase font-semibold">Total Accounts</th>
+                      <th className="px-4 py-3 text-right text-slate-400 uppercase font-semibold">Available Liability</th>
+                      <th className="px-4 py-3 text-right text-slate-400 uppercase font-semibold">Locked / Reserved</th>
+                      <th className="px-4 py-3 text-right text-slate-400 uppercase font-semibold">Total Liability</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {wallets?.byCurrency.map((c) => (
+                      <tr key={c.currency} className="hover:bg-white/[0.02]">
+                        <td className="px-4 py-3 font-bold text-white flex items-center gap-2">
+                          <span className="h-6 w-6 rounded bg-teal-500/15 text-teal-300 flex items-center justify-center font-mono">
+                            {currencySymbol(c.currency)}
+                          </span>
+                          {c.currency}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-slate-300">{c.wallets}</td>
+                        <td className="px-4 py-3 text-right font-mono font-bold text-emerald-400">
+                          {formatCurrencyAmount(c.availableMinor, c.currency)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-amber-400">
+                          {formatCurrencyAmount(c.lockedMinor, c.currency)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono font-bold text-white">
+                          {formatCurrencyAmount(c.availableMinor + c.lockedMinor, c.currency)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* ── 3. RECENT TRANSACTIONS ── */}
+          {financial?.recentTransactions && financial.recentTransactions.length > 0 && (
+            <div className="rounded-2xl border border-white/10 bg-ink-800 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-white">Recent Financial Transactions</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Latest system-wide ledger activity.</p>
+                </div>
+                <Link href="/admin/wallets" className="text-xs text-teal-400 hover:text-teal-300 font-medium">
+                  Search By User →
+                </Link>
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-white/5 bg-ink-900/50">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.02]">
+                      <th className="px-4 py-3 text-slate-400 uppercase font-semibold">Type</th>
+                      <th className="px-4 py-3 text-slate-400 uppercase font-semibold">User ID</th>
+                      <th className="px-4 py-3 text-slate-400 uppercase font-semibold">Reference</th>
+                      <th className="px-4 py-3 text-right text-slate-400 uppercase font-semibold">Amount</th>
+                      <th className="px-4 py-3 text-center text-slate-400 uppercase font-semibold">Status</th>
+                      <th className="px-4 py-3 text-right text-slate-400 uppercase font-semibold">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {financial.recentTransactions.map((tx) => (
+                      <tr key={tx.id} className="hover:bg-white/[0.02]">
+                        <td className="px-4 py-3 font-semibold text-slate-200">{tx.type}</td>
+                        <td className="px-4 py-3 font-mono text-slate-400">{tx.userId.slice(0, 8)}…</td>
+                        <td className="px-4 py-3 font-mono text-slate-400">{tx.reference ?? '—'}</td>
+                        <td className="px-4 py-3 text-right font-mono font-bold text-white">
+                          {formatCurrencyAmount(tx.amount, tx.currency)}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <AdminStatusBadge value={tx.status} />
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-400">{formatDateTime(tx.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── 4. QUICK ADMINISTRATIVE LINKS ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Link
+              href="/admin/manual-deposits"
+              className="p-4 rounded-xl border border-white/10 bg-ink-800 hover:border-teal-500/50 transition text-center"
+            >
+              <div className="text-2xl mb-1">💳</div>
+              <p className="text-sm font-bold text-white">Manual Deposits</p>
+              <p className="text-xs text-slate-400 mt-0.5">Review transaction proofs</p>
+            </Link>
+
+            <Link
+              href="/admin/manual-withdrawals"
+              className="p-4 rounded-xl border border-white/10 bg-ink-800 hover:border-teal-500/50 transition text-center"
+            >
+              <div className="text-2xl mb-1">🏦</div>
+              <p className="text-sm font-bold text-white">Manual Withdrawals</p>
+              <p className="text-xs text-slate-400 mt-0.5">Process customer payouts</p>
+            </Link>
+
+            <Link
+              href="/admin/payment-methods"
+              className="p-4 rounded-xl border border-white/10 bg-ink-800 hover:border-teal-500/50 transition text-center"
+            >
+              <div className="text-2xl mb-1">⚙️</div>
+              <p className="text-sm font-bold text-white">Payment Methods</p>
+              <p className="text-xs text-slate-400 mt-0.5">Configure gateways & limits</p>
+            </Link>
+
+            <Link
+              href="/admin/audit-logs"
+              className="p-4 rounded-xl border border-white/10 bg-ink-800 hover:border-teal-500/50 transition text-center"
+            >
+              <div className="text-2xl mb-1">🧾</div>
+              <p className="text-sm font-bold text-white">Audit Trail</p>
+              <p className="text-xs text-slate-400 mt-0.5">Immutable action log</p>
+            </Link>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

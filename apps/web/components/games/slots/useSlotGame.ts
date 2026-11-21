@@ -16,6 +16,7 @@ export interface UseSlotGameReturn {
   stake: number;
   setStake: (s: number) => void;
   grid: string[][] | null;
+  winningPositions: Array<{ row: number; col: number }>;
   isSpinning: boolean;
   activeMultiplier: number;
   lastWin: number;
@@ -43,6 +44,7 @@ export function useSlotGame(slug: string): UseSlotGameReturn {
   const [balance, setBalance] = useState<number | null>(null);
   const [stake, setStake] = useState<number>(100);
   const [grid, setGrid] = useState<string[][] | null>(null);
+  const [winningPositions, setWinningPositions] = useState<Array<{ row: number; col: number }>>([]);
   const [isSpinning, setIsSpinning] = useState(false);
   const [activeMultiplier, setActiveMultiplier] = useState(1);
   const [lastWin, setLastWin] = useState(0);
@@ -98,7 +100,13 @@ export function useSlotGame(slug: string): UseSlotGameReturn {
     async (steps: SlotCascadeStep[], isTurbo: boolean) => {
       const stepDelay = isTurbo ? 100 : 350;
       for (const step of steps) {
+        if (step.wins && step.wins.length > 0) {
+          const cells = step.wins.flatMap((w) => w.positions ?? []);
+          setWinningPositions(cells);
+          await sleep(isTurbo ? 80 : 250);
+        }
         setGrid(step.gridAfter);
+        setWinningPositions([]);
         setActiveMultiplier(Math.round((step.multiplierBp / 10000) * 10) / 10);
         if (step.stepPayBp > 0) {
           const stepWin = Math.floor((stake * step.stepPayBp) / 10000);
@@ -124,6 +132,7 @@ export function useSlotGame(slug: string): UseSlotGameReturn {
     setLastWin(0);
     setTotalRoundWin(0);
     setActiveMultiplier(1);
+    setWinningPositions([]);
 
     const clientRequestId = typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
@@ -207,6 +216,7 @@ export function useSlotGame(slug: string): UseSlotGameReturn {
     stake,
     setStake,
     grid,
+    winningPositions,
     isSpinning,
     activeMultiplier,
     lastWin,

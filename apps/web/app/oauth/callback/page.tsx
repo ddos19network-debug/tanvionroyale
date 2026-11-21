@@ -40,13 +40,12 @@ function OAuthCallbackInner() {
       return;
     }
 
-    // If we have an exchangeCode from the backend, use it; otherwise use the
-    // Google auth code from the URL.
+    // The backend redirects with ?code=<exchangeCode>. params.get('exchangeCode')
+    // is intentionally unused — the URL param name is 'code'. codeToUse holds
+    // the actual one-time exchange code from the backend.
     const codeToUse = exchangeCode || code || '';
 
     // Already exchanged this exact code earlier in this tab: never re-POST.
-    // Note: hasExchangeCompleted only works for codes exchanged through the
-    // proper backend flow. For now, we skip this check when using exchangeCode.
     const shouldCheckCompleted = !exchangeCode;
     if (shouldCheckCompleted && codeToUse && hasExchangeCompleted(codeToUse)) {
       setCompleted(true);
@@ -56,15 +55,15 @@ function OAuthCallbackInner() {
     }
 
     let cancelled = false;
-    // Use the exchangeCode if available (backend-generated), otherwise use the
-    // Google auth code. The backend OAuthExchangeDto expects a code that was
-    // created via createExchangeCode() and stored in the OTP table.
-    if (exchangeCode) {
+    // The backend OAuthExchangeDto expects a code that was created via
+    // createExchangeCode() and stored in the OTP table.
+    if (codeToUse) {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
       // Exchange the backend-generated exchange code for a session
-      fetch('/api/v1/auth/oauth/exchange', {
+      fetch(`${apiBase}/auth/oauth/exchange`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: exchangeCode }),
+        body: JSON.stringify({ code: codeToUse }),
       })
         .then((res) => {
           if (!res.ok) throw new Error('Exchange failed');
@@ -101,7 +100,7 @@ function OAuthCallbackInner() {
     // NOTE: depend on the code VALUE only - searchParams object identity
     // changes must not restart the exchange.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.get('exchangeCode'), router]);
+  }, [params.get('code'), router]);
 
   return (
     <Card className="w-full max-w-md" aria-labelledby="oauth-heading" aria-busy={!error}>

@@ -1,0 +1,5 @@
+= await this.prisma.p2POffer.findFirst({\n      where: {\n        symbol,\n        fiat,\n        side: offerSide,\n        isActive: true,\n        availableCrypto: { gt: 0 },\n        minOrderFiat: { lte: fiatAmount },\n        maxOrderFiat: { gte: fiatAmount },\n      },\n    });\n    if (!offer) {\n      throw new BadRequestException(\\'No active offer available for this pair and amount.\\');\n    }\n    const cryptoScale = offer.cryptoScale ?? 8;\n    const pricePerUnit = offer.pricePerFiatUnit;\n    const cryptoAmount = Math.floor((fiatAmount * Math.pow(10, cryptoScale)) / pricePerUnit);\n    const feeAmount = Math.floor(fiatAmount * 0.005);\n    const totalFiat = fiatAmount + feeAmount;\n    return {\n      symbol,\n      fiat,\n      side,\n      fiatAmount,\n      cryptoAmount,\n      pricePerFiatUnit: pricePerUnit,\n      feeAmount,\n      totalFiat,\n      dataSource: \\'DEMO\\',\n      asOf: new Date().toISOString(),\n    };\n  }';
+
+fs.appendFileSync(path, getQuoteMethod);
+console.log('Appended getQuote method');
+^Z

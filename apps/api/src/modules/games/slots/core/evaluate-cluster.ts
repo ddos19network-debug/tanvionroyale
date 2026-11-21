@@ -35,23 +35,33 @@ export function evaluateClusters(
   cascadeMultiplierBp: number,
 ): ClusterWin[] {
   const { wildId, scatterId, paytableBp, reels: cols, rows, minClusterSize = 5 } = config;
-  const specialIds = new Set([scatterId]);
-  // bonus symbols that shouldn't cluster
-  const skipIds = specialIds;
+  const skipIds = new Set<SlotSymbolId>([scatterId]);
+  for (const s of config.symbols ?? []) {
+    if (s.tier === 'scatter' || s.tier === 'bonus') {
+      skipIds.add(s.id);
+    }
+  }
 
-  const visited: boolean[][] = Array.from({ length: rows }, () => Array(cols).fill(false));
-  const wins: ClusterWin[] = [];
+  // 1. Identify all connected components of identical regular symbols (orthogonal only)
+  const visitedRegular: boolean[][] = Array.from({ length: rows }, () => Array(cols).fill(false));
+  interface RegularCluster {
+    symbolId: SlotSymbolId;
+    cells: Array<{ row: number; col: number }>;
+    adjacentWilds: Array<{ row: number; col: number }>;
+  }
+
+  const candidateClusters: RegularCluster[] = [];
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      if (visited[r][c]) continue;
+      if (visitedRegular[r][c]) continue;
       const sym = grid[r][c];
       if (skipIds.has(sym) || sym === wildId) continue;
 
-      // BFS to find the connected cluster (same symbol + adjacent wilds)
       const cells: Array<{ row: number; col: number }> = [];
+      const wildsSet = new Set<string>();
       const queue: Array<{ row: number; col: number }> = [{ row: r, col: c }];
-      visited[r][c] = true;
+      visitedRegular[r][c] = true;
 
       while (queue.length > 0) {
         const cur = queue.shift()!;
@@ -60,31 +70,66 @@ export function evaluateClusters(
           const nr = cur.row + dr;
           const nc = cur.col + dc;
           if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
-          if (visited[nr][nc]) continue;
           const ns = grid[nr][nc];
-          // Wilds join the cluster (but their visited flag prevents double-join)
-          if (ns === wildId || ns === sym) {
-            visited[nr][nc] = true;
+          if (ns === sym && !visitedRegular[nr][nc]) {
+            visitedRegular[nr][nc] = true;
             queue.push({ row: nr, col: nc });
+          } else if (ns === wildId) {
+            wildsSet.add(`${nr},${nc}`);
           }
         }
       }
 
-      if (cells.length < minClusterSize) continue;
-
-      const basepayBp = clusterPayBp(paytableBp, sym, cells.length);
-      if (basepayBp <= 0) continue;
-
-      const payBp = Math.floor((basepayBp * cascadeMultiplierBp) / BASIS_POINTS);
-
-      wins.push({
-        symbolId: sym,
-        size: cells.length,
-        positions: cells,
-        basepayBp,
-        multiplierBp: cascadeMultiplierBp,
-        payBp,
+      const adjacentWilds: Array<{ row: number; col: number }> = Array.from(wildsSet).map((key) => {
+        const [wr, wc] = key.split(',').map(Number);
+        return { row: wr, col: wc };
       });
+
+      candidateClusters.push({ symbolId: sym, cells, adjacentWilds });
+    }
+  }
+
+  // 2. Deterministic Wild allocation strategy (Section 5.B):
+  // Priority: Marginal gain from wild -> Raw cluster size -> Top-left coordinate
+  candidateClusters.sort((a, b) => {
+    const baseA = a.cells.length >= minClusterSize ? clusterPayBp(paytableBp, a.symbolId, a.cells.length) : 0;
+    const baseB = b.cells.length >= minClusterSize ? clusterPayBp(paytableBp, b.symbolId, b.cells.length) : 0;
+    const gainA = clusterPayBp(paytableBp, a.symbolId, a.cells.length + a.adjacentWilds.length) - baseA;
+    const gainB = clusterPayBp(paytableBp, b.symbolId, b.cells.length + b.adjacentWilds.length) - baseB;
+    if (gainB !== gainA) return gainB - gainA;
+    if (b.cells.length !== a.cells.length) return b.cells.length - a.cells.length;
+    return a.cells[0].row - b.cells[0].row || a.cells[0].col - b.cells[0].col;
+  });
+
+  const assignedWilds = new Set<string>();
+  const wins: ClusterWin[] = [];
+
+  for (const cluster of candidateClusters) {
+    const availableWilds: Array<{ row: number; col: number }> = [];
+    for (const w of cluster.adjacentWilds) {
+      const key = `${w.row},${w.col}`;
+      if (!assignedWilds.has(key)) {
+        availableWilds.push(w);
+      }
+    }
+
+    const totalCells = [...cluster.cells, ...availableWilds];
+    if (totalCells.length >= minClusterSize) {
+      const basepayBp = clusterPayBp(paytableBp, cluster.symbolId, totalCells.length);
+      if (basepayBp > 0) {
+        for (const w of availableWilds) {
+          assignedWilds.add(`${w.row},${w.col}`);
+        }
+        const payBp = Math.floor((basepayBp * cascadeMultiplierBp) / BASIS_POINTS);
+        wins.push({
+          symbolId: cluster.symbolId,
+          size: totalCells.length,
+          positions: totalCells,
+          basepayBp,
+          multiplierBp: cascadeMultiplierBp,
+          payBp,
+        });
+      }
     }
   }
 

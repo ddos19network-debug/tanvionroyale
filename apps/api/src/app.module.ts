@@ -20,6 +20,7 @@ import { UsersModule } from "./modules/users/users.module";
 import { SportsModule } from "./modules/sports/sports.module";
 import { SportsbookModule } from "./modules/sportsbook/sportsbook.module";
 import { WalletModule } from "./modules/wallet/wallet.module";
+import { P2PModule } from "./modules/p2p/p2p.module";
 import { BettingModule } from "./modules/betting/betting.module";
 import { GamesModule } from "./modules/games/games.module";
 import { CrashModule } from "./modules/crash/crash.module";
@@ -78,6 +79,7 @@ function resolveJwtSecret(): string {
     SportsModule,
     SportsbookModule,
     WalletModule,
+    P2PModule,
     BettingModule,
     GamesModule,
     CrashModule,

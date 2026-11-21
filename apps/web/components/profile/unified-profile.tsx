@@ -648,16 +648,18 @@ export function UnifiedProfile({ isMobileMenuOpen, onMenuToggle, onMenuItemClick
               </button>
             </div>
             <div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Following</div>
-              <button className="text-white hover:text-amber-400 font-semibold transition flex items-center gap-0.5">
-                <span>0</span><span className="text-[10px] text-slate-500">&gt;</span>
-              </button>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">KYC Status</div>
+              <div className="text-xs font-semibold text-slate-200 mt-0.5">
+                <span className={user?.kycStatus === 'VERIFIED' ? 'text-emerald-400' : user?.kycStatus === 'PENDING' ? 'text-amber-400' : 'text-slate-400'}>
+                  {user?.kycStatus ? (user.kycStatus === 'VERIFIED' ? 'Verified' : user.kycStatus === 'PENDING' ? 'Pending' : 'Unverified') : 'Unverified'}
+                </span>
+              </div>
             </div>
             <div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Followers</div>
-              <button className="text-white hover:text-amber-400 font-semibold transition flex items-center gap-0.5">
-                <span>0</span><span className="text-[10px] text-slate-500">&gt;</span>
-              </button>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Account Status</div>
+              <div className="text-xs font-semibold text-emerald-400 mt-0.5">
+                {user?.status ?? 'Active'}
+              </div>
             </div>
           </div>
         </div>

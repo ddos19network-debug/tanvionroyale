@@ -1,0 +1,107 @@
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
+import { PrismaService } from '../../database/prisma.service';
+import { WalletService } from '../wallet/wallet.service';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import type {
+  P2PQuoteView,
+  P2POrderView,
+  P2POfferView,
+  P2POffersView,
+  RoyalePayBalanceView,
+} from '@tanvion-royale/types';
+import {
+  ListP2POffersQueryDto,
+  P2PQuoteDto,
+  CreateP2POrderDto,
+  SubmitP2PPaymentDto,
+  CancelP2POrderDto,
+  ListP2POrdersQueryDto,
+  AdminP2POfferDto,
+  AdminVerifyP2PPaymentDto,
+  AdminResolveP2PDisputeDto,
+} from './dto/p2p.dto';
+
+@Injectable()
+export class P2PService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly walletService: WalletService,
+  ) {}
+
+  async listOffers(
+    query: ListP2POffersQueryDto,
+  ): Promise<P2POffersView> {
+    const { symbol, fiat, side, paymentMethod, minAmount, maxAmount, sortBy = 'price', page = 1, limit = 20 } = query;
+
+    const where: Record<string, unknown> = { isActive: true };
+
+    if (symbol) where.symbol = symbol;
+    if (fiat) where.fiat = fiat;
+    if (side) where.side = side;
+    if (paymentMethod) where.paymentMethods = { has: paymentMethod };
+    if (minAmount !== undefined) {
+      where.minOrderFiat = { ...(where.minOrderFiat as object), gte: minAmount };
+    }
+    if (maxAmount !== undefined) {
+      where.maxOrderFiat = { ...(where.maxOrderFiat as object), lte: maxAmount };
+    }
+
+    const orderBy: Record<string, string> = {};
+    if (sortBy === 'price') orderBy.pricePerFiatUnit = 'asc';
+    else if (sortBy === 'available') orderBy.availableCrypto = 'desc';
+    else orderBy.createdAt = 'desc';
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.p2POffer.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { merchant: { include: { profile: true } } },
+      }),
+      this.prisma.p2POffer.count({ where }),
+    ]);
+
+    return {
+      items: items.map((o) => ({
+        id: o.id,
+        merchantId: o.merchantId,
+        merchant: {
+          id: o.merchant.profile?.id || o.merchantId,
+          displayName: o.merchant.profile?.displayName || 'Merchant',
+          verificationStatus: o.merchant.profile?.verificationStatus || 'UNVERIFIED',
+          totalOrders: o.merchant.profile?.totalOrders ?? 0,
+          completedOrders: o.merchant.profile?.completedOrders ?? 0,
+          cancelledOrders: o.merchant.profile?.cancelledOrders ?? 0,
+          completionRate: Number(o.merchant.profile?.completionRate ?? 0),
+          positiveFeedback: Number(o.merchant.profile?.positiveFeedback ?? 0),
+          isActive: o.merchant.profile?.isActive ?? false,
+          createdAt: o.merchant.profile?.createdAt || o.createdAt,
+          updatedAt: o.merchant.profile?.updatedAt || o.updatedAt,
+        } as any,
+        symbol: o.symbol,
+        fiat: o.fiat,
+        side: o.side,
+        pricePerFiatUnit: o.pricePerFiatUnit,
+        cryptoScale: o.cryptoScale,
+        availableCrypto: Number(o.availableCrypto),
+        minOrderFiat: o.minOrderFiat,
+        maxOrderFiat: o.maxOrderFiat,
+        paymentMethods: (o.paymentMethods as string[]) || [],
+        isActive: o.isActive,
+        expiresAt: o.expiresAt?.toISOString() ?? null,
+        createdAt: o.createdAt.toISOString(),
+        updatedAt: o.updatedAt.toISOString(),
+      })),
+      total,
+      page,
+      limit,
+    };
+  }
+}

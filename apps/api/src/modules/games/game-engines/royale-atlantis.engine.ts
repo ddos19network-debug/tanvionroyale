@@ -23,7 +23,7 @@ function seedSource(): () => number {
   };
 }
 
-export class RoyaleAtlantisEngine {
+export class RoyaleAtlantisEngine implements FreePlayGameEngine {
   public readonly meta = {
     slug: ATLANTIS_SLUG,
     title: 'Royale Atlantis',
@@ -34,17 +34,12 @@ export class RoyaleAtlantisEngine {
 
   public readonly allowedActions = ['SPIN'] as const;
 
-  private readonly random: () => number;
-
-  constructor() {
-    this.random = seedSource();
-  }
-
   createInitialState(): Record<string, unknown> {
+    const grid = createGrid();
     return {
       phase: 'READY',
-      grid: null,
-      totalBet: 0,
+      grid,
+      totalBet: 50,
       totalWin: 0,
       remainingFreeSpins: 0,
       bonusEvents: [],
@@ -56,20 +51,37 @@ export class RoyaleAtlantisEngine {
   applyAction(state: Record<string, unknown>, action: { type: string; payload?: Record<string, unknown> }): FreePlayActionResult {
     if (action.type !== 'SPIN') throw new PlayerActionError(`Unsupported action "${action.type}" for Royale Atlantis`);
 
+    const bet = typeof action.payload?.bet === 'number' && action.payload.bet > 0
+      ? Math.floor(action.payload.bet)
+      : 50;
+
     const grid = createGrid();
     const cascadeSteps = processCascade(grid);
-    for (const step of cascadeSteps) step.winningClusters = step.winningClusters.filter((cl) => cl.symbolCount >= ATLANTIS_CONFIG.minClusterSize);
+    for (const step of cascadeSteps) {
+      step.winningClusters = step.winningClusters.filter((cl) => cl.symbolCount >= ATLANTIS_CONFIG.minClusterSize);
+    }
 
-    const totalWin = cascadeSteps.reduce((sum, s) => sum + s.stepWin, 0);
-    const message = totalWin > 0 ? `Win ${totalWin} ocean coins` : 'No win this tide';
+    const rawWin = cascadeSteps.reduce((sum, s) => sum + s.stepWin, 0);
+    const totalWin = Math.floor(rawWin * (bet / 50));
+
+    // Scatter Gate detection
+    let gateCount = 0;
+    for (const row of grid) for (const s of row) if (s === 'atlantis_gate') gateCount++;
+    const freeSpinsAwarded = gateCount >= 4 ? 10 : 0;
+
+    const message = totalWin > 0
+      ? `Win ${totalWin} ocean points`
+      : freeSpinsAwarded > 0
+        ? `Atlantis Gate triggered ${freeSpinsAwarded} Free Spins!`
+        : 'No win this tide';
 
     const stateRes: Record<string, unknown> = {
       phase: 'SPUN',
       grid,
-      totalBet: 1,
+      totalBet: bet,
       totalWin,
-      remainingFreeSpins: 0,
-      bonusEvents: [],
+      remainingFreeSpins: freeSpinsAwarded,
+      bonusEvents: freeSpinsAwarded > 0 ? [{ type: 'FREE_SPINS', count: freeSpinsAwarded }] : [],
       cascadeSteps,
       featureEvents: [],
     };

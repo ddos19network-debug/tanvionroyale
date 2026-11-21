@@ -5,3 +5,4 @@ export * from './sports';
 export * from './betting';
 export * from './wallet';
 export * from './next-path';
+export * from './p2p';

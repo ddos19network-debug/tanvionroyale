@@ -40,12 +40,55 @@ export interface DashboardOverviewView {
       change24h: number;
     }[];
   };
+  financial: {
+    totalDeposits: number;
+    totalWithdrawals: number;
+    pendingDepositsCount: number;
+    pendingWithdrawalsCount: number;
+    recentTransactions: {
+      id: string;
+      type: string;
+      amount: number;
+      currency: string;
+      status: string;
+      reference: string | null;
+      createdAt: string;
+    }[];
+  };
   trading: {
     openOrdersCount: number;
     activePositionsCount: number;
     virtualBalance: number;
+    portfolioValue: number;
     unrealizedPnl: number;
     totalOrders: number;
+    recentOrders: {
+      id: string;
+      symbol: string;
+      side: string;
+      quantity: number;
+      priceFilled: number | null;
+      status: string;
+      createdAt: string;
+    }[];
+    marketOverview: {
+      symbol: string;
+      name: string;
+      type: string;
+      basePrice: number;
+    }[];
+  };
+  notifications: {
+    unreadCount: number;
+    items: {
+      id: string;
+      type: string;
+      title: string;
+      message: string;
+      isRead: boolean;
+      createdAt: string;
+      actionUrl: string | null;
+    }[];
   };
   betting: {
     activeBetsCount: number;
@@ -131,6 +174,14 @@ export class ProfileActivityService {
       referralsCount,
       referralRewards,
       recentActivityData,
+      depositSum,
+      withdrawalSum,
+      pendingDepositsCount,
+      pendingWithdrawalsCount,
+      recentTxns,
+      unreadNotificationsCount,
+      recentNotifications,
+      marketInstruments,
     ] = await Promise.all([
       this.prisma.user.findUnique({
         where: { id: userId },
@@ -170,15 +221,73 @@ export class ProfileActivityService {
         select: { amount: true, status: true },
       }),
       this.listActivity(auth, { limit: 8 }),
+      this.prisma.walletTransaction.aggregate({
+        where: { userId, type: 'DEPOSIT', status: 'COMPLETED' },
+        _sum: { amount: true },
+      }),
+      this.prisma.walletTransaction.aggregate({
+        where: { userId, type: 'WITHDRAWAL', status: 'COMPLETED' },
+        _sum: { amount: true },
+      }),
+      this.prisma.manualDepositRequest.count({ where: { userId, status: 'PENDING' } }),
+      this.prisma.withdrawalRequest.count({ where: { userId, status: 'PENDING' } }),
+      this.prisma.walletTransaction.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: {
+          id: true,
+          type: true,
+          amount: true,
+          currency: true,
+          status: true,
+          reference: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.notification.count({ where: { recipientUserId: userId, isRead: false } }),
+      this.prisma.notification.findMany({
+        where: { recipientUserId: userId },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          message: true,
+          isRead: true,
+          actionUrl: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.tradingInstrument.findMany({
+        where: { isEnabled: true },
+        take: 6,
+        select: {
+          symbol: true,
+          name: true,
+          type: true,
+          basePrice: true,
+        },
+      }),
     ]);
 
     // Query trading positions & orders if trading account exists
     let openPositions: { id: string; avgEntryPrice: number; quantity: number }[] = [];
     let openOrdersCount = 0;
     let totalOrdersCount = 0;
+    let recentTradingOrders: {
+      id: string;
+      symbol: string;
+      side: string;
+      quantity: number;
+      priceFilled: number | null;
+      status: string;
+      createdAt: string;
+    }[] = [];
 
     if (tradingAccount) {
-      const [pos, openOrd, totOrd] = await Promise.all([
+      const [pos, openOrd, totOrd, recOrd] = await Promise.all([
         this.prisma.tradingPosition.findMany({
           where: { accountId: tradingAccount.id, status: 'OPEN' },
           select: { id: true, avgEntryPrice: true, quantity: true },
@@ -189,10 +298,33 @@ export class ProfileActivityService {
         this.prisma.tradingOrder.count({
           where: { accountId: tradingAccount.id },
         }),
+        this.prisma.tradingOrder.findMany({
+          where: { accountId: tradingAccount.id },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: {
+            id: true,
+            side: true,
+            status: true,
+            quantity: true,
+            priceFilled: true,
+            createdAt: true,
+            instrument: { select: { symbol: true } },
+          },
+        }),
       ]);
       openPositions = pos;
       openOrdersCount = openOrd;
       totalOrdersCount = totOrd;
+      recentTradingOrders = recOrd.map((o) => ({
+        id: o.id,
+        symbol: o.instrument.symbol,
+        side: o.side,
+        quantity: o.quantity,
+        priceFilled: o.priceFilled,
+        status: o.status,
+        createdAt: o.createdAt.toISOString(),
+      }));
     }
 
     const uid = user ? user.id.slice(0, 8).toUpperCase() : 'TR-USER';
@@ -316,12 +448,46 @@ export class ProfileActivityService {
         sparkline,
         assets: assetsList,
       },
+      financial: {
+        totalDeposits: depositSum._sum.amount ?? 0,
+        totalWithdrawals: withdrawalSum._sum.amount ?? 0,
+        pendingDepositsCount,
+        pendingWithdrawalsCount,
+        recentTransactions: recentTxns.map((t) => ({
+          id: t.id,
+          type: t.type,
+          amount: t.amount,
+          currency: t.currency,
+          status: t.status,
+          reference: t.reference,
+          createdAt: t.createdAt.toISOString(),
+        })),
+      },
+      notifications: {
+        unreadCount: unreadNotificationsCount,
+        items: recentNotifications.map((n) => ({
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          message: n.message,
+          isRead: n.isRead,
+          actionUrl: n.actionUrl,
+          createdAt: n.createdAt.toISOString(),
+        })),
+      },
       trading: {
         openOrdersCount,
         activePositionsCount: openPositions.length,
         virtualBalance: tradingAccount?.virtualBalance ?? 10_000_000,
+        portfolioValue:
+          (tradingAccount?.virtualBalance ?? 10_000_000) +
+          Math.round(
+            openPositions.reduce((acc, p) => acc + p.quantity * p.avgEntryPrice, 0),
+          ),
         unrealizedPnl: 0,
         totalOrders: totalOrdersCount,
+        recentOrders: recentTradingOrders,
+        marketOverview: marketInstruments,
       },
       betting: {
         activeBetsCount: bets.filter((b) => b.status === 'PENDING').length,
