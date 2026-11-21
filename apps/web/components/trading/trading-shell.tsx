@@ -9,6 +9,7 @@ import { SearchOverlay } from '@/components/home/SearchOverlay';
 import { LogoMark } from '@/components/brand/logo';
 import { claimTradingFaucet, formatMinor, formatPrice, formatPercent } from '@/lib/api/trading';
 import { useAuth } from '@/src/lib/auth';
+import { UnreadBadge } from '@/components/notifications/unread-badge';
 
 const TOP_MENU = [
   { href: '/trading/home', label: 'Home' },
@@ -16,7 +17,7 @@ const TOP_MENU = [
   { href: '/trading/buy-crypto', label: 'Buy Crypto' },
   { href: '/trading', label: 'Trade' },
   { href: '/trading/earn', label: 'Earn' },
-  { href: '/trading/deposit', label: 'Deposit' },
+  { href: '/wallet/deposit', label: 'Deposit' },
   { href: '/trading/notification', label: 'Notification' },
   { href: '/trading/profile', label: 'Profile' },
 ];
@@ -247,7 +248,7 @@ export function TradingShell({
                   aria-current={active ? 'page' : undefined}
                   className={`flex items-center rounded-full px-2 lg:px-2.5 py-1 text-xs lg:text-sm font-semibold whitespace-nowrap transition ${
                     active
-                      ? 'border border-brand/50 bg-brand/10 text-brand font-bold shadow-sm'
+                      ? 'border border-amber-400/50 bg-amber-400/10 text-amber-400 font-bold shadow-sm shadow-amber-400/10'
                       : 'text-slate-300 hover:text-white hover:bg-white/5'
                   }`}
                 >
@@ -360,7 +361,7 @@ export function TradingShell({
 
             {/* Deposit Button — golden pill, never overlaps */}
             <Link
-              href="/trading/deposit"
+              href="/wallet/deposit"
               className={`flex items-center gap-1.5 rounded-full px-2.5 sm:px-3.5 py-1.5 text-xs font-bold transition active:scale-95 whitespace-nowrap shadow-sm shrink-0 ${
                 isDepositActive
                   ? 'bg-amber-300 text-ink-950 ring-2 ring-amber-400 shadow-amber-500/30'
@@ -377,10 +378,10 @@ export function TradingShell({
             {/* Notification Icon */}
             <Link
               href="/trading/notification"
-              className={`p-1.5 rounded-full text-xs transition shrink-0 ${
+              className={`relative p-1.5 rounded-full text-xs transition shrink-0 ${
                 isNotificationActive
-                  ? 'bg-brand/20 text-brand border border-brand/50'
-                  : 'border border-ink-700/80 bg-ink-800/60 text-slate-300 hover:text-white hover:border-brand/40'
+                  ? 'bg-amber-400/20 text-amber-400 border border-amber-400/50'
+                  : 'border border-ink-700/80 bg-ink-800/60 text-slate-300 hover:text-white hover:border-amber-400/40'
               }`}
               aria-label="Notifications"
             >
@@ -388,6 +389,9 @@ export function TradingShell({
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
+              <div className="absolute -top-1 -right-1">
+                <UnreadBadge />
+              </div>
             </Link>
 
             {/* Profile Link (direct navigation to /trading/profile — no dropdown) */}
@@ -477,6 +481,8 @@ export function TradingShell({
                   ? pathname === '/trading/home' || pathname === '/trading/'
                   : item.href === '/trading'
                   ? pathname === '/trading'
+                  : item.href === '/wallet/deposit'
+                  ? pathname.startsWith('/wallet/deposit') || pathname.startsWith('/trading/deposit')
                   : pathname.startsWith(item.href);
 
               return (
@@ -487,7 +493,7 @@ export function TradingShell({
                   aria-current={active ? 'page' : undefined}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition ${
                     active
-                      ? 'bg-brand/15 text-brand font-bold border border-brand/40'
+                      ? 'bg-amber-400/15 text-amber-400 font-bold border border-amber-400/40 shadow-sm'
                       : 'text-slate-300 hover:bg-ink-800 hover:text-white'
                   }`}
                 >
@@ -495,7 +501,7 @@ export function TradingShell({
                     className="h-5 w-5 shrink-0"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke={active ? '#14b8a6' : 'currentColor'}
+                    stroke={active ? '#F0B90B' : 'currentColor'}
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"

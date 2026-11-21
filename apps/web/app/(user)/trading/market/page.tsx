@@ -1,54 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { TradingShell } from '@/components/trading/trading-shell';
 import { getLiveMarketQuotes, type LiveMarketQuote } from '@/lib/api/live-rates';
+import { listTradingInstruments, type TradingInstrumentView } from '@/lib/api/trading';
 
 interface CoinItem {
   symbol: string;
   name: string;
   price: string;
+  priceNum: number;
   change: number;
   high?: string;
   low?: string;
   volume: string;
+  volumeNum: number;
   marketCap: string;
   category: string[];
+  type?: string;
 }
 
-const ALL_COINS: CoinItem[] = [
-  { symbol: 'BTC', name: 'Bitcoin', price: '$74,530.20', change: 1.02, volume: '$32.4B', marketCap: '$1.46T', category: ['All', 'Layer 1 / Layer 2', 'Payments'] },
-  { symbol: 'ETH', name: 'Ethereum', price: '$2,084.50', change: 1.10, volume: '$18.2B', marketCap: '$251.2B', category: ['All', 'Layer 1 / Layer 2'] },
-  { symbol: 'BNB', name: 'BNB', price: '$686.25', change: 1.56, volume: '$2.8B', marketCap: '$101.4B', category: ['All', 'BSC', 'Layer 1 / Layer 2'] },
-  { symbol: 'SOL', name: 'Solana', price: '$84.97', change: 1.91, volume: '$4.1B', marketCap: '$40.1B', category: ['All', 'Solana', 'Layer 1 / Layer 2'] },
-  { symbol: 'SNXXB', name: 'Synthetix Neo', price: '$4.45', change: 31.27, volume: '$120M', marketCap: '$1.4B', category: ['All', 'RWA', 'DeFi'] },
-  { symbol: 'MUUB', name: 'Muubit Protocol', price: '$18.82', change: 26.99, volume: '$85M', marketCap: '$720M', category: ['All', 'AI', 'Seed'] },
-  { symbol: 'CRWVB', name: 'Crowd Wave', price: '$60.33', change: 25.66, volume: '$210M', marketCap: '$2.3B', category: ['All', 'RWA', 'Launchpool'] },
-  { symbol: 'APPB', name: 'Apple BStock', price: '$404.33', change: 2.28, volume: '$45M', marketCap: '$3.1B', category: ['All', 'bStocks', 'RWA'] },
-  { symbol: 'BSPB', name: 'BioSys Pharma', price: '$40.29', change: -1.56, volume: '$12M', marketCap: '$450M', category: ['All', 'New', 'Seed'] },
-  { symbol: 'GEVB', name: 'GenEnergy Vol', price: '$812.22', change: 2.84, volume: '$64M', marketCap: '$5.8B', category: ['All', 'tCommodities', 'RWA'] },
-  { symbol: 'PEPE', name: 'Pepe', price: '$0.0000114', change: 14.20, volume: '$1.4B', marketCap: '$4.8B', category: ['All', 'MEME'] },
-  { symbol: 'DOGE', name: 'Dogecoin', price: '$0.184', change: 5.80, volume: '$2.1B', marketCap: '$26.5B', category: ['All', 'MEME', 'Payments'] },
-  { symbol: 'SHIB', name: 'Shiba Inu', price: '$0.000024', change: 3.40, volume: '$840M', marketCap: '$14.2B', category: ['All', 'MEME'] },
-  { symbol: 'NEAR', name: 'NEAR Protocol', price: '$5.62', change: 4.15, volume: '$420M', marketCap: '$6.2B', category: ['All', 'AI', 'Layer 1 / Layer 2'] },
-  { symbol: 'RENDER', name: 'Render Token', price: '$6.85', change: 8.90, volume: '$310M', marketCap: '$3.5B', category: ['All', 'AI', 'Solana'] },
-  { symbol: 'FET', name: 'Artificial Superintelligence', price: '$1.42', change: 6.75, volume: '$280M', marketCap: '$3.6B', category: ['All', 'AI'] },
-  { symbol: 'ONDO', name: 'Ondo Finance', price: '$0.95', change: 7.20, volume: '$190M', marketCap: '$1.3B', category: ['All', 'RWA'] },
-  { symbol: 'PENDLE', name: 'Pendle Finance', price: '$4.80', change: 3.10, volume: '$95M', marketCap: '$760M', category: ['All', 'RWA', 'DeFi'] },
-  { symbol: 'SUI', name: 'Sui Network', price: '$3.28', change: 12.40, volume: '$880M', marketCap: '$9.3B', category: ['All', 'Layer 1 / Layer 2'] },
-  { symbol: 'APT', name: 'Aptos', price: '$9.84', change: -2.10, volume: '$310M', marketCap: '$4.8B', category: ['All', 'Layer 1 / Layer 2'] },
-  { symbol: 'XRP', name: 'XRP', price: '$0.58', change: 0.85, volume: '$1.2B', marketCap: '$32.8B', category: ['All', 'Payments'] },
-  { symbol: 'ADA', name: 'Cardano', price: '$0.42', change: -0.45, volume: '$450M', marketCap: '$15.1B', category: ['All', 'Layer 1 / Layer 2'] },
-  { symbol: 'AVAX', name: 'Avalanche', price: '$27.80', change: 2.30, volume: '$520M', marketCap: '$11.2B', category: ['All', 'Layer 1 / Layer 2'] },
-  { symbol: 'LINK', name: 'Chainlink', price: '$13.20', change: 1.80, volume: '$340M', marketCap: '$7.9B', category: ['All', 'DeFi', 'RWA'] },
-  { symbol: 'GALA', name: 'Gala Games', price: '$0.024', change: 6.40, volume: '$150M', marketCap: '$820M', category: ['All', 'Gaming'] },
-  { symbol: 'IMX', name: 'ImmutableX', price: '$1.48', change: 4.80, volume: '$110M', marketCap: '$2.3B', category: ['All', 'Gaming', 'Layer 1 / Layer 2'] },
-  { symbol: 'AXS', name: 'Axie Infinity', price: '$5.40', change: 2.10, volume: '$85M', marketCap: '$780M', category: ['All', 'Gaming'] },
-  { symbol: 'NVDA-S', name: 'NVIDIA Stock Token', price: '$142.50', change: 4.50, volume: '$85M', marketCap: '$3.5T', category: ['All', 'bStocks', 'RWA'] },
-  { symbol: 'TSLA-S', name: 'Tesla Stock Token', price: '$218.00', change: -1.20, volume: '$62M', marketCap: '$690B', category: ['All', 'bStocks', 'RWA'] },
-  { symbol: 'XAU-C', name: 'Gold Tokenized', price: '$2,740.00', change: 0.42, volume: '$140M', marketCap: '$8.2B', category: ['All', 'tCommodities', 'RWA'] },
-  { symbol: 'XAG-C', name: 'Silver Tokenized', price: '$32.50', change: -0.80, volume: '$48M', marketCap: '$1.8B', category: ['All', 'tCommodities', 'RWA'] },
+const DEFAULT_MARKET_COINS: CoinItem[] = [
+  { symbol: 'BTC', name: 'Bitcoin', price: '$74,530.20', priceNum: 74530.20, change: 1.02, volume: '$32.4B', volumeNum: 32.4e9, marketCap: '$1.46T', category: ['All', 'Cryptos', 'Spot', 'Futures', 'Layer 1 / Layer 2', 'Payments'] },
+  { symbol: 'ETH', name: 'Ethereum', price: '$2,084.50', priceNum: 2084.50, change: 1.10, volume: '$18.2B', volumeNum: 18.2e9, marketCap: '$251.2B', category: ['All', 'Cryptos', 'Spot', 'Futures', 'Layer 1 / Layer 2'] },
+  { symbol: 'BNB', name: 'BNB', price: '$686.25', priceNum: 686.25, change: 1.56, volume: '$2.8B', volumeNum: 2.8e9, marketCap: '$101.4B', category: ['All', 'Cryptos', 'Spot', 'Futures', 'BSC', 'Layer 1 / Layer 2'] },
+  { symbol: 'SOL', name: 'Solana', price: '$84.97', priceNum: 84.97, change: 1.91, volume: '$4.1B', volumeNum: 4.1e9, marketCap: '$40.1B', category: ['All', 'Cryptos', 'Spot', 'Futures', 'Solana', 'Layer 1 / Layer 2'] },
+  { symbol: 'XRP', name: 'XRP', price: '$0.58', priceNum: 0.58, change: 0.85, volume: '$1.2B', volumeNum: 1.2e9, marketCap: '$32.8B', category: ['All', 'Cryptos', 'Spot', 'Payments'] },
+  { symbol: 'DOGE', name: 'Dogecoin', price: '$0.184', priceNum: 0.184, change: 5.80, volume: '$2.1B', volumeNum: 2.1e9, marketCap: '$26.5B', category: ['All', 'Cryptos', 'MEME', 'Payments'] },
+  { symbol: 'PEPE', name: 'Pepe', price: '$0.0000114', priceNum: 0.0000114, change: 14.20, volume: '$1.4B', volumeNum: 1.4e9, marketCap: '$4.8B', category: ['All', 'Cryptos', 'MEME'] },
+  { symbol: 'NEAR', name: 'NEAR Protocol', price: '$5.62', priceNum: 5.62, change: 4.15, volume: '$420M', volumeNum: 420e6, marketCap: '$6.2B', category: ['All', 'Cryptos', 'AI', 'Layer 1 / Layer 2'] },
+  { symbol: 'SUI', name: 'Sui Network', price: '$3.28', priceNum: 3.28, change: 12.40, volume: '$880M', volumeNum: 880e6, marketCap: '$9.3B', category: ['All', 'Cryptos', 'Layer 1 / Layer 2'] },
+  { symbol: 'APT', name: 'Aptos', price: '$9.84', priceNum: 9.84, change: -2.10, volume: '$310M', volumeNum: 310e6, marketCap: '$4.8B', category: ['All', 'Cryptos', 'Layer 1 / Layer 2'] },
+  { symbol: 'NVDA', name: 'NVIDIA Corp', price: '$142.50', priceNum: 142.50, change: 4.50, volume: '$8.5B', volumeNum: 8.5e9, marketCap: '$3.5T', category: ['All', 'TradFi', 'bStocks', 'RWA'] },
+  { symbol: 'TSLA', name: 'Tesla Inc', price: '$218.00', priceNum: 218.00, change: -1.20, volume: '$6.2B', volumeNum: 6.2e9, marketCap: '$690B', category: ['All', 'TradFi', 'bStocks', 'RWA'] },
+  { symbol: 'AAPL', name: 'Apple Inc', price: '$228.50', priceNum: 228.50, change: 0.65, volume: '$4.5B', volumeNum: 4.5e9, marketCap: '$3.4T', category: ['All', 'TradFi', 'bStocks', 'RWA'] },
+  { symbol: 'XAUUSD', name: 'Gold Spot', price: '$2,740.00', priceNum: 2740.00, change: 0.42, volume: '$14.0B', volumeNum: 14.0e9, marketCap: '$17.2T', category: ['All', 'TradFi', 'tCommodities', 'RWA'] },
+  { symbol: 'EURUSD', name: 'Euro / US Dollar', price: '1.0842', priceNum: 1.0842, change: 0.15, volume: '$88.0B', volumeNum: 88.0e9, marketCap: '—', category: ['All', 'TradFi', 'Forex'] },
 ];
 
 export default function TradingMarketPage() {
@@ -56,9 +44,37 @@ export default function TradingMarketPage() {
   const [marketType, setMarketType] = useState<string>('Cryptos');
   const [category, setCategory] = useState<string>('All');
   const [search, setSearch] = useState('');
-  const [timeframe, setTimeframe] = useState<'24h' | '7d' | '30d'>('24h');
-  const [liveQuotes, setLiveQuotes] = useState<Record<string, LiveMarketQuote>>({});
+  const [sortBy, setSortBy] = useState<'name' | 'price' | 'change' | 'volume'>('volume');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tr_market_favs');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return ['BTC', 'ETH', 'SOL', 'NVDA'];
+  });
 
+  const [liveQuotes, setLiveQuotes] = useState<Record<string, LiveMarketQuote>>({});
+  const [backendInstruments, setBackendInstruments] = useState<TradingInstrumentView[]>([]);
+
+  // Fetch backend instruments once
+  useEffect(() => {
+    let mounted = true;
+    listTradingInstruments()
+      .then((insts) => {
+        if (mounted && insts && insts.length > 0) {
+          setBackendInstruments(insts);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Poll live market quotes every 3s
   useEffect(() => {
     let mounted = true;
     async function sync() {
@@ -75,8 +91,20 @@ export default function TradingMarketPage() {
     };
   }, []);
 
+  const toggleFavorite = (symbol: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(symbol)
+        ? prev.filter((s) => s !== symbol)
+        : [...prev, symbol];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('tr_market_favs', JSON.stringify(next));
+      }
+      return next;
+    });
+  };
+
   const getCoinPrice = (sym: string, fallback: string) => {
-    const cleanSym = sym.replace(/-[A-Z]$/, ''); // e.g. NVDA-S -> NVDA
+    const cleanSym = sym.replace(/-[A-Z]$/, '');
     const q = liveQuotes[cleanSym + 'USD'] || liveQuotes[cleanSym + 'USDT'] || liveQuotes[cleanSym] || liveQuotes[sym];
     if (q && q.currentPrice > 0) {
       const p = q.currentPrice / 100;
@@ -95,33 +123,28 @@ export default function TradingMarketPage() {
     return fallback;
   };
 
-  // Top 4 card categories
+  // Top highlight cards
   const topCoins = [
     { symbol: 'BNB', price: getCoinPrice('BNB', '$686.25'), change: getCoinChange('BNB', 1.56), iconBg: 'bg-amber-400 text-black' },
-    { symbol: 'BTC', price: getCoinPrice('BTC', '$74.53K'), change: getCoinChange('BTC', 1.02), iconBg: 'bg-[#F0B90B] text-black' },
-    { symbol: 'ETH', price: getCoinPrice('ETH', '$2.08K'), change: getCoinChange('ETH', 1.10), iconBg: 'bg-indigo-500 text-white' },
-  ];
-
-  const newCoins = [
-    { symbol: 'APPB', price: '$404.33', change: 2.28, iconBg: 'bg-amber-400 text-black' },
-    { symbol: 'BSPB', price: '$40.29', change: -1.56, iconBg: 'bg-amber-400 text-black' },
-    { symbol: 'GEVB', price: '$812.22', change: 2.84, iconBg: 'bg-amber-400 text-black' },
+    { symbol: 'BTC', price: getCoinPrice('BTC', '$74,530.20'), change: getCoinChange('BTC', 1.02), iconBg: 'bg-[#F0B90B] text-black' },
+    { symbol: 'ETH', price: getCoinPrice('ETH', '$2,084.50'), change: getCoinChange('ETH', 1.10), iconBg: 'bg-indigo-500 text-white' },
   ];
 
   const gainerCoins = [
-    { symbol: 'SNXXB', price: '$4.45', change: 31.27, iconBg: 'bg-amber-400 text-black' },
-    { symbol: 'MUUB', price: '$18.82', change: 26.99, iconBg: 'bg-amber-400 text-black' },
-    { symbol: 'CRWVB', price: '$60.33', change: 25.66, iconBg: 'bg-amber-400 text-black' },
+    { symbol: 'PEPE', price: getCoinPrice('PEPE', '$0.0000114'), change: getCoinChange('PEPE', 14.20), iconBg: 'bg-emerald-500 text-white' },
+    { symbol: 'SUI', price: getCoinPrice('SUI', '$3.28'), change: getCoinChange('SUI', 12.40), iconBg: 'bg-blue-400 text-white' },
+    { symbol: 'DOGE', price: getCoinPrice('DOGE', '$0.184'), change: getCoinChange('DOGE', 5.80), iconBg: 'bg-amber-400 text-black' },
   ];
 
   const volumeCoins = [
-    { symbol: 'BTC', price: getCoinPrice('BTC', '$74.53K'), change: getCoinChange('BTC', 1.02), iconBg: 'bg-[#F0B90B] text-black' },
-    { symbol: 'ETH', price: getCoinPrice('ETH', '$2.08K'), change: getCoinChange('ETH', 1.10), iconBg: 'bg-indigo-500 text-white' },
-    { symbol: 'SOL', price: getCoinPrice('SOL', '$84.97'), change: getCoinChange('SOL', 1.91), iconBg: 'bg-amber-400 text-black' },
+    { symbol: 'BTC', price: getCoinPrice('BTC', '$74,530.20'), change: getCoinChange('BTC', 1.02), iconBg: 'bg-[#F0B90B] text-black' },
+    { symbol: 'ETH', price: getCoinPrice('ETH', '$2,084.50'), change: getCoinChange('ETH', 1.10), iconBg: 'bg-indigo-500 text-white' },
+    { symbol: 'SOL', price: getCoinPrice('SOL', '$84.97'), change: getCoinChange('SOL', 1.91), iconBg: 'bg-purple-500 text-white' },
   ];
 
   const categories = [
     'All',
+    'Layer 1 / Layer 2',
     'bStocks',
     'tCommodities',
     'BSC',
@@ -130,11 +153,6 @@ export default function TradingMarketPage() {
     'MEME',
     'Payments',
     'AI',
-    'Layer 1 / Layer 2',
-    'Seed',
-    'Launchpool',
-    'Megadrop',
-    'Gaming',
     'DeFi',
   ];
 
@@ -144,159 +162,208 @@ export default function TradingMarketPage() {
     { id: 'Spot', label: 'Spot' },
     { id: 'Futures', label: 'Futures' },
     { id: 'TradFi', label: 'TradFi', isNew: true },
-    { id: 'Alpha', label: 'Alpha' },
-    { id: 'New', label: 'New' },
-    { id: 'Zones', label: 'Zones' },
   ];
 
-  const filteredCoins = ALL_COINS.map((c) => ({
-    ...c,
-    price: getCoinPrice(c.symbol, c.price),
-    change: getCoinChange(c.symbol, c.change),
-  })).filter((c) => {
-    const matchSearch =
-      c.symbol.toLowerCase().includes(search.toLowerCase()) ||
-      c.name.toLowerCase().includes(search.toLowerCase());
-    if (!matchSearch) return false;
+  // Merge backend instruments with DEFAULT_MARKET_COINS
+  const mergedCoins = useMemo(() => {
+    const list = [...DEFAULT_MARKET_COINS];
+    backendInstruments.forEach((bi) => {
+      const existing = list.find((c) => c.symbol === bi.symbol || c.symbol + 'USD' === bi.symbol);
+      if (existing) {
+        existing.priceNum = bi.currentPrice / 100;
+        existing.change = (bi.change24h ?? 0) / 100;
+        existing.high = `$${((bi.high24h ?? bi.currentPrice) / 100).toFixed(2)}`;
+        existing.low = `$${((bi.low24h ?? bi.currentPrice) / 100).toFixed(2)}`;
+      } else {
+        list.push({
+          symbol: bi.symbol,
+          name: bi.name,
+          price: `$${(bi.currentPrice / 100).toFixed(2)}`,
+          priceNum: bi.currentPrice / 100,
+          change: (bi.change24h ?? 0) / 100,
+          high: `$${((bi.high24h ?? bi.currentPrice) / 100).toFixed(2)}`,
+          low: `$${((bi.low24h ?? bi.currentPrice) / 100).toFixed(2)}`,
+          volume: bi.volume24h ? `$${(bi.volume24h / 1e6).toFixed(2)}M` : '$10.0M',
+          volumeNum: bi.volume24h || 10e6,
+          marketCap: '$1.0B',
+          category: ['All', bi.type === 'CRYPTO' ? 'Cryptos' : 'TradFi'],
+          type: bi.type,
+        });
+      }
+    });
 
-    if (category === 'All') return true;
-    return c.category.includes(category);
-  });
+    // Apply live quotes
+    return list.map((c) => {
+      const q = liveQuotes[c.symbol + 'USD'] || liveQuotes[c.symbol + 'USDT'] || liveQuotes[c.symbol];
+      if (q && q.currentPrice > 0) {
+        const p = q.currentPrice / 100;
+        return {
+          ...c,
+          priceNum: p,
+          price: p >= 1000 ? `$${p.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${p.toFixed(2)}`,
+          change: q.change24h / 100,
+        };
+      }
+      return c;
+    });
+  }, [backendInstruments, liveQuotes]);
+
+  // Filtering & Sorting
+  const filteredCoins = useMemo(() => {
+    return mergedCoins
+      .filter((coin) => {
+        if (marketType === 'Favorites') {
+          if (!favorites.includes(coin.symbol)) return false;
+        } else if (marketType === 'TradFi') {
+          if (!coin.category.includes('TradFi') && !coin.category.includes('bStocks') && !coin.category.includes('tCommodities')) return false;
+        } else if (marketType === 'Cryptos') {
+          if (!coin.category.includes('Cryptos')) return false;
+        }
+
+        if (category !== 'All' && !coin.category.includes(category)) {
+          return false;
+        }
+
+        if (search.trim()) {
+          const s = search.toLowerCase();
+          return coin.symbol.toLowerCase().includes(s) || coin.name.toLowerCase().includes(s);
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        let cmp = 0;
+        if (sortBy === 'name') cmp = a.symbol.localeCompare(b.symbol);
+        else if (sortBy === 'price') cmp = a.priceNum - b.priceNum;
+        else if (sortBy === 'change') cmp = a.change - b.change;
+        else if (sortBy === 'volume') cmp = a.volumeNum - b.volumeNum;
+        return sortOrder === 'asc' ? cmp : -cmp;
+      });
+  }, [mergedCoins, marketType, category, search, sortBy, sortOrder, favorites]);
+
+  const handleSort = (field: typeof sortBy) => {
+    if (sortBy === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      setSortOrder('desc');
+    }
+  };
 
   return (
-    <TradingShell fullWidth>
-      <div className="mx-auto max-w-7xl px-2 sm:px-4 py-4 space-y-6">
+    <TradingShell>
+      <div className="space-y-8 max-w-7xl mx-auto py-2">
+        {/* Top Highlight Cards (Binance Style) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Card 1: Highlights */}
+          <div className="rounded-2xl border border-ink-700/80 bg-ink-900/60 p-5 shadow-xl backdrop-blur space-y-3">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+              <span className="text-white">Hot Market</span>
+              <span className="text-[10px] text-amber-400">Live</span>
+            </div>
+            <div className="space-y-2.5">
+              {topCoins.map((c) => (
+                <Link
+                  key={c.symbol}
+                  href={`/trading?symbol=${c.symbol}USD`}
+                  className="flex items-center justify-between hover:bg-white/5 p-1 rounded-lg transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold ${c.iconBg}`}>
+                      {c.symbol.slice(0, 2)}
+                    </span>
+                    <span className="font-bold text-xs text-white">{c.symbol}</span>
+                  </div>
+                  <div className="text-right font-mono text-xs">
+                    <span className="text-white font-bold">{c.price}</span>
+                    <span className={`ml-2 text-[11px] ${c.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {c.change >= 0 ? '+' : ''}{c.change.toFixed(2)}%
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
 
-        {/* ── TOP SECTION: Overview / Trading Data / Token Unlock ── */}
-        <div className="flex items-center gap-6 border-b border-white/5 pb-2">
-          {(['Overview', 'Trading Data', 'Token Unlock'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setTopTab(tab)}
-              className={`text-base sm:text-lg font-bold transition ${
-                topTab === tab ? 'text-white border-b-2 border-white pb-2' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+          {/* Card 2: Top Gainers */}
+          <div className="rounded-2xl border border-ink-700/80 bg-ink-900/60 p-5 shadow-xl backdrop-blur space-y-3">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+              <span className="text-white">Top Gainers</span>
+              <span className="text-[10px] text-emerald-400">24h</span>
+            </div>
+            <div className="space-y-2.5">
+              {gainerCoins.map((c) => (
+                <Link
+                  key={c.symbol}
+                  href={`/trading?symbol=${c.symbol}USD`}
+                  className="flex items-center justify-between hover:bg-white/5 p-1 rounded-lg transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold ${c.iconBg}`}>
+                      {c.symbol.slice(0, 2)}
+                    </span>
+                    <span className="font-bold text-xs text-white">{c.symbol}</span>
+                  </div>
+                  <div className="text-right font-mono text-xs">
+                    <span className="text-white font-bold">{c.price}</span>
+                    <span className="ml-2 text-[11px] text-emerald-400 font-bold">
+                      +{c.change.toFixed(2)}%
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Card 3: Top Volume */}
+          <div className="rounded-2xl border border-ink-700/80 bg-ink-900/60 p-5 shadow-xl backdrop-blur space-y-3">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+              <span className="text-white">Top Volume</span>
+              <span className="text-[10px] text-purple-400">Turnover</span>
+            </div>
+            <div className="space-y-2.5">
+              {volumeCoins.map((c) => (
+                <Link
+                  key={c.symbol}
+                  href={`/trading?symbol=${c.symbol}USD`}
+                  className="flex items-center justify-between hover:bg-white/5 p-1 rounded-lg transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold ${c.iconBg}`}>
+                      {c.symbol.slice(0, 2)}
+                    </span>
+                    <span className="font-bold text-xs text-white">{c.symbol}</span>
+                  </div>
+                  <div className="text-right font-mono text-xs">
+                    <span className="text-white font-bold">{c.price}</span>
+                    <span className={`ml-2 text-[11px] ${c.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {c.change >= 0 ? '+' : ''}{c.change.toFixed(2)}%
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* ── 4 BINANCE HIGHLIGHT CARDS (Top, New, Top Gainer, Top Volume) ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          
-          {/* Card 1: Top */}
-          <div className="rounded-2xl border border-white/10 bg-[#121620] p-4 shadow-lg space-y-3">
-            <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
-              <span className="text-white font-bold">Top</span>
-              <button className="hover:text-amber-400 transition text-[11px] flex items-center">More &gt;</button>
-            </div>
-            <div className="space-y-2.5">
-              {topCoins.map((coin) => (
-                <div key={coin.symbol} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold ${coin.iconBg}`}>
-                      {coin.symbol.slice(0, 3)}
-                    </span>
-                    <span className="font-bold text-white">{coin.symbol}</span>
-                  </div>
-                  <span className="font-mono text-slate-200">{coin.price}</span>
-                  <span className={`font-mono text-xs font-bold ${coin.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {coin.change >= 0 ? '+' : ''}{coin.change}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Card 2: New */}
-          <div className="rounded-2xl border border-white/10 bg-[#121620] p-4 shadow-lg space-y-3">
-            <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
-              <span className="text-white font-bold">New</span>
-              <button className="hover:text-amber-400 transition text-[11px] flex items-center">More &gt;</button>
-            </div>
-            <div className="space-y-2.5">
-              {newCoins.map((coin) => (
-                <div key={coin.symbol} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold ${coin.iconBg}`}>
-                      {coin.symbol.slice(0, 3)}
-                    </span>
-                    <span className="font-bold text-white">{coin.symbol}</span>
-                  </div>
-                  <span className="font-mono text-slate-200">{coin.price}</span>
-                  <span className={`font-mono text-xs font-bold ${coin.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {coin.change >= 0 ? '+' : ''}{coin.change}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Card 3: Top Gainer */}
-          <div className="rounded-2xl border border-white/10 bg-[#121620] p-4 shadow-lg space-y-3">
-            <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
-              <span className="text-white font-bold">Top Gainer</span>
-              <button className="hover:text-amber-400 transition text-[11px] flex items-center">More &gt;</button>
-            </div>
-            <div className="space-y-2.5">
-              {gainerCoins.map((coin) => (
-                <div key={coin.symbol} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold ${coin.iconBg}`}>
-                      {coin.symbol.slice(0, 3)}
-                    </span>
-                    <span className="font-bold text-white">{coin.symbol}</span>
-                  </div>
-                  <span className="font-mono text-slate-200">{coin.price}</span>
-                  <span className={`font-mono text-xs font-bold ${coin.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    +{coin.change}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Card 4: Top Volume */}
-          <div className="rounded-2xl border border-white/10 bg-[#121620] p-4 shadow-lg space-y-3">
-            <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
-              <span className="text-white font-bold">Top Volume</span>
-              <button className="hover:text-amber-400 transition text-[11px] flex items-center">More &gt;</button>
-            </div>
-            <div className="space-y-2.5">
-              {volumeCoins.map((coin) => (
-                <div key={coin.symbol} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold ${coin.iconBg}`}>
-                      {coin.symbol.slice(0, 3)}
-                    </span>
-                    <span className="font-bold text-white">{coin.symbol}</span>
-                  </div>
-                  <span className="font-mono text-slate-200">{coin.price}</span>
-                  <span className={`font-mono text-xs font-bold ${coin.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    +{coin.change}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── MARKET TABS ROW (Favorites, Cryptos, Spot, Futures, TradFi, Alpha, New, Zones) ── */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-4 border-t border-white/5">
-          <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto scrollbar-none text-xs sm:text-sm font-semibold">
+        {/* Market Filter Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink-800 pb-3">
+          {/* Main Market Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
             {marketTypes.map((mt) => (
               <button
                 key={mt.id}
+                type="button"
                 onClick={() => setMarketType(mt.id)}
-                className={`flex items-center gap-1.5 transition pb-1 whitespace-nowrap ${
-                  marketType === mt.id ? 'text-white border-b-2 border-amber-400 font-bold' : 'text-slate-400 hover:text-white'
+                className={`rounded-xl px-4 py-2 text-xs font-bold transition whitespace-nowrap ${
+                  marketType === mt.id
+                    ? 'bg-amber-400/15 text-amber-400 border border-amber-400/40 shadow-sm'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
                 }`}
               >
                 <span>{mt.label}</span>
                 {mt.isNew && (
-                  <span className="rounded bg-amber-400/20 px-1 py-0.2 text-[9px] font-bold text-amber-300">
+                  <span className="ml-1.5 rounded bg-amber-400/20 px-1 py-0.2 text-[9px] font-bold text-amber-300">
                     New
                   </span>
                 )}
@@ -304,150 +371,153 @@ export default function TradingMarketPage() {
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Quick search input */}
-            <div className="relative">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search coin..."
-                className="h-8 w-36 sm:w-48 rounded-full border border-white/10 bg-[#121620] pl-8 pr-3 text-xs text-white placeholder:text-slate-500 outline-none focus:border-amber-400"
-              />
-              <svg
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <circle cx="11" cy="11" r="7" strokeWidth={2} />
-                <path d="M20 20l-3.5-3.5" strokeWidth={2} strokeLinecap="round" />
-              </svg>
-            </div>
-
-            <button
-              type="button"
-              className="p-1.5 rounded-full border border-white/10 bg-[#121620] text-slate-400 hover:text-white transition"
-              title="Notifications"
+          {/* Search Box */}
+          <div className="relative">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search markets..."
+              className="h-9 w-full sm:w-56 rounded-full border border-ink-700 bg-ink-950 pl-8 pr-3 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-400 transition"
+            />
+            <svg
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-            </button>
+              <circle cx="11" cy="11" r="7" strokeWidth={2} />
+              <path d="M20 20l-3.5-3.5" strokeWidth={2} strokeLinecap="round" />
+            </svg>
           </div>
         </div>
 
-        {/* ── SUBCATEGORY PILLS (All, bStocks, tCommodities, BSC, Solana, RWA, MEME, AI, etc.) ── */}
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-1">
+        {/* Subcategories (Pills) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
           {categories.map((cat) => (
             <button
               key={cat}
+              type="button"
               onClick={() => setCategory(cat)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap transition flex items-center gap-1 ${
+              className={`rounded-full px-3 py-1 text-[11px] font-semibold whitespace-nowrap transition ${
                 category === cat
                   ? 'bg-white/15 text-white font-bold border border-white/20'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span>{cat}</span>
-              {cat === 'bStocks' && (
-                <span className="text-[9px] font-bold text-amber-300 ml-0.5">New</span>
-              )}
+              {cat}
             </button>
           ))}
         </div>
 
-        {/* ── TOP TOKENS HEADER BANNER ── */}
-        <div className="space-y-1 pt-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-bold text-white">Top Tokens by Market Capitalization</h2>
-            <button className="text-xs text-slate-400 hover:text-amber-400 font-semibold transition flex items-center gap-0.5">
-              <span>More</span>
-              <span>&gt;</span>
-            </button>
-          </div>
-          <p className="text-xs text-slate-400 max-w-4xl">
-            Get a comprehensive snapshot of all cryptocurrencies available on Royale Exchange. This page displays the latest prices, 24-hour trading volume, price changes, and market capitalizations for all cryptocurrencies.
-          </p>
-        </div>
-
-        {/* ── BINANCE-STYLE FULL MARKETS TABLE ── */}
-        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#121620] shadow-xl">
+        {/* Markets Table */}
+        <div className="overflow-x-auto rounded-2xl border border-ink-700/80 bg-ink-900/60 shadow-2xl backdrop-blur">
           <table className="w-full text-left text-xs">
-            <thead className="border-b border-white/5 text-[11px] font-semibold text-slate-400">
+            <thead className="border-b border-ink-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-ink-950/40">
               <tr>
-                <th className="py-3 px-4 font-medium">Name ⇅</th>
-                <th className="py-3 px-4 text-right font-medium">Price ⇅</th>
-                <th className="py-3 px-4 text-right font-medium">
-                  <div className="inline-flex items-center gap-1 rounded bg-white/5 px-2 py-0.5 text-[10px] text-white">
-                    <span>{timeframe}</span>
-                    <button
-                      onClick={() => setTimeframe(t => t === '24h' ? '7d' : t === '7d' ? '30d' : '24h')}
-                      className="text-slate-400 hover:text-white"
-                    >
-                      ▾
-                    </button>
-                  </div>{' '}
-                  Change ⇅
+                <th className="py-3 px-4 w-10 text-center">★</th>
+                <th
+                  onClick={() => handleSort('name')}
+                  className="py-3 px-4 font-semibold cursor-pointer hover:text-white transition"
+                >
+                  Pair {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
-                <th className="py-3 px-4 text-right font-medium hidden sm:table-cell">24h Volume ⇅</th>
-                <th className="py-3 px-4 text-right font-medium hidden md:table-cell">Market Cap ⇅</th>
-                <th className="py-3 px-4 text-right font-medium">Action</th>
+                <th
+                  onClick={() => handleSort('price')}
+                  className="py-3 px-4 text-right font-semibold cursor-pointer hover:text-white transition"
+                >
+                  Price {sortBy === 'price' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  onClick={() => handleSort('change')}
+                  className="py-3 px-4 text-right font-semibold cursor-pointer hover:text-white transition"
+                >
+                  24h Change {sortBy === 'change' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  onClick={() => handleSort('volume')}
+                  className="py-3 px-4 text-right font-semibold cursor-pointer hover:text-white transition hidden sm:table-cell"
+                >
+                  24h Volume {sortBy === 'volume' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="py-3 px-4 text-right font-semibold hidden md:table-cell">Market Cap</th>
+                <th className="py-3 px-4 text-right font-semibold">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
-              {filteredCoins.map((coin) => {
-                const isUp = coin.change >= 0;
-                return (
-                  <tr key={coin.symbol} className="hover:bg-white/[0.02] transition">
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400/10 font-bold text-amber-300 text-xs shadow-inner">
-                          {coin.symbol.slice(0, 3)}
-                        </span>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-white text-sm">{coin.symbol}</span>
-                            <span className="text-[11px] text-slate-400 hidden xs:inline">{coin.name}</span>
+            <tbody className="divide-y divide-ink-800">
+              {filteredCoins.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-500 font-medium">
+                    No market pairs found matching your criteria.
+                  </td>
+                </tr>
+              ) : (
+                filteredCoins.map((coin) => {
+                  const isUp = coin.change >= 0;
+                  const isFav = favorites.includes(coin.symbol);
+                  const tradeLink = `/trading?symbol=${coin.symbol.includes('USD') ? coin.symbol : coin.symbol + 'USD'}`;
+
+                  return (
+                    <tr key={coin.symbol} className="hover:bg-white/[0.02] transition">
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() => toggleFavorite(coin.symbol)}
+                          title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+                          className={`text-sm transition ${isFav ? 'text-amber-400' : 'text-slate-600 hover:text-slate-400'}`}
+                        >
+                          {isFav ? '★' : '☆'}
+                        </button>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Link href={tradeLink} className="flex items-center gap-2.5 group">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400/10 font-bold text-amber-400 text-xs shadow-inner">
+                            {coin.symbol.slice(0, 3)}
+                          </span>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-white text-sm group-hover:text-amber-400 transition">
+                                {coin.symbol}
+                              </span>
+                              <span className="text-[11px] text-slate-400 hidden xs:inline">{coin.name}</span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 xs:hidden">{coin.name}</div>
                           </div>
-                          <div className="text-[10px] text-slate-500 xs:hidden">{coin.name}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-white text-sm">
-                      {coin.price}
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold">
-                      <span
-                        className={`inline-block rounded px-2 py-0.5 text-xs ${
-                          isUp ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'
-                        }`}
-                      >
-                        {isUp ? '+' : ''}{coin.change}%
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-mono text-slate-300 hidden sm:table-cell">
-                      {coin.volume}
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-mono text-slate-300 hidden md:table-cell">
-                      {coin.marketCap}
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <Link
-                        href={`/trading?symbol=${coin.symbol}USD`}
-                        className="rounded-lg bg-amber-400/15 px-3 py-1 font-bold text-amber-300 hover:bg-amber-400 hover:text-black transition text-xs active:scale-95 inline-block"
-                      >
-                        Trade
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
+                        </Link>
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-bold text-white text-sm">
+                        {coin.price}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-bold">
+                        <span
+                          className={`inline-block rounded-md px-2 py-0.5 text-xs font-semibold ${
+                            isUp ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'
+                          }`}
+                        >
+                          {isUp ? '+' : ''}{coin.change.toFixed(2)}%
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-slate-300 hidden sm:table-cell">
+                        {coin.volume}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-slate-400 hidden md:table-cell">
+                        {coin.marketCap}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <Link
+                          href={tradeLink}
+                          className="rounded-lg bg-amber-400/15 px-3 py-1 font-bold text-amber-300 hover:bg-amber-400 hover:text-ink-950 transition text-xs active:scale-95 inline-block"
+                        >
+                          Trade
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
-
       </div>
     </TradingShell>
   );

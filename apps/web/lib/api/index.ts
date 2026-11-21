@@ -5,5 +5,6 @@ export * from './betting';
 export * from './wallet';
 export * from './games';
 export * from './trading';
+export * from './p2p';
 export * from './profile';
 export * from './casino';
