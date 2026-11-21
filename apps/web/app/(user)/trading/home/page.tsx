@@ -255,7 +255,7 @@ export default function TradingHomePage() {
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
               Trade 100+ Cryptos &amp; Assets with{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-brand">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-[#F0B90B]">
                 Ultra-Low Latency
               </span>
             </h1>
@@ -269,14 +269,14 @@ export default function TradingHomePage() {
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
                 href="/trading"
-                className="rounded-full bg-gradient-to-r from-amber-400 to-[#F0B90B] px-6 py-3 text-xs sm:text-sm font-bold text-ink-950 shadow-lg shadow-amber-500/25 hover:brightness-110 transition active:scale-95"
+                className="rounded-full bg-gradient-to-r from-[#F0B90B] to-[#fcd535] px-6 py-3 text-xs sm:text-sm font-bold text-ink-950 shadow-lg shadow-amber-500/25 hover:brightness-110 transition active:scale-95"
               >
                 Start Trading Terminal &gt;
               </Link>
 
               <Link
                 href="/trading/market"
-                className="rounded-full border border-brand/50 bg-brand/10 px-6 py-3 text-xs sm:text-sm font-bold text-brand hover:bg-brand/20 transition active:scale-95"
+                className="rounded-full bg-gradient-to-r from-[#F0B90B] to-[#fcd535] px-6 py-3 text-xs sm:text-sm font-bold text-ink-950 shadow-lg shadow-amber-500/25 hover:brightness-110 transition active:scale-95"
               >
                 Explore Markets
               </Link>
@@ -285,7 +285,7 @@ export default function TradingHomePage() {
                 type="button"
                 onClick={handleClaimDemoFunds}
                 disabled={faucetLoading}
-                className="rounded-full border border-ink-700 bg-ink-800/80 px-5 py-3 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white hover:border-ink-600 transition disabled:opacity-50"
+                className="rounded-full bg-gradient-to-r from-[#F0B90B] to-[#fcd535] px-5 py-3 text-xs sm:text-sm font-semibold text-ink-950 shadow-lg shadow-amber-500/25 hover:brightness-110 transition active:scale-95"
               >
                 {faucetLoading ? 'Claiming...' : 'Claim $10,000 Demo Faucet'}
               </button>

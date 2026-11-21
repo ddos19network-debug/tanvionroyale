@@ -14,7 +14,7 @@ function EarnCard({
   ctaHref: string;
 }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-[#121620] p-6 sm:p-8 shadow-sm hover:bg-white/5 transition">
+    <div className="rounded-xl border border-amber-400/20 bg-[#121620] p-6 sm:p-8 shadow-sm hover:bg-amber-500/10 transition">
       <div className="flex items-start gap-4 sm:items-center sm:flex-row-reverse">
         <div className="flex-shrink-0 rounded-lg bg-amber-500/20 p-3 sm:p-4">
           <svg className="h-5 w-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -32,7 +32,7 @@ function EarnCard({
       <div className="mt-4 sm:mt-0 text-right sm:text-left">
         <a
           href={ctaHref}
-          className="inline-block rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-black transition hover:bg-amber-300 shadow-md shadow-amber-500/10 active:scale-95"
+          className="inline-block rounded-lg bg-gradient-to-r from-[#F0B90B] to-[#fcd535] px-4 py-2 text-sm font-bold text-black transition hover:bg-amber-300 shadow-md shadow-amber-500/10 active:scale-95"
         >
           {ctaText}
         </a>

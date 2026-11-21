@@ -98,26 +98,26 @@ export default function TradingMarketPage() {
   // Top 4 card categories
   const topCoins = [
     { symbol: 'BNB', price: getCoinPrice('BNB', '$686.25'), change: getCoinChange('BNB', 1.56), iconBg: 'bg-amber-400 text-black' },
-    { symbol: 'BTC', price: getCoinPrice('BTC', '$74.53K'), change: getCoinChange('BTC', 1.02), iconBg: 'bg-orange-500 text-white' },
+    { symbol: 'BTC', price: getCoinPrice('BTC', '$74.53K'), change: getCoinChange('BTC', 1.02), iconBg: 'bg-[#F0B90B] text-black' },
     { symbol: 'ETH', price: getCoinPrice('ETH', '$2.08K'), change: getCoinChange('ETH', 1.10), iconBg: 'bg-indigo-500 text-white' },
   ];
 
   const newCoins = [
-    { symbol: 'APPB', price: '$404.33', change: 2.28, iconBg: 'bg-cyan-500 text-black' },
-    { symbol: 'BSPB', price: '$40.29', change: -1.56, iconBg: 'bg-yellow-600 text-black' },
-    { symbol: 'GEVB', price: '$812.22', change: 2.84, iconBg: 'bg-teal-500 text-black' },
+    { symbol: 'APPB', price: '$404.33', change: 2.28, iconBg: 'bg-amber-400 text-black' },
+    { symbol: 'BSPB', price: '$40.29', change: -1.56, iconBg: 'bg-amber-400 text-black' },
+    { symbol: 'GEVB', price: '$812.22', change: 2.84, iconBg: 'bg-amber-400 text-black' },
   ];
 
   const gainerCoins = [
-    { symbol: 'SNXXB', price: '$4.45', change: 31.27, iconBg: 'bg-rose-500 text-white' },
-    { symbol: 'MUUB', price: '$18.82', change: 26.99, iconBg: 'bg-blue-600 text-white' },
-    { symbol: 'CRWVB', price: '$60.33', change: 25.66, iconBg: 'bg-indigo-600 text-white' },
+    { symbol: 'SNXXB', price: '$4.45', change: 31.27, iconBg: 'bg-amber-400 text-black' },
+    { symbol: 'MUUB', price: '$18.82', change: 26.99, iconBg: 'bg-amber-400 text-black' },
+    { symbol: 'CRWVB', price: '$60.33', change: 25.66, iconBg: 'bg-amber-400 text-black' },
   ];
 
   const volumeCoins = [
-    { symbol: 'BTC', price: getCoinPrice('BTC', '$74.53K'), change: getCoinChange('BTC', 1.02), iconBg: 'bg-orange-500 text-white' },
+    { symbol: 'BTC', price: getCoinPrice('BTC', '$74.53K'), change: getCoinChange('BTC', 1.02), iconBg: 'bg-[#F0B90B] text-black' },
     { symbol: 'ETH', price: getCoinPrice('ETH', '$2.08K'), change: getCoinChange('ETH', 1.10), iconBg: 'bg-indigo-500 text-white' },
-    { symbol: 'SOL', price: getCoinPrice('SOL', '$84.97'), change: getCoinChange('SOL', 1.91), iconBg: 'bg-violet-600 text-white' },
+    { symbol: 'SOL', price: getCoinPrice('SOL', '$84.97'), change: getCoinChange('SOL', 1.91), iconBg: 'bg-amber-400 text-black' },
   ];
 
   const categories = [
