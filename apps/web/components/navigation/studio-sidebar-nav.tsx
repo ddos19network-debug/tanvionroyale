@@ -26,6 +26,7 @@
  * Loading → skeleton rows. Failure → inline retry. No active provider at all →
  * the block renders nothing rather than an invented studio.
  */
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { CatalogProviderSummary } from '@tanvion-royale/types';
 import { useCasinoProviders } from '@/hooks/use-casino-providers';
@@ -53,8 +54,37 @@ export function StudioSidebarNav({
   pathname,
   currentProvider,
 }: StudioSidebarNavProps) {
+  const [mounted, setMounted] = useState(false);
   const { providers, loading, error, reload } = useCasinoProviders(product);
   const selected = normalizeStudio(currentProvider);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // During SSR and initial hydration, render exact skeleton markup to guarantee
+  // zero hydration mismatch with client-side cached provider stores.
+  if (!mounted) {
+    return (
+      <div className="pt-2" data-testid="sidebar-studios">
+        <p className="px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          {STUDIOS_HEADING}
+        </p>
+        <nav
+          aria-label={`${STUDIOS_HEADING} navigation`}
+          className="flex flex-col gap-0.5 px-2"
+        >
+          {Array.from({ length: 3 }).map((_, index) => (
+            <span
+              key={index}
+              className="h-8 animate-pulse rounded-md bg-ink-800"
+              aria-hidden
+            />
+          ))}
+        </nav>
+      </div>
+    );
+  }
 
   if (!loading && !error && providers.length === 0) return null;
 

@@ -312,7 +312,7 @@ export function AppHeader({ hideOnMobile = false }: { hideOnMobile?: boolean } =
           // Always stays visible while the hamburger drawer or search is open.
           topVisible || mobileMenuOpen || searchOpen
             ? 'translate-y-0'
-            : '-translate-y-full'
+            : '-translate-y-full pointer-events-none md:pointer-events-auto'
         }`}
       >
         <div className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-8">

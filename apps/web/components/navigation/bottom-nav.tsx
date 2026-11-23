@@ -71,7 +71,7 @@ export function BottomNav() {
       aria-label="Mobile navigation"
       aria-hidden={!bottomVisible}
       className={`fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur transition-transform duration-200 ease-out md:hidden ${
-        bottomVisible ? 'translate-y-0' : 'translate-y-full'
+        bottomVisible ? 'translate-y-0' : 'translate-y-full pointer-events-none'
       }`}
     >
       <ul className="mx-auto flex max-w-lg">

@@ -194,7 +194,7 @@ export function TradingShell({
             // Stays visible while the hamburger menu or search is open.
             topVisible || mobileMenuOpen || searchOpen
               ? 'translate-y-0'
-              : '-translate-y-full'
+              : '-translate-y-full pointer-events-none md:pointer-events-auto'
           }`}
         >
         <div className="mx-auto flex max-w-[1400px] items-center px-2 sm:px-3 py-2 gap-2">

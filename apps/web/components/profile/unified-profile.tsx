@@ -512,7 +512,7 @@ export function UnifiedProfile({ isMobileMenuOpen, onMenuToggle, onMenuItemClick
       <div aria-hidden="true" className="h-[52px] shrink-0 md:hidden" />
       <div
         className={`fixed inset-x-0 top-0 z-40 flex h-[52px] items-center justify-between border-b border-white/10 bg-[#0e121a]/95 px-4 backdrop-blur transition-transform duration-200 ease-out md:hidden ${
-          topVisible || mobileMenuOpen ? 'translate-y-0' : '-translate-y-full'
+          topVisible || mobileMenuOpen ? 'translate-y-0' : '-translate-y-full pointer-events-none md:pointer-events-auto'
         }`}
       >
         <button
