@@ -169,13 +169,17 @@ function hideBoth() {
   setState({ top: false, bottom: false });
 }
 
-/** Stop debounce: resets tracking when scrolling has fully stopped. */
+/** Stop debounce: resets tracking when scrolling has fully stopped.
+ * Both menus are hidden after scrolling stops, per the spec:
+ * "scroll stop hole menu show hobe na jotokhon pojonto halka scroll hobe"
+ * Uses hideBoth() to respect reveal immunity period.
+ */
 function scheduleScrollStop() {
   if (scrollStopTimer !== null) clearTimeout(scrollStopTimer);
   scrollStopTimer = setTimeout(() => {
     scrollStopTimer = null;
     accumulatedScrollDelta = 0;
-    // Both menus stay in their current state (no auto-show)
+    hideBoth();
   }, SCROLL_STOP_DEBOUNCE_MS);
 }
 
