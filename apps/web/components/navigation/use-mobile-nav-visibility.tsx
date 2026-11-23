@@ -4,42 +4,33 @@ import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 
 /**
- * Global mobile navigation visibility controller.
+ * Global mobile navigation visibility controller (scroll-only, speed based).
  *
  * ONE singleton store drives every mobile header (AppHeader, TradingShell,
  * UnifiedProfile) and BottomNav. Mobile only (< 768px); desktop is inert.
  *
- * USER-CONFIRMED SPECIFICATION:
+ * SPEC:
+ *  1. Initial load / route change: Top + Bottom both VISIBLE.
+ *  2. FAST scroll (speed >= FAST_SPEED_PX_PER_S, any direction):
+ *       BOTH menus HIDE, and a "fast latch" is set. While the latch is set
+ *       (including the momentum tail after the finger lifts) NOTHING shows.
+ *  3. SLOW scroll never hides a menu, however far it goes.
+ *  4. Scroll stops (no scroll event for REST_MS): latch is released.
+ *       Visibility itself does NOT change (no auto show, no auto hide).
+ *  5. HALKA scroll = slow scroll after a rest, HALKA_MIN_PX in one direction.
+ *       Direction is REVERSED on purpose:
+ *         - page scrolled DOWN (scrollY increases, lower content comes in)
+ *             -> TOP menu shows
+ *         - page scrolled UP (scrollY decreases, upper content comes in)
+ *             -> BOTTOM menu shows
+ *       The other menu keeps its current state. Shows immediately, it does
+ *       not wait for the scroll to stop.
+ *  6. Top and Bottom are independent. Only a FAST scroll hides them.
+ *  7. Near the top of the page (scrollY <= TOP_ALWAYS_VISIBLE_PX) Top shows.
+ *  8. Desktop (>= 768px): inert. Top always visible, Bottom hidden by CSS.
  *
- * 1. Initial page load / route change:
- *    - Both menus VISIBLE.
- *
- * 2. Normal continuous scrolling (any direction):
- *    - BOTH menus HIDE ("scroll er somoy 2 ta menu hide hobe scroll jekono pase holei").
- *
- * 3. When scrolling stops:
- *    - Menus do NOT automatically show ("scroll stop hole menu show hobe na jotokhon pojonto halka scroll hobe").
- *    - If both were hidden, both remain hidden.
- *
- * 4. Post-scroll small movement ("halka scroll"):
- *    - When upper content comes into display (scroll up / pull down):
- *      * Top Menu SHOWS ("halka oporer contain display te asle top menu").
- *      * Bottom Menu keeps its current state (does not hide if already visible).
- *    - When lower content comes into display (scroll down / push up):
- *      * Bottom Menu SHOWS ("nicher contain jokhon display te asbe tokhon buttom").
- *      * Top Menu keeps its current state (does not hide if already visible).
- *
- * 5. Independent visibility ("ekbar menu show hole normal scrolling sara hide hobe na,
- *    mane holo ekta menu show hole arekta hide hobe na"):
- *    - Once a menu shows, it will NOT hide unless normal continuous scrolling occurs.
- *    - Showing Top Menu never hides Bottom Menu.
- *    - Showing Bottom Menu never hides Top Menu.
- *
- * 6. Normal scrolling resumes:
- *    - BOTH menus hide ("jokhon normal scroll hobe tokhon 2 tai hide hobe").
- *
- * 7. Desktop (>= 768px):
- *    - Inert. Top Menu always visible, Bottom Menu always hidden via md:hidden.
+ * Speed = distance scrolled inside the last SPEED_WINDOW_MS (px per second).
+ * A "scroll session" = scroll events with gaps shorter than REST_MS.
  */
 
 // ---------------------------------------------------------------------------
@@ -53,18 +44,27 @@ interface NavVisibilityState {
 
 const MOBILE_MAX_WIDTH = 768;
 
-/** Threshold for detecting a small intentional menu reveal gesture (px) */
-const HALKA_MIN_PX = 6;
-const HALKA_MAX_PX = 70;
+/** Slow movement in ONE direction needed to reveal a menu (px). */
+const HALKA_MIN_PX = 8;
 
-/** Distance threshold for regular continuous scrolling (px) */
-const CONTINUOUS_SCROLL_PX = 100;
+/** At/above this speed the scroll is "fast": hide both + latch (px/s). */
+const FAST_SPEED_PX_PER_S = 600;
 
-/** Immunity duration after a reveal gesture to prevent momentum scroll from re-hiding (ms) */
-const REVEAL_IMMUNITY_MS = 600;
+/** Window used to measure scroll speed (ms). */
+const SPEED_WINDOW_MS = 100;
 
-/** Delay after the last movement before considering scrolling stopped (ms) */
-const SCROLL_STOP_DEBOUNCE_MS = 180;
+/** No scroll event for this long = scrolling has stopped / session ended (ms). */
+const REST_MS = 150;
+
+/** A session must be at least this old before a menu may be revealed (ms).
+ *  Gives a fast flick time to be recognised so it never flashes a menu. */
+const MIN_REVEAL_AGE_MS = 48;
+
+/** Ignore scroll events right after a route change (scroll restoration) (ms). */
+const ROUTE_IGNORE_MS = 400;
+
+/** Top menu is always shown this close to the top of the page (px). */
+const TOP_ALWAYS_VISIBLE_PX = 25;
 
 // ---------------------------------------------------------------------------
 // Singleton state
@@ -86,33 +86,25 @@ function setState(next: NavVisibilityState) {
 }
 
 // ---------------------------------------------------------------------------
-// Interaction tracking
+// Scroll session tracking
 // ---------------------------------------------------------------------------
 
-let scrollStopTimer: ReturnType<typeof setTimeout> | null = null;
-let lastRevealTime = 0;
+interface ScrollSample {
+  t: number;
+  d: number;
+}
 
-/** Touch tracking */
-let touchActive = false;
-let touchStartY = 0;
-let touchStartX = 0;
-let touchIgnored = false;
-let gestureRevealedThisTouch = false;
+let lastY = typeof window !== 'undefined' ? window.scrollY : 0;
+let ignoreUntil = 0;
 
-/** Pointer tracking (mouse drag in responsive mode) */
-let pointerActive = false;
-let pointerStartY = 0;
-let pointerStartX = 0;
-let gestureRevealedThisPointer = false;
+let sessionActive = false;
+let sessionStartT = 0;
+let samples: ScrollSample[] = [];
+let dirAccum = 0; // signed: > 0 scrolled down, < 0 scrolled up
+let fastLatched = false;
+let restTimer: ReturnType<typeof setTimeout> | null = null;
 
-/** Wheel tracking (trackpad / mousewheel in responsive mode) */
-let wheelAccum = 0;
-let wheelTimer: ReturnType<typeof setTimeout> | null = null;
-let wheelTicks = 0;
-
-/** Native scroll tracking */
-let lastScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-let accumulatedScrollDelta = 0;
+let lastPathname: string | null = null;
 
 /** Keyboard tracking */
 let keyboardOpen = false;
@@ -126,11 +118,6 @@ function isMobile(): boolean {
   return typeof window !== 'undefined' && window.innerWidth < MOBILE_MAX_WIDTH;
 }
 
-function shouldIgnoreTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false;
-  return target.closest('canvas, input[type="range"], [data-nav-ignore]') !== null;
-}
-
 function isEditable(el: Element | null): boolean {
   if (!el) return false;
   const tag = el.tagName;
@@ -142,272 +129,163 @@ function isEditable(el: Element | null): boolean {
   return (el as HTMLElement).isContentEditable === true;
 }
 
+/** Only the main page scroll counts (not carousels, dropdown lists, etc.). */
+function isPageScrollTarget(target: EventTarget | null): boolean {
+  if (typeof document === 'undefined') return false;
+  return (
+    target === document ||
+    target === document.documentElement ||
+    target === document.body ||
+    target === window
+  );
+}
+
+function resetSession() {
+  sessionActive = false;
+  sessionStartT = 0;
+  samples = [];
+  dirAccum = 0;
+  fastLatched = false;
+  if (restTimer !== null) {
+    clearTimeout(restTimer);
+    restTimer = null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Menu actions
 // ---------------------------------------------------------------------------
 
-/** Show Top Menu. Does NOT hide Bottom Menu if already visible. */
+/** Show Top Menu. Does NOT hide Bottom Menu. */
 function revealTop() {
-  lastRevealTime = Date.now();
   if (state.top) return;
   setState({ top: true, bottom: state.bottom });
 }
 
-/** Show Bottom Menu. Does NOT hide Top Menu if already visible. */
+/** Show Bottom Menu. Does NOT hide Top Menu. */
 function revealBottom() {
   if (keyboardOpen) return;
-  lastRevealTime = Date.now();
   if (state.bottom) return;
   setState({ top: state.top, bottom: true });
 }
 
-/** Normal continuous scrolling: hide both menus together. */
+/** Fast scroll: hide both menus together. */
 function hideBoth() {
-  // Respect reveal immunity so small reveal movements aren't immediately killed by momentum
-  if (Date.now() - lastRevealTime < REVEAL_IMMUNITY_MS) return;
   if (!state.top && !state.bottom) return;
   setState({ top: false, bottom: false });
 }
 
-/** Stop debounce: resets tracking when scrolling has fully stopped.
- * Both menus are hidden after scrolling stops, per the spec:
- * "scroll stop hole menu show hobe na jotokhon pojonto halka scroll hobe"
- * Uses hideBoth() to respect reveal immunity period.
+/**
+ * Reveal the menu for a slow movement in one direction.
+ * REVERSED mapping: scrolled down -> Top, scrolled up -> Bottom.
  */
-function scheduleScrollStop() {
-  if (scrollStopTimer !== null) clearTimeout(scrollStopTimer);
-  scrollStopTimer = setTimeout(() => {
-    scrollStopTimer = null;
-    accumulatedScrollDelta = 0;
-    hideBoth();
-  }, SCROLL_STOP_DEBOUNCE_MS);
+function revealForDirection(signedDistance: number) {
+  if (signedDistance > 0) {
+    revealTop();
+  } else if (signedDistance < 0) {
+    revealBottom();
+  }
 }
 
 /** Reset to initial state (used on route change). */
 export function resetMobileNavVisibility() {
-  touchActive = false;
-  pointerActive = false;
-  gestureRevealedThisTouch = false;
-  gestureRevealedThisPointer = false;
-  accumulatedScrollDelta = 0;
-  wheelAccum = 0;
-  wheelTicks = 0;
-  lastRevealTime = 0;
-  if (scrollStopTimer !== null) {
-    clearTimeout(scrollStopTimer);
-    scrollStopTimer = null;
-  }
-  if (wheelTimer !== null) {
-    clearTimeout(wheelTimer);
-    wheelTimer = null;
-  }
-  lastScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+  resetSession();
+  lastY = typeof window !== 'undefined' ? window.scrollY : 0;
+  ignoreUntil = Date.now() + ROUTE_IGNORE_MS;
   setState({ ...ALL_VISIBLE });
 }
 
 // ---------------------------------------------------------------------------
-// Touch Event Handlers (Real Mobile Devices & Touch Emulation)
+// Scroll handling
 // ---------------------------------------------------------------------------
 
-function onTouchStart(e: TouchEvent) {
+/**
+ * Scrolling has stopped (REST_MS without a scroll event).
+ * Releases the fast latch. A very short slow movement that ended before the
+ * normal reveal gate opened is still honoured here.
+ * NEVER hides anything.
+ */
+function endSession() {
+  restTimer = null;
+
+  if (!fastLatched && Math.abs(dirAccum) >= HALKA_MIN_PX) {
+    revealForDirection(dirAccum);
+  }
+
+  sessionActive = false;
+  sessionStartT = 0;
+  samples = [];
+  dirAccum = 0;
+  fastLatched = false;
+}
+
+function onScroll(e: Event) {
   if (!isMobile()) return;
-  if (e.touches.length !== 1) {
-    touchIgnored = true;
-    return;
-  }
-  const touch = e.touches[0];
-  touchActive = true;
-  touchIgnored = shouldIgnoreTarget(e.target);
-  touchStartY = touch.clientY;
-  touchStartX = touch.clientX;
-  gestureRevealedThisTouch = false;
+  if (!isPageScrollTarget(e.target)) return;
 
-  if (scrollStopTimer !== null) {
-    clearTimeout(scrollStopTimer);
-    scrollStopTimer = null;
-  }
-}
+  const now = performance.now();
+  const y = window.scrollY || 0;
+  const delta = y - lastY;
+  lastY = y;
 
-function onTouchMove(e: TouchEvent) {
-  if (!touchActive || touchIgnored || !isMobile()) return;
-  const touch = e.touches[0];
-  if (!touch) return;
+  // Route change / programmatic restore: ignore.
+  if (Date.now() < ignoreUntil) return;
 
-  const currentY = touch.clientY;
-  const currentX = touch.clientX;
+  // iOS rubber-band overscroll: ignore.
+  const maxY = document.documentElement.scrollHeight - window.innerHeight;
+  if (y < 0 || y > maxY) return;
 
-  const dy = currentY - touchStartY;
-  const dx = currentX - touchStartX;
-
-  // Ignore horizontal swipes (carousels, tabs, tables)
-  if (Math.abs(dx) > Math.abs(dy) * 1.5) return;
-
-  const dist = Math.abs(dy);
-
-  // 1. Halka scroll (small intentional movement to reveal appropriate menu)
-  if (dist >= HALKA_MIN_PX && dist <= HALKA_MAX_PX) {
-    if (!gestureRevealedThisTouch) {
-      if (dy > 0) {
-        // Finger moved down: upper content comes into view -> Top Menu
-        revealTop();
-        gestureRevealedThisTouch = true;
-      } else if (dy < 0) {
-        // Finger moved up: lower content comes into view -> Bottom Menu
-        revealBottom();
-        gestureRevealedThisTouch = true;
-      }
-    }
-  }
-
-  // 2. Normal continuous scrolling:
-  // If user scrolled far (> CONTINUOUS_SCROLL_PX) without a reveal, or kept scrolling past 150px
-  if (!gestureRevealedThisTouch && dist >= CONTINUOUS_SCROLL_PX) {
-    hideBoth();
-  } else if (gestureRevealedThisTouch && dist >= 160) {
-    hideBoth();
-  }
-
-  scheduleScrollStop();
-}
-
-function onTouchEnd() {
-  touchActive = false;
-  touchIgnored = false;
-  gestureRevealedThisTouch = false;
-  scheduleScrollStop();
-}
-
-// ---------------------------------------------------------------------------
-// Pointer Event Handlers (Mouse Drag in Responsive Mode)
-// ---------------------------------------------------------------------------
-
-function onPointerDown(e: PointerEvent) {
-  if (!isMobile() || e.pointerType === 'touch') return;
-  pointerActive = true;
-  pointerStartY = e.clientY;
-  pointerStartX = e.clientX;
-  gestureRevealedThisPointer = false;
-
-  if (scrollStopTimer !== null) {
-    clearTimeout(scrollStopTimer);
-    scrollStopTimer = null;
-  }
-}
-
-function onPointerMove(e: PointerEvent) {
-  if (!pointerActive || !isMobile() || e.pointerType === 'touch') return;
-  const dy = e.clientY - pointerStartY;
-  const dx = e.clientX - pointerStartX;
-  if (Math.abs(dx) > Math.abs(dy) * 1.5) return;
-
-  const dist = Math.abs(dy);
-
-  // 1. Halka scroll:
-  if (dist >= HALKA_MIN_PX && dist <= HALKA_MAX_PX) {
-    if (!gestureRevealedThisPointer) {
-      if (dy > 0) {
-        revealTop();
-        gestureRevealedThisPointer = true;
-      } else if (dy < 0) {
-        revealBottom();
-        gestureRevealedThisPointer = true;
-      }
-    }
-  }
-
-  // 2. Normal continuous drag:
-  if (!gestureRevealedThisPointer && dist >= CONTINUOUS_SCROLL_PX) {
-    hideBoth();
-  } else if (gestureRevealedThisPointer && dist >= 160) {
-    hideBoth();
-  }
-
-  scheduleScrollStop();
-}
-
-function onPointerUp(e: PointerEvent) {
-  if (e.pointerType === 'touch') return;
-  pointerActive = false;
-  gestureRevealedThisPointer = false;
-  scheduleScrollStop();
-}
-
-// ---------------------------------------------------------------------------
-// Mouse Wheel / Trackpad (Desktop Browser Testing in Responsive Mode)
-// ---------------------------------------------------------------------------
-
-function onWheel(e: WheelEvent) {
-  if (!isMobile() || touchActive) return;
-
-  const delta = e.deltaY;
   if (Math.abs(delta) < 1) return;
 
-  wheelAccum += delta;
-  wheelTicks += 1;
-
-  if (wheelTimer !== null) clearTimeout(wheelTimer);
-  wheelTimer = setTimeout(() => {
-    wheelTimer = null;
-    wheelAccum = 0;
-    wheelTicks = 0;
-  }, 200);
-
-  // Fast continuous wheel spinning (> 300px or 4+ continuous ticks) -> normal scrolling
-  if (wheelTicks >= 4 || Math.abs(wheelAccum) >= 300) {
-    hideBoth();
-    scheduleScrollStop();
+  // Near the top of the page the top menu is always visible.
+  if (y <= TOP_ALWAYS_VISIBLE_PX) {
+    revealTop();
     return;
   }
 
-  // Single notch or gentle wheel tick (halka scroll):
-  if (delta < 0) {
-    // Wheel up: upper content comes into view -> Top Menu
-    revealTop();
-  } else if (delta > 0) {
-    // Wheel down: lower content comes into view -> Bottom Menu
-    revealBottom();
+  if (!sessionActive) {
+    sessionActive = true;
+    sessionStartT = now;
+    samples = [];
+    dirAccum = 0;
+    fastLatched = false;
   }
 
-  scheduleScrollStop();
+  // Speed over the last SPEED_WINDOW_MS, in px per second.
+  samples.push({ t: now, d: Math.abs(delta) });
+  while (samples.length > 0 && samples[0].t < now - SPEED_WINDOW_MS) {
+    samples.shift();
+  }
+  let windowDistance = 0;
+  for (const s of samples) windowDistance += s.d;
+  const speed = windowDistance * (1000 / SPEED_WINDOW_MS);
+
+  // FAST: hide both once, then latch until the scroll fully stops.
+  if (!fastLatched && speed >= FAST_SPEED_PX_PER_S) {
+    fastLatched = true;
+    hideBoth();
+  }
+
+  // SLOW: accumulate movement in one direction and reveal at HALKA_MIN_PX.
+  if (!fastLatched) {
+    if (dirAccum !== 0 && Math.sign(dirAccum) !== Math.sign(delta)) {
+      dirAccum = 0; // direction changed: count again from zero
+    }
+    dirAccum += delta;
+
+    if (Math.abs(dirAccum) >= HALKA_MIN_PX && now - sessionStartT >= MIN_REVEAL_AGE_MS) {
+      revealForDirection(dirAccum);
+      dirAccum = 0;
+    }
+  }
+
+  if (restTimer !== null) clearTimeout(restTimer);
+  restTimer = setTimeout(endSession, REST_MS);
 }
 
 // ---------------------------------------------------------------------------
-// Native Window Scroll Event (Momentum Scroll, Scrollbar Drag, Keyboard)
+// Keyboard / resize
 // ---------------------------------------------------------------------------
-
-function onScroll() {
-  if (!isMobile()) return;
-
-  const currentY = window.scrollY || 0;
-  const delta = currentY - lastScrollY;
-  lastScrollY = currentY;
-
-  // Near the top of the page, top menu is always visible
-  if (currentY <= 25) {
-    revealTop();
-    return;
-  }
-
-  // If a reveal gesture just happened or user is touching, do not let scroll hide menus
-  if (touchActive || Date.now() - lastRevealTime < REVEAL_IMMUNITY_MS || Math.abs(delta) < 1) {
-    return;
-  }
-
-  accumulatedScrollDelta += delta;
-
-  // Normal continuous scrolling in either direction hides both menus
-  if (Math.abs(accumulatedScrollDelta) >= CONTINUOUS_SCROLL_PX) {
-    hideBoth();
-  } else if (accumulatedScrollDelta <= -HALKA_MIN_PX) {
-    // Light scroll up brings upper content into display -> Top Menu
-    revealTop();
-  } else if (accumulatedScrollDelta >= HALKA_MIN_PX) {
-    // Light scroll down brings lower content into display -> Bottom Menu
-    revealBottom();
-  }
-
-  scheduleScrollStop();
-}
 
 function onFocusIn(e: FocusEvent) {
   if (!isMobile()) return;
@@ -439,21 +317,10 @@ function onResize() {
 }
 
 // ---------------------------------------------------------------------------
-// Singleton Subscription Management
+// Singleton subscription management
 // ---------------------------------------------------------------------------
 
 function attachListeners() {
-  window.addEventListener('touchstart', onTouchStart, { passive: true });
-  window.addEventListener('touchmove', onTouchMove, { passive: true });
-  window.addEventListener('touchend', onTouchEnd, { passive: true });
-  window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-
-  window.addEventListener('pointerdown', onPointerDown, { passive: true });
-  window.addEventListener('pointermove', onPointerMove, { passive: true });
-  window.addEventListener('pointerup', onPointerUp, { passive: true });
-  window.addEventListener('pointercancel', onPointerUp, { passive: true });
-
-  window.addEventListener('wheel', onWheel, { passive: true });
   window.addEventListener('scroll', onScroll, { passive: true, capture: true });
   window.addEventListener('resize', onResize);
   window.addEventListener('focusin', onFocusIn);
@@ -461,17 +328,6 @@ function attachListeners() {
 }
 
 function detachListeners() {
-  window.removeEventListener('touchstart', onTouchStart);
-  window.removeEventListener('touchmove', onTouchMove);
-  window.removeEventListener('touchend', onTouchEnd);
-  window.removeEventListener('touchcancel', onTouchEnd);
-
-  window.removeEventListener('pointerdown', onPointerDown);
-  window.removeEventListener('pointermove', onPointerMove);
-  window.removeEventListener('pointerup', onPointerUp);
-  window.removeEventListener('pointercancel', onPointerUp);
-
-  window.removeEventListener('wheel', onWheel);
   window.removeEventListener('scroll', onScroll, true);
   window.removeEventListener('resize', onResize);
   window.removeEventListener('focusin', onFocusIn);
@@ -485,26 +341,11 @@ function subscribe(listener: () => void) {
     listeners.delete(listener);
     if (listeners.size === 0) {
       detachListeners();
-      if (scrollStopTimer !== null) {
-        clearTimeout(scrollStopTimer);
-        scrollStopTimer = null;
-      }
-      if (wheelTimer !== null) {
-        clearTimeout(wheelTimer);
-        wheelTimer = null;
-      }
+      resetSession();
       if (keyboardTimer !== null) {
         clearTimeout(keyboardTimer);
         keyboardTimer = null;
       }
-      touchActive = false;
-      pointerActive = false;
-      gestureRevealedThisTouch = false;
-      gestureRevealedThisPointer = false;
-      accumulatedScrollDelta = 0;
-      wheelAccum = 0;
-      wheelTicks = 0;
-      lastRevealTime = 0;
       keyboardOpen = false;
     }
   };
@@ -527,8 +368,11 @@ export function useMobileNavVisibility() {
   const current = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const pathname = usePathname();
 
-  // Every route change starts with both bars visible
+  // Every route change starts with both bars visible.
+  // Several components use this hook, so only reset when the path really changed.
   useEffect(() => {
+    if (lastPathname === pathname) return;
+    lastPathname = pathname;
     resetMobileNavVisibility();
   }, [pathname]);
 

@@ -416,7 +416,7 @@ function withAuth(
 export function isDefinitiveAuthError(error: unknown): boolean {
   return (
     error instanceof ApiClientError &&
-    (error.status === 401 || error.status === 403)
+    (error.status === 400 || error.status === 401 || error.status === 403)
   );
 }
 
@@ -473,7 +473,10 @@ export function refreshAuthSession(): Promise<boolean> {
      */
     const refreshToken = getRefreshToken();
 
-    if (!refreshToken) {
+    if (!refreshToken || typeof refreshToken !== 'string' || refreshToken.trim().length < 16) {
+      if (refreshToken) {
+        clearSession('invalid-refresh-token');
+      }
       return false;
     }
 
